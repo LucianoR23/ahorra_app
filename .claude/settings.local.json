@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(pnpm add *)",
-      "Bash(pnpm tsc *)"
+      "Bash(pnpm tsc *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|json|yml|yaml|env|md\\)$\")"
     ]
   }
 }

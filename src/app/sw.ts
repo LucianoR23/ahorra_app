@@ -29,7 +29,7 @@ type PushPayload = {
   url?: string;
 };
 
-self.addEventListener("push", (event) => {
+self.addEventListener("push", (event: PushEvent) => {
   if (!event.data) return;
 
   let payload: PushPayload;
@@ -52,7 +52,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-self.addEventListener("notificationclick", (event) => {
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.notification.close();
   const url: string = (event.notification.data as { url?: string })?.url ?? "/";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Bell, BellOff, Smartphone, X } from "lucide-react";
+import { Bell, Smartphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth";
 import {
@@ -21,19 +21,19 @@ const DISMISSED_KEY = "ahorra.push.dismissed";
  */
 export function PushProvider() {
   const accessToken = useAuthStore((s) => s.accessToken);
-  const [banner, setBanner] = useState<"push" | "ios" | null>(null);
+  const [banner, setBanner] = useState<"push" | "ios" | null>(() => {
+    if (typeof window === "undefined") return null;
+    if (isIosSafari() && !isStandalone()) {
+      return sessionStorage.getItem(DISMISSED_KEY + ".ios") ? null : "ios";
+    }
+    return null;
+  });
   const [subscribing, setSubscribing] = useState(false);
 
   const initPush = useCallback(async () => {
     if (!accessToken) return;
     if (typeof window === "undefined" || !("Notification" in window)) return;
-
-    // Show iOS tip if Safari without standalone
-    if (isIosSafari() && !isStandalone()) {
-      const dismissed = sessionStorage.getItem(DISMISSED_KEY + ".ios");
-      if (!dismissed) setBanner("ios");
-      return; // iOS Safari requires PWA install before push works
-    }
+    if (isIosSafari() && !isStandalone()) return; // handled via initial state
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
 
@@ -66,7 +66,8 @@ export function PushProvider() {
   }, [accessToken]);
 
   useEffect(() => {
-    initPush();
+    const timer = setTimeout(() => { void initPush(); }, 0);
+    return () => clearTimeout(timer);
   }, [initPush]);
 
   async function handleAllow() {

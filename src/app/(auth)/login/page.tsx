@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -18,20 +18,16 @@ const REMEMBER_KEY = "ahorra.remembered_email";
 export default function LoginPage() {
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() =>
+    typeof window !== "undefined" ? (localStorage.getItem(REMEMBER_KEY) ?? "") : ""
+  );
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() =>
+    typeof window !== "undefined" && !!localStorage.getItem(REMEMBER_KEY)
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(REMEMBER_KEY);
-    if (saved) {
-      setEmail(saved);
-      setRememberMe(true);
-    }
-  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
