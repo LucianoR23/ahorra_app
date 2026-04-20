@@ -1,7 +1,7 @@
-import { Home, ListOrdered, Target, PieChart, Settings, Repeat, TrendingUp, Scale, type LucideIcon } from "lucide-react";
+import { Home, ListOrdered, Target, PieChart, Settings, Repeat, TrendingUp, Scale, BarChart2, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
-  id: "home" | "history" | "goals" | "categories" | "settings" | "incomes" | "recurring" | "debts";
+  id: "home" | "history" | "goals" | "categories" | "settings" | "incomes" | "recurring" | "debts" | "reports";
   label: string;
   href: string;
   icon: LucideIcon;
@@ -15,5 +15,6 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "debts", label: "Deudas", href: "/deudas", icon: Scale },
   { id: "categories", label: "Categorías", href: "/categorias", icon: PieChart },
   { id: "goals", label: "Objetivos", href: "/objetivos", icon: Target },
+  { id: "reports", label: "Reportes", href: "/reportes", icon: BarChart2 },
   { id: "settings", label: "Ajustes", href: "/ajustes", icon: Settings },
 ];

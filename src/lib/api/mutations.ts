@@ -16,6 +16,13 @@ import type {
   Settlement,
   Goal,
   SplitRulesResponse,
+  Bank,
+  PaymentMethod,
+  PaymentMethodKind,
+  CreditCard,
+  CreditCardPeriod,
+  Household,
+  Category,
 } from "./schemas";
 
 let refreshInflight: Promise<string | null> | null = null;
@@ -308,4 +315,154 @@ export function toggleGoal(id: string, isActive: boolean) {
 
 export function deleteGoal(id: string) {
   return apiMutate<void>({ method: "DELETE", path: `/goals/${id}` });
+}
+
+// --- Banks ----------------------------------------------------------------
+
+export function createBank(name: string) {
+  return apiMutate<Bank>({ method: "POST", path: "/banks", body: { name }, householdScoped: false });
+}
+
+export function patchBank(id: string, name: string) {
+  return apiMutate<Bank>({ method: "PATCH", path: `/banks/${id}`, body: { name }, householdScoped: false });
+}
+
+export function activateBank(id: string) {
+  return apiMutate<Bank>({ method: "POST", path: `/banks/${id}/activate`, householdScoped: false });
+}
+
+export function deactivateBank(id: string) {
+  return apiMutate<Bank>({ method: "POST", path: `/banks/${id}/deactivate`, householdScoped: false });
+}
+
+// --- Payment methods ------------------------------------------------------
+
+export type PaymentMethodCreateInput = {
+  bankId?: string | null;
+  name: string;
+  kind: PaymentMethodKind;
+  allowsInstallments: boolean;
+  creditCard?: {
+    alias: string;
+    lastFour?: string | null;
+    defaultClosingDay: number;
+    defaultDueDay: number;
+    debitPaymentMethodId?: string | null;
+  };
+};
+
+export function createPaymentMethod(input: PaymentMethodCreateInput) {
+  return apiMutate<PaymentMethod>({ method: "POST", path: "/payment-methods", body: input, householdScoped: false });
+}
+
+export type PaymentMethodPatchInput = {
+  name?: string;
+  bankId?: string | null;
+  allowsInstallments?: boolean;
+};
+
+export function patchPaymentMethod(id: string, input: PaymentMethodPatchInput) {
+  return apiMutate<PaymentMethod>({ method: "PATCH", path: `/payment-methods/${id}`, body: input, householdScoped: false });
+}
+
+export function activatePaymentMethod(id: string) {
+  return apiMutate<PaymentMethod>({ method: "POST", path: `/payment-methods/${id}/activate`, householdScoped: false });
+}
+
+export function deactivatePaymentMethod(id: string) {
+  return apiMutate<PaymentMethod>({ method: "POST", path: `/payment-methods/${id}/deactivate`, householdScoped: false });
+}
+
+// --- Credit cards ---------------------------------------------------------
+
+export type CreditCardPatchInput = {
+  alias?: string;
+  lastFour?: string | null;
+  defaultClosingDay?: number;
+  defaultDueDay?: number;
+  debitPaymentMethodId?: string | null;
+};
+
+export function patchCreditCard(paymentMethodId: string, input: CreditCardPatchInput) {
+  return apiMutate<CreditCard>({
+    method: "PATCH",
+    path: `/payment-methods/${paymentMethodId}/credit-card`,
+    body: input,
+    householdScoped: false,
+  });
+}
+
+// --- Credit card periods --------------------------------------------------
+
+export function upsertCreditCardPeriod(
+  paymentMethodId: string,
+  ym: string,
+  input: { closingDate: string; dueDate: string },
+) {
+  return apiMutate<CreditCardPeriod>({
+    method: "PUT",
+    path: `/payment-methods/${paymentMethodId}/credit-card/periods/${ym}`,
+    body: input,
+    householdScoped: false,
+  });
+}
+
+export function deleteCreditCardPeriod(paymentMethodId: string, ym: string) {
+  return apiMutate<void>({
+    method: "DELETE",
+    path: `/payment-methods/${paymentMethodId}/credit-card/periods/${ym}`,
+    householdScoped: false,
+  });
+}
+
+// --- Households -----------------------------------------------------------
+
+export function patchHousehold(id: string, input: { name?: string; baseCurrency?: Currency }) {
+  return apiMutate<Household>({
+    method: "PATCH",
+    path: `/households/${id}`,
+    body: input,
+    householdScoped: false,
+  });
+}
+
+export function deleteHousehold(id: string) {
+  return apiMutate<void>({ method: "DELETE", path: `/households/${id}`, householdScoped: false });
+}
+
+export function inviteHouseholdMember(householdId: string, email: string) {
+  return apiMutate<{ userId: string; householdId: string; role: string; joinedAt: string }>({
+    method: "POST",
+    path: `/households/${householdId}/members`,
+    body: { email },
+    householdScoped: false,
+  });
+}
+
+export function removeHouseholdMember(householdId: string, userId: string) {
+  return apiMutate<void>({
+    method: "DELETE",
+    path: `/households/${householdId}/members/${userId}`,
+    householdScoped: false,
+  });
+}
+
+// --- Categories -----------------------------------------------------------
+
+export type CategoryInput = {
+  name: string;
+  icon?: string | null;
+  color?: string | null;
+};
+
+export function createCategory(input: CategoryInput) {
+  return apiMutate<Category>({ method: "POST", path: "/categories", body: input });
+}
+
+export function patchCategory(id: string, input: CategoryInput) {
+  return apiMutate<Category>({ method: "PATCH", path: `/categories/${id}`, body: input });
+}
+
+export function deleteCategory(id: string) {
+  return apiMutate<void>({ method: "DELETE", path: `/categories/${id}` });
 }

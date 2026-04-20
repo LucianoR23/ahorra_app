@@ -1,0 +1,312 @@
+"use client";
+
+import { useState } from "react";
+import { mutate as swrMutate } from "swr";
+import { useRouter } from "next/navigation";
+import { Loader2, Save, UserPlus, UserX, Trash2, Info } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useHouseholds, useHouseholdMembers } from "@/lib/api/hooks";
+import {
+  patchHousehold,
+  deleteHousehold,
+  inviteHouseholdMember,
+  removeHouseholdMember,
+} from "@/lib/api/mutations";
+import type { Currency } from "@/lib/api/schemas";
+import { useAuthStore } from "@/stores/auth";
+import { useHouseholdStore } from "@/stores/household";
+import { ApiError } from "@/lib/api/errors";
+
+const selectClass =
+  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
+
+function invalidateHouseholds() {
+  swrMutate(
+    (k) => Array.isArray(k) && typeof k[0] === "string" && k[0].startsWith("/households"),
+    undefined,
+    { revalidate: true },
+  );
+}
+
+export function HouseholdConfig() {
+  const me = useAuthStore((s) => s.user);
+  const currentHhId = useHouseholdStore((s) => s.currentId);
+  const setCurrentId = useHouseholdStore((s) => s.setCurrentId);
+  const router = useRouter();
+
+  const { data: households, isLoading } = useHouseholds();
+  const { data: members } = useHouseholdMembers(currentHhId);
+
+  const household = households?.find((h) => h.id === currentHhId);
+  const isOwner = !!(me && household && household.createdBy === me.id);
+
+  const [name, setName] = useState("");
+  const [currency, setCurrency] = useState<Currency>("ARS");
+  const [editKey, setEditKey] = useState<unknown>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveOk, setSaveOk] = useState(false);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
+
+  if (household && editKey !== household) {
+    setEditKey(household);
+    setName(household.name);
+    setCurrency(household.baseCurrency as Currency);
+  }
+
+  const dirty = household
+    ? name !== household.name || currency !== household.baseCurrency
+    : false;
+
+  async function handleSave() {
+    if (!household || !dirty) return;
+    setSaving(true);
+    setSaveErr(null);
+    setSaveOk(false);
+    try {
+      await patchHousehold(household.id, { name: name.trim(), baseCurrency: currency });
+      invalidateHouseholds();
+      setSaveOk(true);
+    } catch (e) {
+      setSaveErr(e instanceof ApiError ? e.message : "No se pudo guardar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!household) return;
+    if (!confirm(`¿Eliminar el hogar "${household.name}"? Esta acción es irreversible.`)) return;
+    try {
+      await deleteHousehold(household.id);
+      setCurrentId(null);
+      invalidateHouseholds();
+      router.replace("/");
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "No se pudo eliminar el hogar");
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <Card className="rounded-2xl border-0 shadow-card">
+        <CardContent className="p-4">
+          <Skeleton className="h-24 w-full rounded-md" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!household) return null;
+
+  return (
+    <Card className="rounded-2xl border-0 shadow-card">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-bold">Configuración del hogar</h2>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Nombre, moneda base y miembros.
+            </p>
+          </div>
+          {!isOwner && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+              <Info className="size-3" /> Solo lectura
+            </span>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <div>
+            <Label htmlFor="hh-name">Nombre del hogar</Label>
+            <Input
+              id="hh-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!isOwner || saving}
+            />
+          </div>
+          <div>
+            <Label>Moneda base</Label>
+            <select
+              className={selectClass}
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              disabled={!isOwner || saving}
+            >
+              <option value="ARS">ARS</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </div>
+
+          {isOwner && (
+            <>
+              {saveErr && (
+                <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{saveErr}</div>
+              )}
+              <div className="flex items-center justify-between">
+                {saveOk && !dirty && <span className="text-[11px] text-emerald-500">Guardado</span>}
+                <div className="ml-auto">
+                  <Button size="sm" onClick={handleSave} disabled={!dirty || saving}>
+                    {saving ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Save className="mr-1 size-3.5" />}
+                    Guardar
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="mt-5">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold">Miembros</span>
+            {isOwner && <InviteDialog householdId={household.id} onDone={invalidateHouseholds} />}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {members?.map((m) => (
+              <div key={m.userId} className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2">
+                <div className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-bold uppercase">
+                  {m.firstName[0]}{m.lastName[0]}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold">
+                    {m.userId === me?.id ? "Yo" : `${m.firstName} ${m.lastName}`}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">{m.email}</p>
+                </div>
+                <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                  {m.role === "owner" ? "Dueño" : "Miembro"}
+                </Badge>
+                {isOwner && m.userId !== me?.id && (
+                  <RemoveMemberButton
+                    householdId={household.id}
+                    userId={m.userId}
+                    name={`${m.firstName} ${m.lastName}`}
+                    onDone={invalidateHouseholds}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {isOwner && (
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <p className="mb-2 text-[11px] font-semibold text-destructive">Zona de peligro</p>
+            <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+              <Trash2 className="mr-1 size-3.5" />
+              Eliminar hogar
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function InviteDialog({ householdId, onDone }: { householdId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setErr(null);
+    setOk(false);
+    setSaving(true);
+    try {
+      await inviteHouseholdMember(householdId, email.trim());
+      onDone();
+      setOk(true);
+      setEmail("");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "No se pudo invitar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); setErr(null); setOk(false); }}>
+      <DialogTrigger render={<Button size="sm" variant="outline" />}>
+        <UserPlus className="mr-1 size-3.5" />
+        Invitar
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xs">
+        <DialogHeader>
+          <DialogTitle>Invitar miembro</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div>
+            <Label htmlFor="invite-email">Email del usuario</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="correo@ejemplo.com"
+              autoFocus
+            />
+          </div>
+          {err && <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{err}</div>}
+          {ok && <div className="rounded-md bg-emerald-500/10 px-3 py-2 text-xs text-emerald-600">¡Invitación enviada!</div>}
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="ghost" />}>Cerrar</DialogClose>
+            <Button type="submit" disabled={!email.trim() || saving}>
+              {saving && <Loader2 className="mr-1 size-3.5 animate-spin" />}
+              Invitar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RemoveMemberButton({
+  householdId,
+  userId,
+  name,
+  onDone,
+}: {
+  householdId: string;
+  userId: string;
+  name: string;
+  onDone: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  async function handle() {
+    if (!confirm(`¿Remover a ${name} del hogar?`)) return;
+    setBusy(true);
+    try {
+      await removeHouseholdMember(householdId, userId);
+      onDone();
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <button type="button" onClick={handle} disabled={busy} className="text-muted-foreground hover:text-destructive">
+      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <UserX className="size-3.5" />}
+    </button>
+  );
+}

@@ -374,3 +374,50 @@ export const rateSchema = z.object({
   fetchedAt: z.string(),
 });
 export type Rate = z.infer<typeof rateSchema>;
+
+export const trendPointSchema = z.object({
+  month: z.string(),
+  spentTotal: z.number(),
+  dueTotal: z.number(),
+  income: z.number(),
+  net: z.number(),
+});
+export type TrendPoint = z.infer<typeof trendPointSchema>;
+
+export const trendsReportSchema = z.object({
+  householdId: z.string(),
+  baseCurrency: z.string(),
+  months: z.number(),
+  points: z.array(trendPointSchema),
+});
+export type TrendsReport = z.infer<typeof trendsReportSchema>;
+
+export const aiExportCategorySchema = z.object({
+  name: z.string(),
+  total: z.number(),
+  pct: z.number(),
+  txCount: z.number(),
+});
+
+export const aiExportSchema = z.object({
+  householdName: z.string(),
+  baseCurrency: z.string(),
+  month: z.string(),
+  spent: z.number(),
+  billed: z.number(),
+  due: z.number(),
+  fixedTotal: z.number(),
+  variableTotal: z.number(),
+  fixedPct: z.number(),
+  topCategories: z.array(aiExportCategorySchema),
+  trendsLast6: z.array(trendPointSchema),
+  prompt: z.string(),
+});
+export type AiExport = z.infer<typeof aiExportSchema>;
+
+export const creditCardPeriodStatusSchema = z.object({
+  noPeriodsLoaded: z.boolean(),
+  dueDatePassed: z.boolean(),
+  latestPeriod: creditCardPeriodSchema.nullable().optional(),
+});
+export type CreditCardPeriodStatus = z.infer<typeof creditCardPeriodStatusSchema>;

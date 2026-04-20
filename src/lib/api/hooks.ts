@@ -17,6 +17,7 @@ import type {
   Bank,
   CreditCard,
   CreditCardPeriod,
+  CreditCardPeriodStatus,
   RecurringExpense,
   RecurringIncome,
   Rate,
@@ -26,6 +27,8 @@ import type {
   SplitRulesResponse,
   Goal,
   GoalProgress,
+  TrendsReport,
+  AiExport,
 } from "./schemas";
 
 function useReady() {
@@ -255,5 +258,37 @@ export function useExchangeRates() {
   const token = useAuthStore((s) => s.accessToken);
   return useSWR<Rate[]>(
     token ? (["/exchange-rates/current", { householdScoped: false }] as const) : null,
+  );
+}
+
+export function useHousehold(id?: string | null) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<Household>(
+    token && id ? ([`/households/${id}`, { householdScoped: false }] as const) : null,
+  );
+}
+
+export function useTrendsReport(months = 6) {
+  const { token, householdId } = useReady();
+  const key = token && householdId
+    ? (["/reports/trends", { query: { months } }] as const)
+    : null;
+  return useSWR<TrendsReport>(key);
+}
+
+export function useAiExport(month?: string) {
+  const { token, householdId } = useReady();
+  const key = token && householdId && month
+    ? (["/reports/ai-export", { query: { month } }] as const)
+    : null;
+  return useSWR<AiExport>(key);
+}
+
+export function useCreditCardPeriodStatus(paymentMethodId?: string | null) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<CreditCardPeriodStatus>(
+    token && paymentMethodId
+      ? ([`/payment-methods/${paymentMethodId}/credit-card/periods/status`, { householdScoped: false }] as const)
+      : null,
   );
 }
