@@ -10,6 +10,7 @@ import { AuthGate } from "@/components/auth-gate";
 import { HouseholdSwitcher } from "@/components/household-switcher";
 import { useAuthStore } from "@/stores/auth";
 import { logout as apiLogout } from "@/lib/api/auth";
+import { unsubscribePush } from "@/lib/push";
 import { useHouseholdStore } from "@/stores/household";
 import {
   Sheet,
@@ -43,6 +44,8 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
 
   async function handleLogout() {
+    const token = useAuthStore.getState().accessToken;
+    if (token) await unsubscribePush(token).catch(() => {});
     try {
       await apiLogout();
     } finally {

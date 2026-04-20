@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CategoryIcon } from "@/components/category-icon";
+import { PushProvider } from "@/components/push-provider";
 import { fmtARS, greeting } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useIsClient } from "@/lib/hooks";
@@ -36,6 +37,7 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-4 pb-4">
       <Header />
+      <PushProvider />
 
       <div className="grid grid-cols-2 gap-3">
         <StatCard

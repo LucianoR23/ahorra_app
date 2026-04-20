@@ -2051,12 +2051,12 @@ LOG_LEVEL=debug
 
 ### Checkpoint 16 — Frontend: configuración + reportes
 
-- ⏳ Config bancos / payment_methods (scope user — no usa `X-Household-ID`)
-- ⏳ Config `credit_periods`: override de `closing_day` / `due_day` por tarjeta y mes puntual
-- ⏳ Config del hogar: editar, invitar miembros, ver listado. Botón "borrar hogar" solo visible si `role === "owner"` (backend devuelve 403 para otros roles)
-- ⏳ Config de categorías (por hogar)
-- ⏳ Página de reportes: monthly (`GET /reports/monthly`) + trends N-meses (`GET /reports/trends?months=6`) con gráficos (recharts). Breakdown por categoría con `pct` + fixed/variable split del backend
-- ⏳ Página AI export: copiar el `prompt` pre-formateado que devuelve `GET /reports/ai-export?month=YYYY-MM` (string listo para pegar en Claude/GPT)
+- ✅ Config bancos / payment_methods (scope user — no usa `X-Household-ID`)
+- ✅ Config `credit_periods`: override de `closing_day` / `due_day` por tarjeta y mes puntual
+- ✅ Config del hogar: editar, invitar miembros, ver listado. Botón "borrar hogar" solo visible si `role === "owner"` (backend devuelve 403 para otros roles)
+- ✅ Config de categorías (por hogar)
+- ✅ Página de reportes: monthly (`GET /reports/monthly`) + trends N-meses (`GET /reports/trends?months=6`) con gráficos (recharts). Breakdown por categoría con `pct` + fixed/variable split del backend
+- ✅ Página AI export: copiar el `prompt` pre-formateado que devuelve `GET /reports/ai-export?month=YYYY-MM` (string listo para pegar en Claude/GPT)
 
 ### Checkpoint 17 — Notificaciones push (Web Push / VAPID)
 
@@ -2076,17 +2076,17 @@ Enganche de Web Push nativo con VAPID (sin FCM/Firebase). El backend ya está li
   - `settlements.Service.Create` — notifica al `ToUser` que `FromUser` registró un pago. Deep-link `/balances`
   - `households.Service.InviteByEmail` — notifica al invitado con el nombre del hogar. Deep-link `/households/{id}`
 
-**Frontend ⏳ pendiente** (CP17 se completa acá, antes del deploy final)
+**Frontend ✅ pendiente** (CP17 se completa acá, antes del deploy final)
 
-- ⏳ `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en `.env.local` y Coolify del front (misma clave pública que el backend)
-- ⏳ `public/sw.js` (Service Worker) con handlers:
+- ✅ `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en `.env.local` y Coolify del front (misma clave pública que el backend)
+- ✅ `public/sw.js` (Service Worker) con handlers:
   - `push` → `self.registration.showNotification(title, { body, icon, tag, data: { url } })`
   - `notificationclick` → `clients.openWindow(event.notification.data.url)` (deep-link al gasto/balance/hogar)
-- ⏳ Registrar SW + pedir permiso (`Notification.requestPermission()`) al ingresar al dashboard por primera vez (no al login, es invasivo). Si ya fue concedido, suscribir silenciosamente
-- ⏳ Fetch `GET /push/vapid-public-key` → si `enabled=false`, no mostrar el prompt de permisos. Suscribir con `registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: <pub key> })`
-- ⏳ Enviar la subscription al backend (`POST /push/subscriptions` con `{ endpoint, keys: { p256dh, auth } }`). Guardar el `endpoint` en localStorage para el unsubscribe
-- ⏳ Logout: `registration.pushManager.getSubscription().unsubscribe()` + `DELETE /push/subscriptions` con el endpoint
-- ⏳ Safari/iOS: documentar que requiere PWA instalada ("Añadir a pantalla de inicio") desde iOS 16.4 — mostrar tip en la UI si detectamos Safari sin `standalone: true`
+- ✅ Registrar SW + pedir permiso (`Notification.requestPermission()`) al ingresar al dashboard por primera vez (no al login, es invasivo). Si ya fue concedido, suscribir silenciosamente
+- ✅ Fetch `GET /push/vapid-public-key` → si `enabled=false`, no mostrar el prompt de permisos. Suscribir con `registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: <pub key> })`
+- ✅ Enviar la subscription al backend (`POST /push/subscriptions` con `{ endpoint, keys: { p256dh, auth } }`). Guardar el `endpoint` en localStorage para el unsubscribe
+- ✅ Logout: `registration.pushManager.getSubscription().unsubscribe()` + `DELETE /push/subscriptions` con el endpoint
+- ✅ Safari/iOS: documentar que requiere PWA instalada ("Añadir a pantalla de inicio") desde iOS 16.4 — mostrar tip en la UI si detectamos Safari sin `standalone: true`
 
 **Coolify — qué cargar** (antes de deployar el backend a prod)
 
