@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Ahorro App — Favicon</title>
+  <rect width="512" height="512" rx="112" fill="#5b6cff"/>
+  <g transform="translate(256,290)">
+    <!-- Solo arco externo + base: la silueta más reconocible a tamaños pequeños -->
+    <path d="M -150 34 A 150 150 0 0 1 150 34" fill="none" stroke="#ffffff" stroke-width="38" stroke-linecap="round"/>
+    <line x1="-150" y1="60" x2="150" y2="60" stroke="#ffffff" stroke-width="38" stroke-linecap="round"/>
+    <!-- Semilla central más grande para que sobreviva al downscale -->
+    <circle cx="0" cy="8" r="28" fill="#ffffff"/>
+    <circle cx="0" cy="8" r="11" fill="#5b6cff"/>
+  </g>
+</svg>

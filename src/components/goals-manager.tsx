@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { Plus, Trash2, Pause, Play, Loader2, Target, PiggyBank, Wallet } from "lucide-react";
+import { Plus, Trash2, Pause, Play, Loader2, Target, PiggyBank, Wallet, LineChart, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   useCategories,
   useHouseholdMembers,
   useHouseholds,
+  useGoalProgress,
 } from "@/lib/api/hooks";
 import {
   createGoal,
@@ -37,9 +38,7 @@ import { useHouseholdStore } from "@/stores/household";
 import { fmtMoney } from "@/lib/format";
 import { ApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
-
-const selectClass =
-  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 function invalidateGoals() {
   swrMutate(
@@ -200,6 +199,7 @@ export function GoalsManager() {
                       </>
                     )}
                   </Button>
+                  <GoalProgressButton goalId={p.goal.id} goalName={p.goal.goalType === "category_limit" ? catName(p.goal.categoryId) : meta.label} />
                   <DeleteGoalButton id={p.goal.id} />
                 </div>
               </CardContent>
@@ -222,6 +222,101 @@ export function GoalsManager() {
         />
       )}
     </div>
+  );
+}
+
+function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: string }) {
+  const [open, setOpen] = useState(false);
+  const [at, setAt] = useState<string>("");
+  const { data, isLoading, error } = useGoalProgress(open ? goalId : null, at || undefined);
+  const s = data ? STATUS_META[data.status] : null;
+  const pct = data ? Math.max(0, Math.min(100, data.percent)) : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button size="sm" variant="ghost" />}>
+        <LineChart className="mr-1 size-3.5" />
+        Detalle
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="truncate">{goalName}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <Label htmlFor="progress-at" className="flex items-center gap-1 text-xs">
+              <Calendar className="size-3" />
+              Progreso a la fecha
+            </Label>
+            <Input
+              id="progress-at"
+              type="date"
+              value={at}
+              onChange={(e) => setAt(e.target.value)}
+              className="mt-1"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Dejá vacío para ver progreso de hoy.
+            </p>
+          </div>
+
+          {isLoading && <Skeleton className="h-32 w-full rounded-lg" />}
+
+          {error && !isLoading && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              No se pudo cargar el progreso.
+            </div>
+          )}
+
+          {data && s && (
+            <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-4">
+              <div className="flex items-center justify-between">
+                <Badge
+                  variant="outline"
+                  className={cn("h-5 px-1.5 text-[10px] border-transparent", s.className)}
+                >
+                  {s.label}
+                </Badge>
+                <span className="font-mono text-xs font-bold">{pct.toFixed(1)}%</span>
+              </div>
+
+              <div className="h-2 w-full overflow-hidden rounded-full bg-background">
+                <div
+                  className={cn("h-full rounded-full transition-all", s.bar)}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Actual</div>
+                  <div className="mt-0.5 font-mono text-sm font-bold">
+                    {fmtMoney(data.currentAmount, data.goal.currency)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Objetivo</div>
+                  <div className="mt-0.5 font-mono text-sm font-bold">
+                    {fmtMoney(data.targetAmount, data.goal.currency)}
+                  </div>
+                </div>
+                <div className="col-span-2 border-t border-border pt-2">
+                  <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Período</div>
+                  <div className="mt-0.5 font-mono text-xs">
+                    {data.periodStart} → {data.periodEnd}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="ghost" />}>Cerrar</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -342,42 +437,45 @@ function GoalFormDialog({
             <>
               <div>
                 <Label>Tipo</Label>
-                <select
-                  className={selectClass}
-                  value={goalType}
-                  onChange={(e) => setGoalType(e.target.value as Goal["goalType"])}
-                >
-                  <option value="total_limit">Límite total</option>
-                  <option value="category_limit">Límite por categoría</option>
-                  <option value="savings">Ahorro</option>
-                </select>
+                <Select value={goalType} onValueChange={(v) => setGoalType(v as Goal["goalType"])}>
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="total_limit">Límite total</SelectItem>
+                    <SelectItem value="category_limit">Límite por categoría</SelectItem>
+                    <SelectItem value="savings">Ahorro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Alcance</Label>
-                <select
-                  className={selectClass}
-                  value={scope}
-                  onChange={(e) => setScope(e.target.value as "household" | "user")}
-                >
-                  <option value="household">Hogar</option>
-                  <option value="user">Usuario</option>
-                </select>
+                <Select value={scope} onValueChange={(v) => setScope(v as "household" | "user")}>
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="household">Hogar</SelectItem>
+                    <SelectItem value="user">Usuario</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               {scope === "user" && (
                 <div>
                   <Label>Miembro</Label>
-                  <select
-                    className={selectClass}
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    {members?.map((m) => (
-                      <option key={m.userId} value={m.userId}>
-                        {m.userId === me?.id ? "Yo" : `${m.firstName} ${m.lastName}`}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={userId} onValueChange={setUserId}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Seleccionar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Seleccionar</SelectItem>
+                      {members?.map((m) => (
+                        <SelectItem key={m.userId} value={m.userId}>
+                          {m.userId === me?.id ? "Yo" : `${m.firstName} ${m.lastName}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </>
@@ -386,18 +484,17 @@ function GoalFormDialog({
           {goalType === "category_limit" && (
             <div>
               <Label>Categoría</Label>
-              <select
-                className={selectClass}
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                <option value="">Seleccionar</option>
-                {categories?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger className="text-xs">
+                  <SelectValue placeholder="Seleccionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Seleccionar</SelectItem>
+                  {categories?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -416,15 +513,16 @@ function GoalFormDialog({
             </div>
             <div>
               <Label>Moneda</Label>
-              <select
-                className={selectClass}
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as Currency)}
-              >
-                <option value="ARS">ARS</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-              </select>
+              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+                <SelectTrigger className="text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ARS">ARS</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

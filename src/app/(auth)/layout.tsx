@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth";
+import { BrandLogo } from "@/components/brand-logo";
+import { DevSignature } from "@/components/dev-signature";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -14,8 +17,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }, [hydrated, user, router]);
 
   return (
-    <div className="grid min-h-svh place-items-center px-4 py-10">
+    <div className="flex min-h-svh flex-col items-center px-4 py-10">
+      <Link
+        href="/login"
+        aria-label="Ahorro — Inicio"
+        className="vt-brand-hero mb-6 flex items-center"
+      >
+        <BrandLogo variant="wordmark" size={40} priority />
+      </Link>
       <div className="w-full max-w-sm">{children}</div>
+      <DevSignature className="mt-8" size={14} />
     </div>
   );
 }

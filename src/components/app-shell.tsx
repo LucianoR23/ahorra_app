@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Plus, LayoutGrid } from "lucide-react";
+import { LogOut, Plus, LayoutGrid, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthGate } from "@/components/auth-gate";
 import { HouseholdSwitcher } from "@/components/household-switcher";
+import { BrandLogo } from "@/components/brand-logo";
+import { DevSignature } from "@/components/dev-signature";
+import { InsightsUnreadBadge } from "@/components/insights-inbox";
 import { useAuthStore } from "@/stores/auth";
 import { logout as apiLogout } from "@/lib/api/auth";
 import { unsubscribePush } from "@/lib/push";
@@ -59,24 +62,26 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     ? `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase()
     : "··";
   const displayName = user?.firstName ?? "—";
+  const visibleNavItems = NAV_ITEMS.filter((n) => !n.adminOnly || user?.isSuperadmin);
 
   return (
     <div className="flex min-h-svh">
       {/* Sidebar (md+) */}
-      <aside className="hidden md:flex w-[220px] shrink-0 flex-col border-r border-border bg-sidebar px-3 py-5">
-        <div className="flex items-center gap-2.5 px-2 pb-5">
-          <div className="grid size-8 place-items-center rounded-[10px] bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-base font-extrabold tracking-tight">
-            A
-          </div>
-          <span className="text-base font-bold tracking-tight">Ahorro</span>
-        </div>
+      <aside className="hidden md:flex w-55 shrink-0 flex-col border-r border-border bg-sidebar px-3 py-5">
+        <Link
+          href="/"
+          aria-label="Ahorro — Inicio"
+          className="vt-brand-hero flex items-center px-2 pb-5"
+        >
+          <BrandLogo variant="wordmark" size={32} priority />
+        </Link>
 
         <div className="px-1 pb-3">
           <HouseholdSwitcher />
         </div>
 
         <nav className="flex flex-col gap-0.5">
-          {NAV_ITEMS.map((n) => {
+          {visibleNavItems.map((n) => {
             const active = isActive(pathname, n.href);
             const Icon = n.icon;
             return (
@@ -90,8 +95,9 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                     : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
                 )}
               >
-                <Icon className={cn("size-[18px]", active && "text-primary")} />
-                {n.label}
+                <Icon className={cn("size-4.5", active && "text-primary")} />
+                <span className="flex-1">{n.label}</span>
+                {n.id === "notifications" && <InsightsUnreadBadge />}
               </Link>
             );
           })}
@@ -107,7 +113,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
           </Link>
 
           <div className="flex items-center gap-2.5 rounded-xl bg-secondary p-3">
-            <div className="grid size-8 place-items-center rounded-[10px] bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
+            <div className="grid size-8 place-items-center rounded-[10px] bg-linear-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
@@ -124,22 +130,44 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
               <LogOut className="size-3.5" />
             </button>
           </div>
+
+          <DevSignature className="pt-1" />
         </div>
       </aside>
 
       {/* Main */}
       <div className="flex flex-1 min-w-0 flex-col">
-        <header className="md:hidden sticky top-0 z-40 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur-xl safe-top">
-          <HouseholdSwitcher />
+        <header className="md:hidden sticky top-0 z-40 flex items-center gap-3 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur-xl safe-top">
+          <Link href="/" aria-label="Ahorro — Inicio" className="shrink-0">
+            <BrandLogo variant="icon" size={28} priority />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <HouseholdSwitcher />
+          </div>
+          <Link
+            href="/notificaciones"
+            aria-label="Notificaciones"
+            className="relative grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Bell className="size-4.5" />
+            <span className="absolute right-0.5 top-0.5">
+              <InsightsUnreadBadge dotOnly />
+            </span>
+          </Link>
         </header>
         <main className="flex-1 overflow-x-hidden pb-24 md:pb-8">
-          <div className="mx-auto w-full max-w-3xl px-4 pt-4 md:px-8 md:pt-8">{children}</div>
+          <div
+            key={pathname}
+            className="mx-auto w-full max-w-3xl px-4 pt-4 md:px-8 md:pt-8 animate-in fade-in slide-in-from-bottom-1 duration-200"
+          >
+            {children}
+          </div>
         </main>
 
         {/* Bottom nav (mobile) */}
         <nav
           aria-label="Navegación principal"
-          className="fixed inset-x-3 bottom-3 z-50 flex h-[68px] items-center justify-around rounded-3xl border border-border bg-card/85 p-1.5 shadow-card backdrop-blur-xl md:hidden safe-bottom"
+          className="fixed inset-x-3 bottom-3 z-50 flex h-17 items-center justify-around rounded-3xl border border-border bg-card/85 p-1.5 shadow-card backdrop-blur-xl md:hidden safe-bottom"
         >
           {NAV_ORDER_MOBILE.map((id) => {
             if (id === "add") {
@@ -148,9 +176,9 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                   key="add"
                   onClick={() => router.push("/agregar")}
                   aria-label="Agregar gasto"
-                  className="grid size-[54px] -translate-y-2 place-items-center rounded-[18px] bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/40 transition-transform active:scale-95"
+                  className="grid size-13.5 -translate-y-2 place-items-center rounded-[18px] bg-linear-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/40 transition-transform active:scale-95"
                 >
-                  <Plus className="size-[22px]" strokeWidth={2.5} />
+                  <Plus className="size-5.5" strokeWidth={2.5} />
                 </button>
               );
             }
@@ -185,7 +213,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                       <SheetTitle className="text-base font-bold">Menú</SheetTitle>
                     </SheetHeader>
                     <div className="grid grid-cols-3 gap-2 px-4 pb-4">
-                      {NAV_ITEMS.map((n) => {
+                      {visibleNavItems.map((n) => {
                         const active = isActive(pathname, n.href);
                         const Icon = n.icon;
                         return (
@@ -209,7 +237,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                     </div>
                     <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-4">
                       <div className="flex min-w-0 items-center gap-2.5">
-                        <div className="grid size-9 place-items-center rounded-[10px] bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
+                        <div className="grid size-9 place-items-center rounded-[10px] bg-linear-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
                           {initials}
                         </div>
                         <div className="min-w-0">
@@ -233,6 +261,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                         </SheetClose>
                       </div>
                     </div>
+                    <DevSignature className="pb-2 pt-3" />
                   </SheetContent>
                 </Sheet>
               );

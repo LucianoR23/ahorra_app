@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Ahorro App</title>
+  <rect width="512" height="512" rx="112" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+  <g transform="translate(256,286)">
+    <path d="M -148 30 A 148 148 0 0 1 148 30" fill="none" stroke="#0f172a" stroke-width="24" stroke-linecap="round"/>
+    <path d="M -86 30 A 86 86 0 0 1 86 30" fill="none" stroke="#5b6cff" stroke-width="24" stroke-linecap="round"/>
+    <line x1="-148" y1="56" x2="148" y2="56" stroke="#0f172a" stroke-width="24" stroke-linecap="round"/>
+    <line x1="-112" y1="82" x2="-76" y2="82" stroke="#0f172a" stroke-width="10" stroke-linecap="round" opacity="0.3"/>
+    <line x1="76" y1="82" x2="112" y2="82" stroke="#0f172a" stroke-width="10" stroke-linecap="round" opacity="0.3"/>
+    <circle cx="0" cy="10" r="18" fill="#5b6cff"/>
+    <circle cx="0" cy="10" r="6.5" fill="#ffffff"/>
+  </g>
+</svg>

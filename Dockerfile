@@ -1,9 +1,12 @@
+# syntax=docker/dockerfile:1.7
+
 # ── Stage 1: deps ─────────────────────────────────────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # ── Stage 2: builder ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
@@ -13,11 +16,14 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build-time env vars (public — safe to bake in)
+ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
 RUN pnpm build
 
@@ -27,11 +33,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs \
+# wget is needed for the HEALTHCHECK below (absent by default on some Alpine variants)
+RUN apk add --no-cache wget \
+ && addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
 
-# Standalone output + static assets
-COPY --from=builder /app/public ./public
+# Standalone output + static assets. `public` and `.next/static` must be
+# copied separately because `output: "standalone"` omits them.
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 

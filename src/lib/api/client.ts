@@ -50,8 +50,27 @@ export async function apiFetch<T = unknown>(req: ApiRequest): Promise<T> {
   const text = await res.text();
   const json = text ? safeJson(text) : null;
 
-  if (!res.ok) throw ApiError.fromResponse(res.status, json);
+  if (!res.ok) {
+    if (res.status === 429) {
+      throw ApiError.fromResponse(res.status, json, {
+        retryAfterSeconds: parseRetryAfter(res.headers.get("Retry-After")),
+      });
+    }
+    throw ApiError.fromResponse(res.status, json);
+  }
   return json as T;
+}
+
+function parseRetryAfter(header: string | null): number | undefined {
+  if (!header) return undefined;
+  const asNumber = Number(header);
+  if (Number.isFinite(asNumber) && asNumber >= 0) return Math.ceil(asNumber);
+  const asDate = Date.parse(header);
+  if (!Number.isNaN(asDate)) {
+    const diff = Math.ceil((asDate - Date.now()) / 1000);
+    return diff > 0 ? diff : undefined;
+  }
+  return undefined;
 }
 
 function safeJson(text: string): unknown {

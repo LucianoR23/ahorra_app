@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import {
   useRecurringExpenses,
   useRecurringIncomes,
+  useRecurringExpense,
+  useRecurringIncome,
   useCategories,
   usePaymentMethods,
   useHouseholds,
@@ -33,10 +35,9 @@ import { useHouseholdStore } from "@/stores/household";
 import { fmtMoney, isoToday } from "@/lib/format";
 import type { Currency, RecurringExpense, RecurringIncome } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
-const selectClass =
-  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
 
 type Tab = "expenses" | "incomes";
 
@@ -176,8 +177,9 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
 
   if (editing) {
     return (
-      <RecurringExpenseForm
-        initial={rec}
+      <RecurringExpenseEditForm
+        id={rec.id}
+        fallback={rec}
         onDone={() => { setEditing(false); onChanged(); }}
         onCancel={() => setEditing(false)}
       />
@@ -251,8 +253,9 @@ function RecurringIncomeCard({ rec, onChanged }: { rec: RecurringIncome; onChang
 
   if (editing) {
     return (
-      <RecurringIncomeForm
-        initial={rec}
+      <RecurringIncomeEditForm
+        id={rec.id}
+        fallback={rec}
         onDone={() => { setEditing(false); onChanged(); }}
         onCancel={() => setEditing(false)}
       />
@@ -333,15 +336,16 @@ function FrequencyFields({
       </div>
 
       {frequency === "weekly" && (
-        <select
-          className={selectClass}
-          value={dayOfWeek ?? 1}
-          onChange={(e) => setDayOfWeek(Number(e.target.value))}
-        >
-          {["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map((d, i) => (
-            <option key={i} value={i}>{d}</option>
-          ))}
-        </select>
+        <Select value={String(dayOfWeek ?? 1)} onValueChange={(v) => setDayOfWeek(Number(v))}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map((d, i) => (
+              <SelectItem key={i} value={String(i)}>{d}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
 
       {frequency === "monthly" && (
@@ -358,15 +362,16 @@ function FrequencyFields({
 
       {frequency === "yearly" && (
         <div className="grid grid-cols-2 gap-2">
-          <select
-            className={selectClass}
-            value={monthOfYear ?? 1}
-            onChange={(e) => setMonthOfYear(Number(e.target.value))}
-          >
-            {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map((m, i) => (
-              <option key={i} value={i + 1}>{m}</option>
-            ))}
-          </select>
+          <Select value={String(monthOfYear ?? 1)} onValueChange={(v) => setMonthOfYear(Number(v))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map((m, i) => (
+                <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             type="number"
             min={1}
@@ -379,6 +384,68 @@ function FrequencyFields({
         </div>
       )}
     </div>
+  );
+}
+
+function RecurringExpenseEditForm({
+  id,
+  fallback,
+  onDone,
+  onCancel,
+}: {
+  id: string;
+  fallback: RecurringExpense;
+  onDone: () => void;
+  onCancel?: () => void;
+}) {
+  const { data, isLoading } = useRecurringExpense(id);
+  if (isLoading && !data) {
+    return (
+      <Card className="rounded-2xl border-0 shadow-card">
+        <CardContent className="p-4">
+          <Skeleton className="h-48 w-full rounded-md" />
+        </CardContent>
+      </Card>
+    );
+  }
+  return (
+    <RecurringExpenseForm
+      key={(data ?? fallback).lastGenerated ?? id}
+      initial={data ?? fallback}
+      onDone={onDone}
+      onCancel={onCancel}
+    />
+  );
+}
+
+function RecurringIncomeEditForm({
+  id,
+  fallback,
+  onDone,
+  onCancel,
+}: {
+  id: string;
+  fallback: RecurringIncome;
+  onDone: () => void;
+  onCancel?: () => void;
+}) {
+  const { data, isLoading } = useRecurringIncome(id);
+  if (isLoading && !data) {
+    return (
+      <Card className="rounded-2xl border-0 shadow-card">
+        <CardContent className="p-4">
+          <Skeleton className="h-48 w-full rounded-md" />
+        </CardContent>
+      </Card>
+    );
+  }
+  return (
+    <RecurringIncomeForm
+      key={(data ?? fallback).lastGenerated ?? id}
+      initial={data ?? fallback}
+      onDone={onDone}
+      onCancel={onCancel}
+    />
   );
 }
 
@@ -471,26 +538,41 @@ function RecurringExpenseForm({
           </div>
           <div className="space-y-1.5">
             <Label>Moneda</Label>
-            <select className={selectClass} value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
-              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <Label>Categoría</Label>
-            <select className={selectClass} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              <option value="">Sin categoría</option>
-              {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sin categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin categoría</SelectItem>
+                {categories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label>Método de pago</Label>
-            <select className={selectClass} value={paymentMethodId} onChange={(e) => setPaymentMethodId(e.target.value)}>
-              <option value="">Elegir</option>
-              {paymentMethods?.filter((p) => p.isActive).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Elegir" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Elegir</SelectItem>
+                {paymentMethods?.filter((p) => p.isActive).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -635,18 +717,28 @@ function RecurringIncomeForm({
           </div>
           <div className="space-y-1.5">
             <Label>Moneda</Label>
-            <select className={selectClass} value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
-              {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="space-y-1.5">
           <Label>Cuenta destino (opcional)</Label>
-          <select className={selectClass} value={paymentMethodId} onChange={(e) => setPaymentMethodId(e.target.value)}>
-            <option value="">Sin especificar</option>
-            {paymentMethods?.filter((p) => p.isActive).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sin especificar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Sin especificar</SelectItem>
+              {paymentMethods?.filter((p) => p.isActive).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
         <FrequencyFields

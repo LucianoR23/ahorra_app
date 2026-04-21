@@ -23,11 +23,9 @@ import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, isoToday, projectBillingMonth, shiftMonth } from "@/lib/format";
 import type { Currency } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
-
-const selectClass =
-  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 aria-invalid:border-destructive dark:bg-input/30";
 
 export function ExpenseForm() {
   const router = useRouter();
@@ -182,16 +180,16 @@ export function ExpenseForm() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="currency">Moneda</Label>
-              <select
-                id="currency"
-                className={cn(selectClass, "h-10")}
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as Currency)}
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+                <SelectTrigger id="currency" className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
@@ -228,17 +226,17 @@ export function ExpenseForm() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="category">Categoría</Label>
-              <select
-                id="category"
-                className={selectClass}
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                <option value="">Sin categoría</option>
-                {categories?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="Sin categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin categoría</SelectItem>
+                  {categories?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="spentAt">Fecha</Label>
@@ -260,21 +258,17 @@ export function ExpenseForm() {
         <CardContent className="p-4 space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="paymentMethod">Método de pago</Label>
-            <select
-              id="paymentMethod"
-              className={selectClass}
-              value={paymentMethodId}
-              onChange={(e) => {
-                setPaymentMethodId(e.target.value);
-                setInstallments(1);
-              }}
-              aria-invalid={!!errors.paymentMethodId}
-            >
-              <option value="">Elegí un método</option>
-              {paymentMethods?.filter((p) => p.isActive).map((p) => (
-                <option key={p.id} value={p.id}>{p.name} · {p.kind}</option>
-              ))}
-            </select>
+            <Select value={paymentMethodId} onValueChange={(v) => { setPaymentMethodId(v); setInstallments(1); }}>
+              <SelectTrigger id="paymentMethod">
+                <SelectValue placeholder="Elegí un método" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Elegí un método</SelectItem>
+                {paymentMethods?.filter((p) => p.isActive).map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name} · {p.kind}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {errors.paymentMethodId && <p className="text-xs text-destructive">{errors.paymentMethodId}</p>}
           </div>
 

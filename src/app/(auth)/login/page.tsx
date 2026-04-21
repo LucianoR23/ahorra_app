@@ -3,15 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { PasswordInput } from "@/components/ui/password-input";
 import { login } from "@/lib/api/auth";
 import { loginInputSchema } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
+import { toastError } from "@/lib/toast";
 
 const REMEMBER_KEY = "ahorra.remembered_email";
 
@@ -22,7 +23,6 @@ export default function LoginPage() {
     typeof window !== "undefined" ? (localStorage.getItem(REMEMBER_KEY) ?? "") : ""
   );
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() =>
     typeof window !== "undefined" && !!localStorage.getItem(REMEMBER_KEY)
   );
@@ -54,8 +54,13 @@ export default function LoginPage() {
       router.replace("/");
     } catch (err) {
       if (err instanceof ApiError) {
-        if (err.field) setErrors({ [err.field]: err.message });
-        else setErrors({ form: err.message });
+        if (err.code === "rate_limited") {
+          toastError(err);
+        } else if (err.field) {
+          setErrors({ [err.field]: err.message });
+        } else {
+          setErrors({ form: err.message });
+        }
       } else {
         setErrors({ form: "Error inesperado" });
       }
@@ -87,37 +92,32 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="password">Contraseña</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              aria-invalid={!!errors.password}
-              disabled={submitting}
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-              tabIndex={-1}
-              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Contraseña</Label>
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-invalid={!!errors.password}
+            disabled={submitting}
+          />
           {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="rounded"
+            className="cursor-pointer rounded"
           />
           Recordar mi email
         </label>

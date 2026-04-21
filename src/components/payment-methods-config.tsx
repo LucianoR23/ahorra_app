@@ -38,7 +38,7 @@ import {
 } from "@/lib/api/mutations";
 import type { PaymentMethod, PaymentMethodKind } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
-import { cn } from "@/lib/utils";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const KIND_LABELS: Record<PaymentMethodKind, string> = {
   cash: "Efectivo",
@@ -47,9 +47,6 @@ const KIND_LABELS: Record<PaymentMethodKind, string> = {
   transfer: "Transferencia",
   other: "Otro",
 };
-
-const selectClass =
-  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
 
 function invalidatePMs() {
   swrMutate(
@@ -163,7 +160,7 @@ function TogglePMButton({ pm }: { pm: PaymentMethod }) {
     }
   }
   return (
-    <button type="button" onClick={handle} disabled={busy} className="text-muted-foreground hover:text-foreground">
+    <button type="button" onClick={handle} disabled={busy} className="cursor-pointer text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50">
       {busy ? <Loader2 className="size-3.5 animate-spin" /> : pm.isActive ? <PowerOff className="size-3.5" /> : <Power className="size-3.5" />}
     </button>
   );
@@ -279,7 +276,7 @@ function DeletePeriodButton({ paymentMethodId, ym }: { paymentMethodId: string; 
     }
   }
   return (
-    <button type="button" onClick={handle} disabled={busy} className="text-muted-foreground hover:text-destructive">
+    <button type="button" onClick={handle} disabled={busy} className="cursor-pointer text-muted-foreground hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50">
       {busy ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
     </button>
   );
@@ -530,28 +527,38 @@ function PMFormDialog({
           {mode === "create" && (
             <div>
               <Label>Tipo</Label>
-              <select className={selectClass} value={kind} onChange={(e) => setKind(e.target.value as PaymentMethodKind)}>
-                {(Object.keys(KIND_LABELS) as PaymentMethodKind[]).map((k) => (
-                  <option key={k} value={k}>{KIND_LABELS[k]}</option>
-                ))}
-              </select>
+              <Select value={kind} onValueChange={(v) => setKind(v as PaymentMethodKind)}>
+                <SelectTrigger className="text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(KIND_LABELS) as PaymentMethodKind[]).map((k) => (
+                    <SelectItem key={k} value={k}>{KIND_LABELS[k]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
           <div>
             <Label>Banco (opcional)</Label>
-            <select className={selectClass} value={bankId} onChange={(e) => setBankId(e.target.value)}>
-              <option value="">Sin banco</option>
-              {banks?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+            <Select value={bankId} onValueChange={setBankId}>
+              <SelectTrigger className="text-xs">
+                <SelectValue placeholder="Sin banco" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin banco</SelectItem>
+                {banks?.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
-          <label className="flex items-center gap-2 text-xs">
+          <label className="flex cursor-pointer items-center gap-2 text-xs">
             <input
               type="checkbox"
               checked={allowsInstallments}
               onChange={(e) => setAllowsInstallments(e.target.checked)}
-              className="rounded"
+              className="cursor-pointer rounded"
             />
             Permite cuotas
           </label>

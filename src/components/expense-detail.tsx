@@ -27,9 +27,7 @@ import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, fmtDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Installment } from "@/lib/api/schemas";
-
-const selectClass =
-  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 export function ExpenseDetailView({ id }: { id: string }) {
   const router = useRouter();
@@ -233,12 +231,17 @@ function EditExpense({
           </div>
           <div className="space-y-1.5">
             <Label>Categoría</Label>
-            <select className={selectClass} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-              <option value="">Sin categoría</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sin categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin categoría</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         {err && <p className="text-xs text-destructive">{err}</p>}

@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, ChevronsUpDown, Home } from "lucide-react";
+import { Check, ChevronsUpDown, Home, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { mutate } from "swr";
 import {
   DropdownMenu,
@@ -15,6 +16,7 @@ import { useHouseholdStore } from "@/stores/household";
 import { cn } from "@/lib/utils";
 
 export function HouseholdSwitcher({ className }: { className?: string }) {
+  const router = useRouter();
   const { data: households } = useHouseholds();
   const currentId = useHouseholdStore((s) => s.currentId);
   const setCurrentId = useHouseholdStore((s) => s.setCurrentId);
@@ -46,7 +48,7 @@ export function HouseholdSwitcher({ className }: { className?: string }) {
         )}
         <ChevronsUpDown className="size-3 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[200px]">
+      <DropdownMenuContent align="start" className="min-w-50">
         <DropdownMenuLabel>Cambiar hogar</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {households?.map((h) => {
@@ -59,6 +61,11 @@ export function HouseholdSwitcher({ className }: { className?: string }) {
             </DropdownMenuItem>
           );
         })}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => router.push("/ajustes/hogares/nuevo")}>
+          <Plus className="mr-1 size-3.5" />
+          <span className="flex-1">Crear hogar nuevo</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

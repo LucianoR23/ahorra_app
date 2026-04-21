@@ -3,7 +3,9 @@
     "allow": [
       "Bash(pnpm add *)",
       "Bash(pnpm tsc *)",
-      "Bash(grep -E \"\\\\.\\(ts|tsx|js|json|yml|yaml|env|md\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|json|yml|yaml|env|md\\)$\")",
+      "PowerShell(pnpm add *)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }

@@ -5,6 +5,8 @@ export const userSchema = z.object({
   email: z.string().email(),
   firstName: z.string(),
   lastName: z.string(),
+  emailVerifiedAt: z.string().optional(),
+  isSuperadmin: z.boolean().optional().default(false),
 });
 export type User = z.infer<typeof userSchema>;
 
@@ -31,8 +33,23 @@ export const householdSchema = z.object({
   createdBy: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  deletedAt: z.string().nullable().optional(),
 });
 export type Household = z.infer<typeof householdSchema>;
+
+export const adminDeletedHouseholdSchema = householdSchema.extend({
+  deletedAt: z.string(),
+  owner: z
+    .object({
+      id: z.string(),
+      email: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+    })
+    .nullable()
+    .optional(),
+});
+export type AdminDeletedHousehold = z.infer<typeof adminDeletedHouseholdSchema>;
 
 export const householdMemberSchema = z.object({
   userId: z.string(),
@@ -50,11 +67,25 @@ export const loginInputSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginInputSchema>;
 
+/**
+ * Reglas de contraseña alineadas con el backend:
+ * 8–128, al menos 1 mayúscula, 1 minúscula y 1 dígito.
+ * Carácter especial sugerido (no obligatorio).
+ */
+export const passwordSchema = z
+  .string()
+  .min(8, "Mínimo 8 caracteres")
+  .max(128, "Máximo 128 caracteres")
+  .regex(/[A-Z]/, "Debe incluir al menos una mayúscula")
+  .regex(/[a-z]/, "Debe incluir al menos una minúscula")
+  .regex(/[0-9]/, "Debe incluir al menos un número");
+
 export const registerInputSchema = z.object({
   email: z.string().email("Email inválido"),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
+  password: passwordSchema,
   firstName: z.string().min(1, "Requerido"),
   lastName: z.string().min(1, "Requerido"),
+  inviteToken: z.string().optional(),
 });
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 
@@ -414,6 +445,25 @@ export const aiExportSchema = z.object({
   prompt: z.string(),
 });
 export type AiExport = z.infer<typeof aiExportSchema>;
+
+export const insightUnreadCountSchema = z.object({
+  unread: z.number(),
+});
+export type InsightUnreadCount = z.infer<typeof insightUnreadCountSchema>;
+
+export const totalIncomeResponseSchema = z.object({
+  total: z.number(),
+  baseCurrency: z.string(),
+  from: z.string(),
+  to: z.string(),
+});
+export type TotalIncomeResponse = z.infer<typeof totalIncomeResponseSchema>;
+
+export const insightGenerateResultSchema = z.object({
+  created: z.number(),
+  failed: z.number(),
+});
+export type InsightGenerateResult = z.infer<typeof insightGenerateResultSchema>;
 
 export const creditCardPeriodStatusSchema = z.object({
   noPeriodsLoaded: z.boolean(),

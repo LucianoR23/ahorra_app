@@ -1,10 +1,11 @@
-import { Home, ListOrdered, Target, PieChart, Settings, Repeat, TrendingUp, Scale, BarChart2, type LucideIcon } from "lucide-react";
+import { Home, ListOrdered, Target, PieChart, Settings, Repeat, TrendingUp, Scale, BarChart2, Shield, ShieldCheck, Bell, type LucideIcon } from "lucide-react";
 
 export type NavItem = {
-  id: "home" | "history" | "goals" | "categories" | "settings" | "incomes" | "recurring" | "debts" | "reports";
+  id: "home" | "history" | "goals" | "categories" | "settings" | "incomes" | "recurring" | "debts" | "reports" | "security" | "admin" | "notifications";
   label: string;
   href: string;
   icon: LucideIcon;
+  adminOnly?: boolean;
 };
 
 export const NAV_ITEMS: NavItem[] = [
@@ -16,5 +17,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "categories", label: "Categorías", href: "/categorias", icon: PieChart },
   { id: "goals", label: "Objetivos", href: "/objetivos", icon: Target },
   { id: "reports", label: "Reportes", href: "/reportes", icon: BarChart2 },
+  { id: "notifications", label: "Notificaciones", href: "/notificaciones", icon: Bell },
   { id: "settings", label: "Ajustes", href: "/ajustes", icon: Settings },
+  { id: "security", label: "Seguridad", href: "/seguridad", icon: Shield },
+  { id: "admin", label: "Admin", href: "/admin", icon: ShieldCheck, adminOnly: true },
 ];

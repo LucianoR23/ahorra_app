@@ -18,11 +18,9 @@ import { createIncome, type IncomeCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, isoToday } from "@/lib/format";
 import type { Currency } from "@/lib/api/schemas";
-import { cn } from "@/lib/utils";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
-const selectClass =
-  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
 
 const SOURCE_PRESETS = ["salario", "freelance", "venta", "regalo", "interes", "otro"];
 
@@ -128,14 +126,14 @@ export function IncomeForm({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="currency">Moneda</Label>
-              <select
-                id="currency"
-                className={cn(selectClass, "h-10")}
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as Currency)}
-              >
-                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+                <SelectTrigger id="currency" className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
@@ -151,16 +149,19 @@ export function IncomeForm({
         <CardContent className="p-4 space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="source">Fuente</Label>
-            <select
-              id="source"
-              className={selectClass}
+            <Select
               value={SOURCE_PRESETS.includes(source) ? source : "otro"}
-              onChange={(e) => setSource(e.target.value === "otro" ? "" : e.target.value)}
+              onValueChange={(v) => setSource(v === "otro" ? "" : v)}
             >
-              {SOURCE_PRESETS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              <SelectTrigger id="source">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SOURCE_PRESETS.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {(!SOURCE_PRESETS.includes(source) || source === "") && (
               <Input
                 value={source}
@@ -196,35 +197,35 @@ export function IncomeForm({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="receivedBy">Para</Label>
-              <select
-                id="receivedBy"
-                className={selectClass}
-                value={receivedBy}
-                onChange={(e) => setReceivedBy(e.target.value)}
-              >
-                <option value="">Yo</option>
-                {members?.map((m) => (
-                  <option key={m.userId} value={m.userId}>
-                    {m.firstName} {m.lastName}
-                  </option>
-                ))}
-              </select>
+              <Select value={receivedBy} onValueChange={setReceivedBy}>
+                <SelectTrigger id="receivedBy">
+                  <SelectValue placeholder="Yo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Yo</SelectItem>
+                  {members?.map((m) => (
+                    <SelectItem key={m.userId} value={m.userId}>
+                      {m.firstName} {m.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="paymentMethodId">Cuenta destino (opcional)</Label>
-            <select
-              id="paymentMethodId"
-              className={selectClass}
-              value={paymentMethodId}
-              onChange={(e) => setPaymentMethodId(e.target.value)}
-            >
-              <option value="">Sin especificar</option>
-              {paymentMethods?.filter((p) => p.isActive).map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+              <SelectTrigger id="paymentMethodId">
+                <SelectValue placeholder="Sin especificar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sin especificar</SelectItem>
+                {paymentMethods?.filter((p) => p.isActive).map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

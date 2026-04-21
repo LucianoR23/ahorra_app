@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { ArrowRight, TrendingDown, TrendingUp, Trash2, Loader2 } from "lucide-react";
+import { ArrowRight, TrendingDown, TrendingUp, Trash2, Loader2, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   useBalances,
   useBalancesMe,
   useSettlements,
+  useSettlement,
   useHouseholdMembers,
   useHouseholds,
 } from "@/lib/api/hooks";
@@ -201,6 +202,7 @@ export function DebtsManager() {
                       {fmtMoney(s.amount, s.baseCurrency)}
                     </div>
                   </div>
+                  <SettlementDetailButton id={s.id} fromLabel={memberName(s.fromUser)} toLabel={memberName(s.toUser)} />
                   <DeleteSettlementButton id={s.id} />
                 </div>
               );
@@ -350,6 +352,103 @@ function PayDebtDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SettlementDetailButton({
+  id,
+  fromLabel,
+  toLabel,
+}: {
+  id: string;
+  fromLabel: string;
+  toLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const { data, isLoading, error } = useSettlement(open ? id : null);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Ver detalle del pago"
+            className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          />
+        }
+      >
+        <Eye className="size-3.5" />
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Detalle del pago</DialogTitle>
+        </DialogHeader>
+
+        {isLoading && <Skeleton className="h-32 w-full rounded-lg" />}
+
+        {error && !isLoading && (
+          <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            No se pudo cargar el detalle.
+          </div>
+        )}
+
+        {data && (
+          <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-4 text-sm">
+            <div className="flex items-center justify-center gap-2 text-base font-semibold">
+              <span className="truncate">{fromLabel}</span>
+              <ArrowRight className="size-4 text-muted-foreground" />
+              <span className="truncate">{toLabel}</span>
+            </div>
+
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Monto</div>
+              <div className="mt-0.5 font-mono text-2xl font-bold tracking-tight">
+                {fmtMoney(data.amount, data.baseCurrency)}
+              </div>
+              <div className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
+                {data.baseCurrency}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Pagado</div>
+                <div className="mt-0.5">{fmtDateShort(data.paidAt)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Registrado</div>
+                <div className="mt-0.5">
+                  {new Date(data.createdAt).toLocaleDateString("es-AR", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {data.note && (
+              <div className="border-t border-border pt-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Nota</div>
+                <p className="mt-1 whitespace-pre-wrap text-xs">{data.note}</p>
+              </div>
+            )}
+
+            <div className="border-t border-border pt-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</div>
+              <code className="mt-0.5 block truncate font-mono text-[10px] text-muted-foreground">
+                {data.id}
+              </code>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="ghost" />}>Cerrar</DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

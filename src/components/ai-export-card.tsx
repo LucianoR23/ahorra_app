@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
-import { Copy, Check, Bot } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -138,7 +139,14 @@ export function AiExportCard() {
             <CardContent className="p-4">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <Bot className="size-4 text-primary" />
+                  <Image
+                    src="/svg/icon-ai-spark.svg"
+                    alt=""
+                    width={16}
+                    height={16}
+                    aria-hidden="true"
+                    className="size-4"
+                  />
                   <p className="text-xs font-bold">Prompt para IA financiera</p>
                 </div>
                 <Button size="sm" variant="outline" onClick={handleCopy} disabled={!fullPrompt}>

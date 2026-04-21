@@ -1,4 +1,4 @@
-import { CATEGORIES } from "@/lib/mock";
+import { CATEGORIES } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
@@ -16,7 +16,7 @@ export function CategoryIcon({ cat, size = 40, className }: { cat: string; size?
       style={style}
       className={cn(
         "grid shrink-0 place-items-center rounded-[12px]",
-        "bg-[var(--cat-bg-light)] dark:bg-[var(--cat-bg-dark)]",
+        "bg-(--cat-bg-light) dark:bg-(--cat-bg-dark)",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
         className,
       )}

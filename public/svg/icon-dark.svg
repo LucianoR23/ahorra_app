@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Ahorro App</title>
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <g transform="translate(256,286)">
+    <!-- arco externo (hogar / contenedor) -->
+    <path d="M -148 30 A 148 148 0 0 1 148 30" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" opacity="0.95"/>
+    <!-- arco interno (núcleo/pareja protegida) -->
+    <path d="M -86 30 A 86 86 0 0 1 86 30" fill="none" stroke="#5b6cff" stroke-width="24" stroke-linecap="round"/>
+    <!-- base firme -->
+    <line x1="-148" y1="56" x2="148" y2="56" stroke="#ffffff" stroke-width="24" stroke-linecap="round" opacity="0.95"/>
+    <!-- anclajes laterales -->
+    <line x1="-112" y1="82" x2="-76" y2="82" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.4"/>
+    <line x1="76" y1="82" x2="112" y2="82" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.4"/>
+    <!-- semilla luminosa -->
+    <circle cx="0" cy="10" r="18" fill="#5b6cff"/>
+    <circle cx="0" cy="10" r="6.5" fill="#ffffff"/>
+  </g>
+</svg>

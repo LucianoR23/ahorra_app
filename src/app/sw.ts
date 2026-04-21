@@ -42,8 +42,8 @@ self.addEventListener("push", (event: PushEvent) => {
   const title = payload.title ?? "Ahorra";
   const options: NotificationOptions = {
     body: payload.body ?? "",
-    icon: "/icons/icon.svg",
-    badge: "/icons/icon.svg",
+    icon: "/pwa/icon-192.png",
+    badge: "/pwa/icon-96.png",
     tag: payload.tag ?? "ahorra",
     data: { url: payload.url ?? "/" },
     requireInteraction: false,

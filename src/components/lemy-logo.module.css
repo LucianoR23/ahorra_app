@@ -1,0 +1,145 @@
+/* ============================================================
+   LemyLogo animations
+   - Weight shift (variable font)
+   - Dot pulse (elastic)
+   - Cursor blink (terminal vibe)
+   ============================================================ */
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  user-select: none;
+  cursor: default;
+  color: inherit;
+}
+
+.link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.link .logo {
+  cursor: pointer;
+}
+
+.icon {
+  flex-shrink: 0;
+  color: currentColor;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  position: relative;
+}
+
+/* ------- "lemy" -------
+   Weight shift sutil en hover, requiere Geist Mono variable
+   (que ya es el caso con geist/font/mono). */
+.strong {
+  font-weight: 500;
+  font-variation-settings: "wght" 500;
+  transition: font-variation-settings 0.35s ease, font-weight 0.35s ease;
+  will-change: font-variation-settings;
+}
+
+/* ------- "dev" -------
+   Más opaco, baja jerarquía. */
+.muted {
+  font-weight: 400;
+  opacity: 0.55;
+  transition: opacity 0.35s ease;
+}
+
+/* ------- "." -------
+   Dot pulse: escala con bounce elástico en hover. */
+.dot {
+  color: var(--accent, #7c5cff);
+  font-weight: 500;
+  display: inline-block;
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+/* ------- cursor "|" -------
+   Aparece en hover, parpadea como terminal. */
+.cursor {
+  display: inline-block;
+  margin-left: 0.1em;
+  color: var(--accent, #7c5cff);
+  font-weight: 400;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.25s ease 0.05s, transform 0.25s ease 0.05s;
+}
+
+/* ============================================================
+   HOVER STATE
+   ============================================================ */
+
+.logo:hover .strong,
+.link:hover .strong {
+  font-weight: 600;
+  font-variation-settings: "wght" 600;
+}
+
+.logo:hover .muted,
+.link:hover .muted {
+  opacity: 0.8;
+}
+
+.logo:hover .dot,
+.link:hover .dot {
+  animation: dotPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo:hover .cursor,
+.link:hover .cursor {
+  opacity: 1;
+  transform: translateX(0);
+  animation: cursorBlink 1s step-end infinite 0.3s;
+}
+
+.logo:hover .icon,
+.link:hover .icon {
+  transform: rotate(-3deg) scale(1.05);
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+
+@keyframes dotPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.6); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes cursorBlink {
+  0%, 50%   { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   Respetamos prefers-reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  .strong, .muted, .dot, .cursor, .icon {
+    transition: none;
+  }
+  .logo:hover .dot, .link:hover .dot {
+    animation: none;
+    transform: scale(1.2);
+  }
+  .logo:hover .cursor, .link:hover .cursor {
+    animation: none;
+  }
+}

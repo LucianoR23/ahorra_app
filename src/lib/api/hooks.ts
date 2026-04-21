@@ -10,6 +10,7 @@ import type {
   IncomeListResponse,
   Income,
   Insight,
+  InsightUnreadCount,
   Household,
   HouseholdMember,
   Category,
@@ -29,6 +30,8 @@ import type {
   GoalProgress,
   TrendsReport,
   AiExport,
+  AdminDeletedHousehold,
+  TotalIncomeResponse,
 } from "./schemas";
 
 function useReady() {
@@ -129,18 +132,80 @@ export function useRecurringExpenses() {
   return useSWR<RecurringExpense[]>(key);
 }
 
+export function useRecurringExpense(id: string | null | undefined) {
+  const { token, householdId } = useReady();
+  const key = token && householdId && id ? ([`/recurring-expenses/${id}`] as const) : null;
+  return useSWR<RecurringExpense>(key);
+}
+
 export function useRecurringIncomes() {
   const { token, householdId } = useReady();
   const key = token && householdId ? (["/recurring-incomes"] as const) : null;
   return useSWR<RecurringIncome[]>(key);
 }
 
-export function useLatestInsight() {
+export function useRecurringIncome(id: string | null | undefined) {
   const { token, householdId } = useReady();
+  const key = token && householdId && id ? ([`/recurring-incomes/${id}`] as const) : null;
+  return useSWR<RecurringIncome>(key);
+}
+
+export function useTotalIncome(range: { from?: string; to?: string } = {}) {
+  const { token, householdId } = useReady();
+  const query: Record<string, string | number | undefined> = {};
+  if (range.from) query.from = range.from;
+  if (range.to) query.to = range.to;
   const key = token && householdId
-    ? (["/insights", { query: { limit: 1 } }] as const)
+    ? (["/totals/income", Object.keys(query).length ? { query } : {}] as const)
     : null;
+  return useSWR<TotalIncomeResponse>(key);
+}
+
+export type InsightFilters = {
+  userId?: string;
+  unread?: boolean;
+  from?: string;
+  to?: string;
+  type?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export function useInsights(filters: InsightFilters = {}) {
+  const { token, householdId } = useReady();
+  const query: Record<string, string | number | undefined> = {};
+  if (filters.userId) query.userId = filters.userId;
+  if (typeof filters.unread === "boolean") query.unread = filters.unread ? "true" : "false";
+  if (filters.from) query.from = filters.from;
+  if (filters.to) query.to = filters.to;
+  if (filters.type) query.type = filters.type;
+  if (typeof filters.limit === "number") query.limit = filters.limit;
+  if (typeof filters.offset === "number") query.offset = filters.offset;
+  const key = token && householdId ? (["/insights", { query }] as const) : null;
   return useSWR<Insight[]>(key);
+}
+
+export function useLatestInsight() {
+  return useInsights({ limit: 1 });
+}
+
+export function useInsight(id: string | null | undefined) {
+  const { token, householdId } = useReady();
+  const key = token && householdId && id ? ([`/insights/${id}`] as const) : null;
+  return useSWR<Insight>(key);
+}
+
+export function useInsightsUnreadCount(userId?: string | null) {
+  const { token, householdId } = useReady();
+  const query: Record<string, string | number | undefined> = {};
+  if (userId) query.userId = userId;
+  const key = token && householdId
+    ? (["/insights/unread-count", Object.keys(query).length ? { query } : {}] as const)
+    : null;
+  return useSWR<InsightUnreadCount>(key, {
+    refreshInterval: 60_000,
+    revalidateOnFocus: true,
+  });
 }
 
 export function useCategories() {
@@ -254,6 +319,22 @@ export function useGoal(id: string | null | undefined) {
   return useSWR<Goal>(key);
 }
 
+export function useGoalProgress(id: string | null | undefined, at?: string) {
+  const { token, householdId } = useReady();
+  const query: Record<string, string | undefined> = {};
+  if (at) query.at = at;
+  const key = token && householdId && id
+    ? ([`/goals/${id}/progress`, Object.keys(query).length ? { query } : {}] as const)
+    : null;
+  return useSWR<GoalProgress>(key);
+}
+
+export function useSettlement(id: string | null | undefined) {
+  const { token, householdId } = useReady();
+  const key = token && householdId && id ? ([`/settlements/${id}`] as const) : null;
+  return useSWR<Settlement>(key);
+}
+
 export function useExchangeRates() {
   const token = useAuthStore((s) => s.accessToken);
   return useSWR<Rate[]>(
@@ -291,4 +372,47 @@ export function useCreditCardPeriodStatus(paymentMethodId?: string | null) {
       ? ([`/payment-methods/${paymentMethodId}/credit-card/periods/status`, { householdScoped: false }] as const)
       : null,
   );
+}
+
+export function useHouseholdInvites(householdId?: string | null) {
+  const token = useAuthStore((s) => s.accessToken);
+  const current = useHouseholdStore((s) => s.currentId);
+  const id = householdId ?? current;
+  return useSWR<
+    {
+      id: string;
+      householdId: string;
+      email: string;
+      invitedBy: string;
+      expiresAt: string;
+      createdAt: string;
+      status: "pending" | "accepted" | "revoked" | "expired";
+    }[]
+  >(
+    token && id ? ([`/households/${id}/invites`, { householdScoped: false }] as const) : null,
+  );
+}
+
+export function useAdminDeletedHouseholds(enabled = true) {
+  const token = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
+  const canQuery = !!token && !!user?.isSuperadmin && enabled;
+  return useSWR<AdminDeletedHousehold[]>(
+    canQuery
+      ? (["/admin/households/deleted", { householdScoped: false }] as const)
+      : null,
+  );
+}
+
+export function usePushSubscriptions() {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<
+    {
+      id: string;
+      endpoint: string;
+      userAgent?: string;
+      createdAt: string;
+      lastSeenAt: string;
+    }[]
+  >(token ? (["/push/subscriptions", { householdScoped: false }] as const) : null);
 }

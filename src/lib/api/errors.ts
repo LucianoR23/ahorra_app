@@ -4,6 +4,7 @@ export type ApiErrorCode =
   | "forbidden"
   | "not_found"
   | "conflict"
+  | "rate_limited"
   | "internal"
   | "network";
 
@@ -11,23 +12,37 @@ export class ApiError extends Error {
   readonly code: ApiErrorCode;
   readonly status: number;
   readonly field?: string;
+  /** Segundos hasta poder reintentar (solo para `rate_limited`). */
+  readonly retryAfterSeconds?: number;
 
-  constructor(opts: { code: ApiErrorCode; message: string; status: number; field?: string }) {
+  constructor(opts: {
+    code: ApiErrorCode;
+    message: string;
+    status: number;
+    field?: string;
+    retryAfterSeconds?: number;
+  }) {
     super(opts.message);
     this.name = "ApiError";
     this.code = opts.code;
     this.status = opts.status;
     this.field = opts.field;
+    this.retryAfterSeconds = opts.retryAfterSeconds;
   }
 
-  static fromResponse(status: number, body: unknown): ApiError {
+  static fromResponse(
+    status: number,
+    body: unknown,
+    opts?: { retryAfterSeconds?: number },
+  ): ApiError {
     const b = (body ?? {}) as { code?: string; message?: string; field?: string };
     const code = (b.code as ApiErrorCode) ?? statusToCode(status);
     return new ApiError({
       code,
-      message: b.message ?? defaultMessage(code),
+      message: b.message ?? defaultMessage(code, opts?.retryAfterSeconds),
       status,
       field: b.field,
+      retryAfterSeconds: opts?.retryAfterSeconds,
     });
   }
 
@@ -42,11 +57,12 @@ function statusToCode(status: number): ApiErrorCode {
   if (status === 404) return "not_found";
   if (status === 409) return "conflict";
   if (status === 422) return "validation";
+  if (status === 429) return "rate_limited";
   if (status >= 500) return "internal";
   return "internal";
 }
 
-function defaultMessage(code: ApiErrorCode): string {
+function defaultMessage(code: ApiErrorCode, retryAfterSeconds?: number): string {
   switch (code) {
     case "validation":
       return "Datos inválidos";
@@ -58,6 +74,11 @@ function defaultMessage(code: ApiErrorCode): string {
       return "No encontrado";
     case "conflict":
       return "Conflicto con el estado actual";
+    case "rate_limited":
+      if (retryAfterSeconds && retryAfterSeconds > 0) {
+        return `Demasiados intentos. Reintentá en ${retryAfterSeconds}s.`;
+      }
+      return "Demasiados intentos. Esperá unos minutos e intentá de nuevo.";
     case "network":
       return "Sin conexión con el servidor";
     case "internal":

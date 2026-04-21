@@ -14,10 +14,9 @@ import {
 } from "@/lib/api/hooks";
 import { fmtMoney, fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const PAGE = 20;
-const selectClass =
-  "h-9 w-full rounded-md border border-input bg-input/20 px-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-input/30";
 
 type FixedFilter = "all" | "fixed" | "variable";
 
@@ -91,26 +90,28 @@ export function ExpensesList() {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <select
-              className={selectClass}
-              value={categoryId}
-              onChange={(e) => resetOffset(setCategoryId)(e.target.value)}
-            >
-              <option value="">Todas las categorías</option>
-              {categories?.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <select
-              className={selectClass}
-              value={paymentMethodId}
-              onChange={(e) => resetOffset(setPaymentMethodId)(e.target.value)}
-            >
-              <option value="">Todos los métodos</option>
-              {paymentMethods?.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <Select value={categoryId} onValueChange={(v) => resetOffset(setCategoryId)(v)}>
+              <SelectTrigger className="text-xs">
+                <SelectValue placeholder="Todas las categorías" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas las categorías</SelectItem>
+                {categories?.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={paymentMethodId} onValueChange={(v) => resetOffset(setPaymentMethodId)(v)}>
+              <SelectTrigger className="text-xs">
+                <SelectValue placeholder="Todos los métodos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos los métodos</SelectItem>
+                {paymentMethods?.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-1.5">
