@@ -90,9 +90,11 @@ export function ExpensesList() {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Select value={categoryId} onValueChange={(v) => resetOffset(setCategoryId)(v)}>
+            <Select value={categoryId} onValueChange={(v) => resetOffset(setCategoryId)(v ?? "")}>
               <SelectTrigger className="text-xs">
-                <SelectValue placeholder="Todas las categorías" />
+                <SelectValue placeholder="Todas las categorías">
+                  {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Todas las categorías") : "Todas las categorías")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Todas las categorías</SelectItem>
@@ -101,9 +103,11 @@ export function ExpensesList() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={paymentMethodId} onValueChange={(v) => resetOffset(setPaymentMethodId)(v)}>
+            <Select value={paymentMethodId} onValueChange={(v) => resetOffset(setPaymentMethodId)(v ?? "")}>
               <SelectTrigger className="text-xs">
-                <SelectValue placeholder="Todos los métodos" />
+                <SelectValue placeholder="Todos los métodos">
+                  {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Todos los métodos") : "Todos los métodos")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Todos los métodos</SelectItem>

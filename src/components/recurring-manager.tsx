@@ -36,6 +36,7 @@ import { fmtMoney, isoToday } from "@/lib/format";
 import type { Currency, RecurringExpense, RecurringIncome } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { FREQUENCY_LABELS, type RecurringFrequency } from "@/lib/labels";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -139,7 +140,7 @@ function frequencyLabel(r: { frequency: string; dayOfMonth?: number | null; dayO
     const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
     return `${r.dayOfMonth ?? 1} de ${months[(r.monthOfYear ?? 1) - 1]}`;
   }
-  return r.frequency;
+  return FREQUENCY_LABELS[r.frequency as RecurringFrequency] ?? r.frequency;
 }
 
 function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onChanged: () => void }) {
@@ -552,9 +553,11 @@ function RecurringExpenseForm({
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <Label>Categoría</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
+            <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
               <SelectTrigger>
-                <SelectValue placeholder="Sin categoría" />
+                <SelectValue placeholder="Sin categoría">
+                  {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Sin categoría") : "Sin categoría")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Sin categoría</SelectItem>
@@ -564,9 +567,11 @@ function RecurringExpenseForm({
           </div>
           <div className="space-y-1.5">
             <Label>Método de pago</Label>
-            <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+            <Select value={paymentMethodId} onValueChange={(v) => setPaymentMethodId(v ?? "")}>
               <SelectTrigger>
-                <SelectValue placeholder="Elegir" />
+                <SelectValue placeholder="Elegir">
+                  {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Elegir") : "Elegir")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Elegir</SelectItem>
@@ -730,9 +735,11 @@ function RecurringIncomeForm({
 
         <div className="space-y-1.5">
           <Label>Cuenta destino (opcional)</Label>
-          <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+          <Select value={paymentMethodId} onValueChange={(v) => setPaymentMethodId(v ?? "")}>
             <SelectTrigger>
-              <SelectValue placeholder="Sin especificar" />
+              <SelectValue placeholder="Sin especificar">
+                {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Sin especificar") : "Sin especificar")}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">Sin especificar</SelectItem>

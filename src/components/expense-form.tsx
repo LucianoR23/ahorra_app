@@ -24,6 +24,7 @@ import { fmtMoney, isoToday, projectBillingMonth, shiftMonth } from "@/lib/forma
 import type { Currency } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { PAYMENT_METHOD_KIND_LABELS } from "@/lib/labels";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -226,9 +227,11 @@ export function ExpenseForm() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="category">Categoría</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="Sin categoría" />
+                  <SelectValue placeholder="Sin categoría">
+                    {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Sin categoría") : "Sin categoría")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Sin categoría</SelectItem>
@@ -258,14 +261,20 @@ export function ExpenseForm() {
         <CardContent className="p-4 space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="paymentMethod">Método de pago</Label>
-            <Select value={paymentMethodId} onValueChange={(v) => { setPaymentMethodId(v); setInstallments(1); }}>
+            <Select value={paymentMethodId} onValueChange={(v) => { setPaymentMethodId(v ?? ""); setInstallments(1); }}>
               <SelectTrigger id="paymentMethod">
-                <SelectValue placeholder="Elegí un método" />
+                <SelectValue placeholder="Elegí un método">
+                  {(v: string | null) => {
+                    if (!v) return "Elegí un método";
+                    const pm = paymentMethods?.find((p) => p.id === v);
+                    return pm ? `${pm.name} · ${PAYMENT_METHOD_KIND_LABELS[pm.kind]}` : "Elegí un método";
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Elegí un método</SelectItem>
                 {paymentMethods?.filter((p) => p.isActive).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name} · {p.kind}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.name} · {PAYMENT_METHOD_KIND_LABELS[p.kind]}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

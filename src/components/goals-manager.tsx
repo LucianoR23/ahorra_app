@@ -463,9 +463,16 @@ function GoalFormDialog({
               {scope === "user" && (
                 <div>
                   <Label>Miembro</Label>
-                  <Select value={userId} onValueChange={setUserId}>
+                  <Select value={userId} onValueChange={(v) => setUserId(v ?? "")}>
                     <SelectTrigger className="text-xs">
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder="Seleccionar">
+                        {(v: string | null) => {
+                          if (!v) return "Seleccionar";
+                          const m = members?.find((x) => x.userId === v);
+                          if (!m) return "Seleccionar";
+                          return m.userId === me?.id ? "Yo" : `${m.firstName} ${m.lastName}`;
+                        }}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Seleccionar</SelectItem>
@@ -484,9 +491,11 @@ function GoalFormDialog({
           {goalType === "category_limit" && (
             <div>
               <Label>Categoría</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
                 <SelectTrigger className="text-xs">
-                  <SelectValue placeholder="Seleccionar" />
+                  <SelectValue placeholder="Seleccionar">
+                    {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Seleccionar") : "Seleccionar")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Seleccionar</SelectItem>

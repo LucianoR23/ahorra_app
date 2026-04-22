@@ -231,9 +231,11 @@ function EditExpense({
           </div>
           <div className="space-y-1.5">
             <Label>Categoría</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
+            <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
               <SelectTrigger>
-                <SelectValue placeholder="Sin categoría" />
+                <SelectValue placeholder="Sin categoría">
+                  {(v: string | null) => (v ? (categories.find((c) => c.id === v)?.name ?? "Sin categoría") : "Sin categoría")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Sin categoría</SelectItem>

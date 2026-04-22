@@ -19,6 +19,7 @@ import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, isoToday } from "@/lib/format";
 import type { Currency } from "@/lib/api/schemas";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { incomeSourceLabel } from "@/lib/labels";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -151,14 +152,16 @@ export function IncomeForm({
             <Label htmlFor="source">Fuente</Label>
             <Select
               value={SOURCE_PRESETS.includes(source) ? source : "otro"}
-              onValueChange={(v) => setSource(v === "otro" ? "" : v)}
+              onValueChange={(v) => setSource(v === "otro" || v == null ? "" : v)}
             >
               <SelectTrigger id="source">
-                <SelectValue />
+                <SelectValue>
+                  {(v: string | null) => (v ? incomeSourceLabel(v) : "")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {SOURCE_PRESETS.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s} value={s}>{incomeSourceLabel(s)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -197,9 +200,15 @@ export function IncomeForm({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="receivedBy">Para</Label>
-              <Select value={receivedBy} onValueChange={setReceivedBy}>
+              <Select value={receivedBy} onValueChange={(v) => setReceivedBy(v ?? "")}>
                 <SelectTrigger id="receivedBy">
-                  <SelectValue placeholder="Yo" />
+                  <SelectValue placeholder="Yo">
+                    {(v: string | null) => {
+                      if (!v) return "Yo";
+                      const m = members?.find((x) => x.userId === v);
+                      return m ? `${m.firstName} ${m.lastName}`.trim() || m.email : "Yo";
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Yo</SelectItem>
@@ -215,9 +224,11 @@ export function IncomeForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="paymentMethodId">Cuenta destino (opcional)</Label>
-            <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+            <Select value={paymentMethodId} onValueChange={(v) => setPaymentMethodId(v ?? "")}>
               <SelectTrigger id="paymentMethodId">
-                <SelectValue placeholder="Sin especificar" />
+                <SelectValue placeholder="Sin especificar">
+                  {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Sin especificar") : "Sin especificar")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Sin especificar</SelectItem>

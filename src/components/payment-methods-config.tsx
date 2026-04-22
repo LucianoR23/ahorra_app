@@ -39,14 +39,7 @@ import {
 import type { PaymentMethod, PaymentMethodKind } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-
-const KIND_LABELS: Record<PaymentMethodKind, string> = {
-  cash: "Efectivo",
-  debit: "Débito",
-  credit: "Crédito",
-  transfer: "Transferencia",
-  other: "Otro",
-};
+import { PAYMENT_METHOD_KIND_LABELS as KIND_LABELS } from "@/lib/labels";
 
 function invalidatePMs() {
   swrMutate(
@@ -527,7 +520,7 @@ function PMFormDialog({
           {mode === "create" && (
             <div>
               <Label>Tipo</Label>
-              <Select value={kind} onValueChange={(v) => setKind(v as PaymentMethodKind)}>
+              <Select value={kind} onValueChange={(v) => v && setKind(v as PaymentMethodKind)}>
                 <SelectTrigger className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
@@ -542,9 +535,11 @@ function PMFormDialog({
 
           <div>
             <Label>Banco (opcional)</Label>
-            <Select value={bankId} onValueChange={setBankId}>
+            <Select value={bankId} onValueChange={(v) => setBankId(v ?? "")}>
               <SelectTrigger className="text-xs">
-                <SelectValue placeholder="Sin banco" />
+                <SelectValue placeholder="Sin banco">
+                  {(v: string | null) => (v ? (banks?.find((b) => b.id === v)?.name ?? "Sin banco") : "Sin banco")}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Sin banco</SelectItem>
@@ -604,5 +599,3 @@ function PMFormDialog({
   );
 }
 
-// re-export for convenience
-export { cn };
