@@ -51,7 +51,10 @@ function invalidatePMs() {
 }
 
 export function PaymentMethodsConfig() {
-  const { data: methods, isLoading } = usePaymentMethods();
+  // Incluye inactivos para que el user pueda "revivir" un medio de pago
+  // que desactivó por error. El badge "Inactivo" ya los marca visualmente
+  // y el TogglePMButton sirve como botón de revivir (llama a activate).
+  const { data: methods, isLoading } = usePaymentMethods({ includeInactive: true });
   const { data: banks } = useBanks();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<PaymentMethod | null>(null);
@@ -83,7 +86,7 @@ export function PaymentMethodsConfig() {
             {methods.map((pm) => {
               const expanded = expandedId === pm.id;
               return (
-                <div key={pm.id} className="rounded-lg border border-border/60">
+                <div key={pm.id} className={`rounded-lg border border-border/60 ${!pm.isActive ? "bg-muted/30 opacity-70" : ""}`}>
                   <div
                     className="flex cursor-pointer items-center gap-3 px-3 py-2.5"
                     onClick={() => setExpandedId(expanded ? null : pm.id)}
@@ -153,9 +156,26 @@ function TogglePMButton({ pm }: { pm: PaymentMethod }) {
       setBusy(false);
     }
   }
+  // Cuando el pm está inactivo el botón actúa como "revivir": texto
+  // explícito para que se entienda la acción, en vez de solo el icono
+  // de Power que es ambiguo para un user no técnico.
+  if (!pm.isActive) {
+    return (
+      <button
+        type="button"
+        onClick={handle}
+        disabled={busy}
+        title="Revivir este medio de pago"
+        className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {busy ? <Loader2 className="size-3 animate-spin" /> : <Power className="size-3" />}
+        Revivir
+      </button>
+    );
+  }
   return (
-    <button type="button" onClick={handle} disabled={busy} className="cursor-pointer text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50">
-      {busy ? <Loader2 className="size-3.5 animate-spin" /> : pm.isActive ? <PowerOff className="size-3.5" /> : <Power className="size-3.5" />}
+    <button type="button" onClick={handle} disabled={busy} title="Desactivar" className="cursor-pointer text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50">
+      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <PowerOff className="size-3.5" />}
     </button>
   );
 }
@@ -447,8 +467,12 @@ function PMFormDialog({
   const [allowsInstallments, setAllowsInstallments] = useState(pm?.allowsInstallments ?? false);
   const [ccAlias, setCcAlias] = useState("");
   const [ccLastFour, setCcLastFour] = useState("");
-  const [ccClosingDay, setCcClosingDay] = useState("20");
-  const [ccDueDay, setCcDueDay] = useState("5");
+  // Próximo ciclo: fechas reales (no días del mes), para cubrir el caso
+  // habitual en el que cierre y vencimiento caen en meses distintos
+  // (ej: cierre 30/04, vencimiento 20/05). De acá se deriva el "día"
+  // del template mensual para persistir en credit_cards.
+  const [ccClosingDate, setCcClosingDate] = useState("");
+  const [ccDueDate, setCcDueDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -457,7 +481,7 @@ function PMFormDialog({
     setKind(pm?.kind ?? "cash");
     setBankId(pm?.bankId ?? "");
     setAllowsInstallments(pm?.allowsInstallments ?? false);
-    setCcAlias(""); setCcLastFour(""); setCcClosingDay("20"); setCcDueDay("5");
+    setCcAlias(""); setCcLastFour(""); setCcClosingDate(""); setCcDueDate("");
     setErr(null);
   }
 
@@ -475,11 +499,27 @@ function PMFormDialog({
           allowsInstallments,
         };
         if (kind === "credit" && ccAlias.trim()) {
+          if (!ccClosingDate || !ccDueDate) {
+            setErr("Ingresá la fecha del próximo cierre y vencimiento.");
+            setSaving(false);
+            return;
+          }
+          if (ccDueDate < ccClosingDate) {
+            setErr("El vencimiento no puede ser anterior al cierre.");
+            setSaving(false);
+            return;
+          }
+          // Derivamos el día del mes para el template recurrente y
+          // mandamos el período concreto para que quede persistido
+          // (sin necesidad de cargar un período manual después).
+          const closingDay = Number(ccClosingDate.slice(8, 10));
+          const dueDay = Number(ccDueDate.slice(8, 10));
           input.creditCard = {
             alias: ccAlias.trim(),
             lastFour: ccLastFour.trim() || null,
-            defaultClosingDay: Number(ccClosingDay),
-            defaultDueDay: Number(ccDueDay),
+            defaultClosingDay: closingDay,
+            defaultDueDay: dueDay,
+            currentPeriod: { closingDate: ccClosingDate, dueDate: ccDueDate },
           };
         }
         await createPaymentMethod(input);
@@ -573,14 +613,17 @@ function PMFormDialog({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label htmlFor="cc-closing-new">Día cierre</Label>
-                    <Input id="cc-closing-new" type="number" min={1} max={31} value={ccClosingDay} onChange={(e) => setCcClosingDay(e.target.value)} />
+                    <Label htmlFor="cc-closing-new">Próximo cierre</Label>
+                    <Input id="cc-closing-new" type="date" value={ccClosingDate} onChange={(e) => setCcClosingDate(e.target.value)} />
                   </div>
                   <div>
-                    <Label htmlFor="cc-due-new">Día vencimiento</Label>
-                    <Input id="cc-due-new" type="number" min={1} max={31} value={ccDueDay} onChange={(e) => setCcDueDay(e.target.value)} />
+                    <Label htmlFor="cc-due-new">Próximo vencimiento</Label>
+                    <Input id="cc-due-new" type="date" value={ccDueDate} onChange={(e) => setCcDueDate(e.target.value)} />
                   </div>
                 </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Si el cierre cae en un mes y el vencimiento en otro (ej. 30/04 y 20/05), cargá las fechas exactas del próximo ciclo.
+                </p>
               </div>
             </div>
           )}

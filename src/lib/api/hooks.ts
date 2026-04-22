@@ -214,10 +214,13 @@ export function useCategories() {
   return useSWR<Category[]>(key);
 }
 
-export function usePaymentMethods() {
+export function usePaymentMethods(opts?: { includeInactive?: boolean }) {
   const token = useAuthStore((s) => s.accessToken);
+  const path = opts?.includeInactive
+    ? "/payment-methods?includeInactive=true"
+    : "/payment-methods";
   return useSWR<PaymentMethod[]>(
-    token ? (["/payment-methods", { householdScoped: false }] as const) : null,
+    token ? ([path, { householdScoped: false }] as const) : null,
   );
 }
 

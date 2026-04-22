@@ -353,6 +353,10 @@ export type PaymentMethodCreateInput = {
     defaultClosingDay: number;
     defaultDueDay: number;
     debitPaymentMethodId?: string | null;
+    // Fechas "YYYY-MM-DD" del ciclo concreto. El backend persiste
+    // estos períodos junto con la tarjeta en la misma transacción.
+    currentPeriod?: { closingDate: string; dueDate: string };
+    nextPeriod?: { closingDate: string; dueDate: string };
   };
 };
 
