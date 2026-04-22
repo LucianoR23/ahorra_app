@@ -100,17 +100,17 @@ function RegisterInner() {
     form.confirmPassword.length === 0 || form.password === form.confirmPassword;
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 md:p-8">
       <div className="mb-6 space-y-1">
-        <h1 className="text-xl font-semibold">Crear cuenta</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl md:text-2xl font-semibold">Crear cuenta</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           {inviteToken
             ? "Al completar el registro te vas a unir al hogar al que te invitaron."
             : "Empezá a controlar tus gastos hoy."}
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4 md:space-y-5">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="firstName">Nombre</Label>
@@ -121,6 +121,7 @@ function RegisterInner() {
               onChange={(e) => update("firstName", e.target.value)}
               aria-invalid={!!errors.firstName}
               disabled={submitting}
+              className="md:h-11 md:text-base"
             />
             {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
           </div>
@@ -133,6 +134,7 @@ function RegisterInner() {
               onChange={(e) => update("lastName", e.target.value)}
               aria-invalid={!!errors.lastName}
               disabled={submitting}
+              className="md:h-11 md:text-base"
             />
             {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
           </div>
@@ -149,7 +151,7 @@ function RegisterInner() {
             aria-invalid={!!errors.email}
             disabled={submitting}
             readOnly={!!invitedEmail}
-            className={invitedEmail ? "bg-muted text-muted-foreground" : ""}
+            className={invitedEmail ? "md:h-11 md:text-base bg-muted text-muted-foreground" : "md:h-11 md:text-base"}
           />
           {invitedEmail && (
             <p className="text-[11px] text-muted-foreground">
@@ -168,6 +170,7 @@ function RegisterInner() {
             onChange={(e) => update("password", e.target.value)}
             aria-invalid={!!errors.password}
             disabled={submitting}
+            className="md:h-11 md:text-base"
           />
           <PasswordStrengthMeter password={form.password} className="pt-1" />
           {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
@@ -182,6 +185,7 @@ function RegisterInner() {
             onChange={(e) => update("confirmPassword", e.target.value)}
             aria-invalid={!!errors.confirmPassword || !passwordsMatch}
             disabled={submitting}
+            className="md:h-11 md:text-base"
           />
           {!passwordsMatch && (
             <p className="text-xs text-destructive">Las contraseñas no coinciden</p>

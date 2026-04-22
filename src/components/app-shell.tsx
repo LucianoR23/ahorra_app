@@ -67,7 +67,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-svh">
       {/* Sidebar (md+) */}
-      <aside className="hidden md:flex w-55 shrink-0 flex-col border-r border-border bg-sidebar px-3 py-5">
+      <aside className="hidden md:flex sticky top-0 h-svh w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar px-3 py-5">
         <Link
           href="/"
           aria-label="Ahorro — Inicio"
@@ -89,13 +89,13 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                 key={n.id}
                 href={n.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[15px] font-medium transition-colors",
                   active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
                 )}
               >
-                <Icon className={cn("size-4.5", active && "text-primary")} />
+                <Icon className={cn("size-5", active && "text-primary")} />
                 <span className="flex-1">{n.label}</span>
                 {n.id === "notifications" && <InsightsUnreadBadge />}
               </Link>
@@ -125,13 +125,13 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={handleLogout}
               aria-label="Cerrar sesión"
-              className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="grid size-7 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
               <LogOut className="size-3.5" />
             </button>
           </div>
 
-          <DevSignature className="pt-1" />
+          <DevSignature className="pt-1" size={12} />
         </div>
       </aside>
 
@@ -158,7 +158,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-x-hidden pb-24 md:pb-8">
           <div
             key={pathname}
-            className="mx-auto w-full max-w-3xl px-4 pt-4 md:px-8 md:pt-8 animate-in fade-in slide-in-from-bottom-1 duration-200"
+            className="mx-auto w-full max-w-3xl md:max-w-5xl px-4 pt-4 md:px-10 md:pt-8 animate-in fade-in slide-in-from-bottom-1 duration-200"
           >
             {children}
           </div>
@@ -253,7 +253,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                               type="button"
                               onClick={handleLogout}
                               aria-label="Cerrar sesión"
-                              className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              className="grid size-9 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                             />
                           }
                         >

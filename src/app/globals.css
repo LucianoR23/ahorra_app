@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@media (min-width: 768px) {
+  html { font-size: 17px; }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -70,13 +70,13 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 md:p-8">
       <div className="mb-6 space-y-1">
-        <h1 className="text-xl font-semibold">Iniciar sesión</h1>
-        <p className="text-sm text-muted-foreground">Bienvenido de vuelta a Ahorro.</p>
+        <h1 className="text-xl md:text-2xl font-semibold">Iniciar sesión</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Bienvenido de vuelta a Ahorro.</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4 md:space-y-5">
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -87,6 +87,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             aria-invalid={!!errors.email}
             disabled={submitting}
+            className="md:h-11 md:text-base"
           />
           {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
         </div>
@@ -108,6 +109,7 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             aria-invalid={!!errors.password}
             disabled={submitting}
+            className="md:h-11 md:text-base"
           />
           {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
         </div>

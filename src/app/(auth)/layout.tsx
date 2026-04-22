@@ -13,7 +13,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
-    if (hydrated && user) router.replace("/");
+    if (!hydrated || !user) return;
+    if (user.emailVerifiedAt) {
+      router.replace("/");
+    } else {
+      router.replace("/verify-email/pending");
+    }
   }, [hydrated, user, router]);
 
   return (
@@ -25,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       >
         <BrandLogo variant="wordmark" size={40} priority />
       </Link>
-      <div className="w-full max-w-sm">{children}</div>
+      <div className="w-full max-w-sm md:max-w-md">{children}</div>
       <DevSignature className="mt-8" size={14} />
     </div>
   );

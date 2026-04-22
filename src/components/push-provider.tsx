@@ -134,7 +134,8 @@ export function PushProvider() {
         <button
           type="button"
           onClick={dismissPush}
-          className="shrink-0 text-primary/50 hover:text-primary"
+          aria-label="Cerrar"
+          className="shrink-0 cursor-pointer text-primary/50 transition-colors hover:text-destructive"
         >
           <X className="size-3.5" />
         </button>
@@ -156,7 +157,8 @@ export function PushProvider() {
         <button
           type="button"
           onClick={dismissIos}
-          className="shrink-0 text-muted-foreground hover:text-foreground"
+          aria-label="Cerrar"
+          className="shrink-0 cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
         >
           <X className="size-3.5" />
         </button>

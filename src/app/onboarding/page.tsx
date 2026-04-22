@@ -16,6 +16,8 @@ import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type { Currency } from "@/lib/api/schemas";
 
+const EMAIL_RE = /^[^\s@]+@[a-zA-Z0-9-]+(\.[a-zA-Z]+)+$/;
+
 export default function OnboardingPage() {
   const router = useRouter();
   const hydrated = useAuthStore((s) => s.hydrated);
@@ -86,6 +88,11 @@ export default function OnboardingPage() {
     if (!createdId) return;
     const trimmed = inviteEmail.trim();
     if (!trimmed) return;
+    if (!EMAIL_RE.test(trimmed)) {
+      setInviteErr("Ingresá un email válido (ej: nombre@dominio.com)");
+      setInviteOk(false);
+      return;
+    }
     setInviteErr(null);
     setInviteOk(false);
     setLastInviteUrl(null);
@@ -215,9 +222,15 @@ export default function OnboardingPage() {
                 <Input
                   id="invite-email"
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   placeholder="correo@ejemplo.com"
                   value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onChange={(e) => {
+                    setInviteEmail(e.target.value);
+                    if (inviteErr) setInviteErr(null);
+                  }}
+                  aria-invalid={!!inviteErr}
                   disabled={inviteBusy}
                 />
                 <p className="text-[11px] text-muted-foreground">

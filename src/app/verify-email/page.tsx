@@ -40,6 +40,7 @@ function VerifyEmailInner() {
   const token = params.get("token");
   const setUser = useAuthStore((s) => s.setUser);
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s.hydrated);
   const currentHouseholdId = useHouseholdStore((s) => s.currentId);
 
   const [state, setState] = useState<"loading" | "success" | "error" | "no-token">(
@@ -113,6 +114,18 @@ function VerifyEmailInner() {
   }
 
   if (state === "success") {
+    // If we haven't hydrated yet, AuthBootstrap may still be recovering the
+    // session from the refresh cookie. Show a spinner so the CTA doesn't flicker.
+    const waitingForSession = !hydrated;
+    const needsLogin = hydrated && !user;
+    const cta = waitingForSession
+      ? { href: "#", label: "Cargando…" }
+      : needsLogin
+      ? { href: "/login", label: "Iniciar sesión" }
+      : currentHouseholdId
+      ? { href: "/", label: "Ir al inicio" }
+      : { href: "/onboarding", label: "Continuar" };
+
     return (
       <Card className="p-6">
         <div className="flex flex-col items-center gap-3 text-center">
@@ -121,12 +134,25 @@ function VerifyEmailInner() {
           </div>
           <h1 className="text-xl font-semibold">¡Email verificado!</h1>
           <p className="text-sm text-muted-foreground">
-            Listo. Ya podés usar todas las funciones de tu cuenta.
+            {needsLogin
+              ? "Iniciá sesión para terminar de configurar tu cuenta."
+              : "Listo. Ya podés usar todas las funciones de tu cuenta."}
           </p>
         </div>
-        <Link href={currentHouseholdId ? "/" : "/onboarding"} className="mt-6 block">
-          <Button size="lg" className="w-full">
-            {currentHouseholdId ? "Ir al inicio" : "Continuar"}
+        <Link
+          href={cta.href}
+          className={`mt-6 block ${waitingForSession ? "pointer-events-none" : ""}`}
+          aria-disabled={waitingForSession}
+        >
+          <Button size="lg" className="w-full" disabled={waitingForSession}>
+            {waitingForSession ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                {cta.label}
+              </>
+            ) : (
+              cta.label
+            )}
           </Button>
         </Link>
       </Card>

@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuGroup,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useHouseholds } from "@/lib/api/hooks";
@@ -32,10 +33,10 @@ export function HouseholdSwitcher({ className }: { className?: string }) {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal>
       <DropdownMenuTrigger
         className={cn(
-          "flex w-full items-center gap-2 rounded-[10px] border border-border bg-card px-2.5 py-2 text-left text-xs font-semibold transition-colors hover:bg-muted",
+          "flex w-full cursor-pointer items-center gap-2 rounded-[10px] border border-border bg-card px-2.5 py-2 text-left text-xs font-semibold transition-colors hover:bg-muted",
           className,
         )}
       >
@@ -49,7 +50,9 @@ export function HouseholdSwitcher({ className }: { className?: string }) {
         <ChevronsUpDown className="size-3 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-50">
-        <DropdownMenuLabel>Cambiar hogar</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Cambiar hogar</DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         {households?.map((h) => {
           const active = h.id === currentId;
