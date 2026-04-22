@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Plus, LayoutGrid, Bell } from "lucide-react";
@@ -45,6 +46,82 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clear);
   const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
+
+  const [moreOpen, setMoreOpen] = useState(false);
+  const popupRef = useRef<HTMLElement | null>(null);
+  const overlayRef = useRef<HTMLElement | null>(null);
+  const dragStartY = useRef<number | null>(null);
+  const dragStartTime = useRef(0);
+  const dragDelta = useRef(0);
+
+  function resetDragStyles() {
+    [popupRef.current, overlayRef.current].forEach((el) => {
+      if (!el) return;
+      el.style.transition = "";
+      el.style.transform = "";
+      el.style.opacity = "";
+    });
+  }
+
+  function onDragStart(e: React.TouchEvent) {
+    dragStartY.current = e.touches[0].clientY;
+    dragStartTime.current = Date.now();
+    dragDelta.current = 0;
+    popupRef.current = document.querySelector<HTMLElement>(
+      '[data-slot="sheet-content"]',
+    );
+    overlayRef.current = document.querySelector<HTMLElement>(
+      '[data-slot="sheet-overlay"]',
+    );
+    if (popupRef.current) popupRef.current.style.transition = "none";
+    if (overlayRef.current) overlayRef.current.style.transition = "none";
+  }
+
+  function onDragMove(e: React.TouchEvent) {
+    if (dragStartY.current === null || !popupRef.current) return;
+    const delta = e.touches[0].clientY - dragStartY.current;
+    const applied = delta > 0 ? delta : Math.max(delta / 3, -24);
+    dragDelta.current = applied;
+    popupRef.current.style.transform = `translateY(${applied}px)`;
+    if (overlayRef.current && applied > 0) {
+      const h = popupRef.current.offsetHeight || 1;
+      const progress = Math.min(applied / h, 1);
+      overlayRef.current.style.opacity = String(1 - progress);
+    }
+  }
+
+  function onDragEnd() {
+    if (dragStartY.current === null || !popupRef.current) return;
+    const delta = dragDelta.current;
+    const elapsed = Date.now() - dragStartTime.current;
+    const velocity = delta / Math.max(elapsed, 1);
+    dragStartY.current = null;
+    dragDelta.current = 0;
+
+    const popup = popupRef.current;
+    const ov = overlayRef.current;
+
+    if (delta > 100 || velocity > 0.6) {
+      popup.style.transition = "transform 200ms ease-out, opacity 200ms ease-out";
+      popup.style.transform = "translateY(100%)";
+      if (ov) {
+        ov.style.transition = "opacity 200ms ease-out";
+        ov.style.opacity = "0";
+      }
+      setTimeout(() => {
+        setMoreOpen(false);
+        setTimeout(resetDragStyles, 50);
+      }, 200);
+    } else {
+      popup.style.transition = "transform 180ms ease-out";
+      popup.style.transform = "translateY(0px)";
+      if (ov) {
+        ov.style.transition = "opacity 180ms ease-out";
+        ov.style.opacity = "1";
+      }
+      setTimeout(resetDragStyles, 200);
+    }
+  }
 
   async function handleLogout() {
     const token = useAuthStore.getState().accessToken;
@@ -187,7 +264,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                 h === "/" ? pathname === "/" : pathname.startsWith(h),
               );
               return (
-                <Sheet key="more">
+                <Sheet key="more" open={moreOpen} onOpenChange={setMoreOpen}>
                   <SheetTrigger
                     render={
                       <button
@@ -208,11 +285,20 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                     showCloseButton={false}
                     className="rounded-t-3xl border-border pb-[calc(env(safe-area-inset-bottom)+1rem)]"
                   >
-                    <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
-                    <SheetHeader className="pb-2 pt-3">
-                      <SheetTitle className="text-base font-bold">Menú</SheetTitle>
-                    </SheetHeader>
-                    <div className="grid grid-cols-3 gap-2 px-4 pb-4">
+                    <div className="flex flex-col">
+                      <div
+                        onTouchStart={onDragStart}
+                        onTouchMove={onDragMove}
+                        onTouchEnd={onDragEnd}
+                        onTouchCancel={onDragEnd}
+                        className="touch-none cursor-grab active:cursor-grabbing"
+                      >
+                        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-muted-foreground/30" />
+                        <SheetHeader className="pb-2 pt-3">
+                          <SheetTitle className="text-base font-bold">Menú</SheetTitle>
+                        </SheetHeader>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 px-4 pb-4">
                       {visibleNavItems.map((n) => {
                         const active = isActive(pathname, n.href);
                         const Icon = n.icon;
@@ -262,7 +348,8 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                         </SheetClose>
                       </div>
                     </div>
-                    <DevSignature className="pb-2 pt-3" />
+                      <DevSignature className="pb-2 pt-3" />
+                    </div>
                   </SheetContent>
                 </Sheet>
               );
