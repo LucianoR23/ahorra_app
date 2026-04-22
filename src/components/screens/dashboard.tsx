@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CategoryIcon } from "@/components/category-icon";
 import { PushProvider } from "@/components/push-provider";
+import { InstallPrompt } from "@/components/install-prompt";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { fmtARS, greeting } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-4 pb-4">
       <Header />
+      <InstallPrompt />
       <PushProvider />
       <EmailVerificationBanner />
 
