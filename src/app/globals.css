@@ -213,6 +213,18 @@
   animation: vt-fade-in 180ms cubic-bezier(0, 0, 0.2, 1) both;
 }
 
+/* Theme toggle — circular reveal from the button.
+   Overrides the default root fade so the WAAPI clip-path animation in
+   theme-toggle.tsx is the only thing driving the transition. The old view
+   stays put while the new view wipes in on top. */
+html[data-theme-transition]::view-transition-old(root),
+html[data-theme-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html[data-theme-transition]::view-transition-old(root) { z-index: 0; }
+html[data-theme-transition]::view-transition-new(root) { z-index: 1; }
+
 /* Hero logo morph — the wordmark in the auth layout and the desktop sidebar
    share `view-transition-name: brand-hero`, so the browser animates size
    and position between them on login/logout. Uses a longer, smoother curve
