@@ -34,11 +34,8 @@ export function PushProvider() {
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (banner) {
-      rafRef.current = requestAnimationFrame(() => setExpanded(true));
-    } else {
-      setExpanded(false);
-    }
+    if (!banner) return;
+    rafRef.current = requestAnimationFrame(() => setExpanded(true));
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [banner]);
 

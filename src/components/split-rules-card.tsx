@@ -107,12 +107,12 @@ export function SplitRulesCard() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold">Reglas de división</h2>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
               Porcentajes usados para dividir gastos compartidos cuando no hay override.
             </p>
           </div>
           {!isOwner && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
               <Info className="size-3" /> Solo lectura
             </span>
           )}
@@ -133,7 +133,7 @@ export function SplitRulesCard() {
                   <div key={r.userId} className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-semibold">{memberName(r.userId)}</div>
-                      <div className="text-[10px] text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {share.toFixed(1)}% del total
                       </div>
                     </div>
@@ -150,7 +150,7 @@ export function SplitRulesCard() {
                         }
                         className="h-9 w-24 pr-6 text-right"
                       />
-                      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">
+                      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground">
                         %
                       </span>
                     </div>
@@ -161,7 +161,7 @@ export function SplitRulesCard() {
 
             {isOwner && (
               <>
-                <div className="mt-3 flex items-center justify-between text-[11px]">
+                <div className="mt-3 flex items-center justify-between text-[12px]">
                   <span className={cn("text-muted-foreground", !sumsTo100 && "text-amber-500")}>
                     Total: {fmtPct(totalWeight)}%{!sumsTo100 && " (debería sumar 100)"}
                   </span>

@@ -39,6 +39,7 @@ import { fmtMoney } from "@/lib/format";
 import { ApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 function invalidateGoals() {
   swrMutate(
@@ -149,7 +150,7 @@ export function GoalsManager() {
                   <button
                     type="button"
                     onClick={() => setEditing(p.goal)}
-                    className="text-[11px] font-semibold text-primary hover:underline"
+                    className="cursor-pointer text-[11px] font-semibold text-primary hover:underline"
                   >
                     Editar
                   </button>
@@ -249,11 +250,10 @@ function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: st
               <Calendar className="size-3" />
               Progreso a la fecha
             </Label>
-            <Input
-              id="progress-at"
-              type="date"
+            <DatePicker
               value={at}
-              onChange={(e) => setAt(e.target.value)}
+              onChange={setAt}
+              placeholder="Hoy"
               className="mt-1"
             />
             <p className="mt-1 text-[11px] text-muted-foreground">
@@ -439,7 +439,7 @@ function GoalFormDialog({
                 <Label>Tipo</Label>
                 <Select value={goalType} onValueChange={(v) => setGoalType(v as Goal["goalType"])}>
                   <SelectTrigger className="text-xs">
-                    <SelectValue />
+                    <SelectValue>{(v: unknown) => v != null ? (TYPE_META[v as Goal["goalType"]]?.label ?? String(v)) : ""}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="total_limit">Límite total</SelectItem>
@@ -535,7 +535,7 @@ function GoalFormDialog({
                   type="button"
                   onClick={() => setPeriod(p)}
                   className={cn(
-                    "flex-1 rounded-md px-2 py-2 text-xs font-semibold transition-colors",
+                    "flex-1 cursor-pointer rounded-md px-2 py-2 text-xs font-semibold transition-colors",
                     period === p
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:bg-muted/70",

@@ -14,6 +14,7 @@ import { useIncome, useHouseholdMembers } from "@/lib/api/hooks";
 import { deleteIncome, patchIncome } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, fmtDateShort } from "@/lib/format";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function IncomeDetailView({ id }: { id: string }) {
   const router = useRouter();
@@ -152,7 +153,7 @@ function EditIncome({
         </div>
         <div className="space-y-1.5">
           <Label>Fecha</Label>
-          <Input type="date" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} className="h-9" />
+          <DatePicker value={receivedAt} onChange={setReceivedAt} />
         </div>
         {err && <p className="text-xs text-destructive">{err}</p>}
         <Button onClick={save} disabled={saving} size="sm" className="w-full">

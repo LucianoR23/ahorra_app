@@ -38,7 +38,7 @@ export function IncomesList() {
           <button
             type="button"
             onClick={() => { setOffset(0); setMonth(shiftMonth(month, -1)); }}
-            className="grid size-8 place-items-center rounded-md hover:bg-muted"
+            className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
             aria-label="Mes anterior"
           >
             <ChevronLeft className="size-4" />
@@ -47,7 +47,7 @@ export function IncomesList() {
           <button
             type="button"
             onClick={() => { setOffset(0); setMonth(shiftMonth(month, 1)); }}
-            className="grid size-8 place-items-center rounded-md hover:bg-muted"
+            className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
             aria-label="Mes siguiente"
           >
             <ChevronRight className="size-4" />

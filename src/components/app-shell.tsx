@@ -253,7 +253,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                   key="add"
                   onClick={() => router.push("/agregar")}
                   aria-label="Agregar gasto"
-                  className="grid size-13.5 -translate-y-2 place-items-center rounded-[18px] bg-linear-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/40 transition-transform active:scale-95"
+                  className="grid size-13.5 -translate-y-2 cursor-pointer place-items-center rounded-[18px] bg-linear-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/40 transition-transform active:scale-95"
                 >
                   <Plus className="size-5.5" strokeWidth={2.5} />
                 </button>
@@ -271,7 +271,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                         type="button"
                         aria-label="Más opciones"
                         className={cn(
-                          "flex h-full flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
+                          "flex h-full flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 transition-colors",
                           moreActive ? "text-primary" : "text-muted-foreground",
                         )}
                       />

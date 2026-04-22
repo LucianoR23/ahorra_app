@@ -148,7 +148,7 @@ export function DevicesCard() {
                     onClick={() => handleRevoke(s.id)}
                     disabled={revokingId === s.id}
                     aria-label="Desconectar dispositivo"
-                    className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {revokingId === s.id ? (
                       <Loader2 className="size-3.5 animate-spin" />

@@ -28,6 +28,7 @@ import { fmtMoney, fmtDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Installment } from "@/lib/api/schemas";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function ExpenseDetailView({ id }: { id: string }) {
   const router = useRouter();
@@ -227,7 +228,7 @@ function EditExpense({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label>Fecha</Label>
-            <Input type="date" value={spentAt} onChange={(e) => setSpentAt(e.target.value)} className="h-9" />
+            <DatePicker value={spentAt} onChange={setSpentAt} />
           </div>
           <div className="space-y-1.5">
             <Label>Categoría</Label>
@@ -305,7 +306,7 @@ function InstallmentRow({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+        className="w-full cursor-pointer px-4 py-3 text-left hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className={cn(
@@ -356,11 +357,11 @@ function InstallmentRow({
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label className="text-[10px]">Factura</Label>
-                  <Input type="date" value={billingDate} onChange={(e) => setBillingDate(e.target.value)} className="h-8 text-xs" />
+                  <DatePicker value={billingDate} onChange={setBillingDate} />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px]">Vencimiento</Label>
-                  <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-8 text-xs" />
+                  <DatePicker value={dueDate} onChange={setDueDate} />
                 </div>
               </div>
               <div className="flex gap-1.5">

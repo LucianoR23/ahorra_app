@@ -70,7 +70,7 @@ export function AiExportCard() {
         <button
           type="button"
           onClick={() => setMonth(prevMonth(month))}
-          className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+          className="cursor-pointer rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
         >
           ‹ Anterior
         </button>
@@ -79,7 +79,7 @@ export function AiExportCard() {
           type="button"
           onClick={() => setMonth(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`)}
           disabled={isCurrentOrFuture}
-          className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+          className="cursor-pointer rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
         >
           Siguiente ›
         </button>

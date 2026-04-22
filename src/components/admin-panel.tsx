@@ -34,6 +34,7 @@ import {
 } from "@/lib/api/mutations";
 import type { AdminDeletedHousehold } from "@/lib/api/schemas";
 import { toast, toastError } from "@/lib/toast";
+import { DatePicker } from "@/components/ui/date-picker";
 
 function invalidate() {
   swrMutate(
@@ -140,15 +141,14 @@ function GenerateInsightsCard() {
             <Label htmlFor="insights-at" className="text-xs">
               Fecha (opcional)
             </Label>
-            <Input
-              id="insights-at"
-              type="date"
+            <DatePicker
               value={at}
-              onChange={(e) => setAt(e.target.value)}
+              onChange={setAt}
+              placeholder="Hoy"
               className="mt-1"
             />
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Vacío = hoy. Formato YYYY-MM-DD.
+              Vacío = hoy.
             </p>
           </div>
           <Button type="button" onClick={handle} disabled={busy}>

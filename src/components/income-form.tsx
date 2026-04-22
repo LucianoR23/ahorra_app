@@ -19,6 +19,7 @@ import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, isoToday } from "@/lib/format";
 import type { Currency } from "@/lib/api/schemas";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -153,12 +154,12 @@ export function IncomeForm({
               value={SOURCE_PRESETS.includes(source) ? source : "otro"}
               onValueChange={(v) => setSource(v === "otro" ? "" : v)}
             >
-              <SelectTrigger id="source">
+              <SelectTrigger id="source" className="capitalize">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {SOURCE_PRESETS.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -187,12 +188,9 @@ export function IncomeForm({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="receivedAt">Fecha</Label>
-              <Input
-                id="receivedAt"
-                type="date"
+              <DatePicker
                 value={receivedAt}
-                onChange={(e) => setReceivedAt(e.target.value)}
-                className="h-9"
+                onChange={setReceivedAt}
               />
             </div>
             <div className="space-y-1.5">

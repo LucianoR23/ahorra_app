@@ -6,7 +6,22 @@ import { cn } from "@/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowDown01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
 
-const Select = SelectPrimitive.Root
+type SelectRootProps = React.ComponentProps<typeof SelectPrimitive.Root>
+
+// Base UI tipa onValueChange como (unknown | null), pero en este codebase
+// usamos "" como sentinel de "sin selección". Normalizamos para que los call
+// sites puedan pasar setters de useState<string> sin castear cada vez.
+function Select({
+  onValueChange,
+  ...props
+}: Omit<SelectRootProps, "onValueChange"> & {
+  onValueChange?: (value: string) => void
+}) {
+  const handler: SelectRootProps["onValueChange"] = onValueChange
+    ? (value) => onValueChange(((value as string | null) ?? ""))
+    : undefined
+  return <SelectPrimitive.Root {...props} onValueChange={handler} />
+}
 
 const SelectTrigger = React.forwardRef<
   HTMLButtonElement,
@@ -16,7 +31,7 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     data-slot="select-trigger"
     className={cn(
-      "flex h-9 w-full items-center justify-between rounded-md border border-input bg-input/20 px-3 text-sm outline-none transition-colors",
+      "flex h-9 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-input/20 px-3 text-sm outline-none transition-colors",
       "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
       "disabled:cursor-not-allowed disabled:opacity-50",
       "dark:bg-input/30",
@@ -72,9 +87,9 @@ const SelectItem = React.forwardRef<
     ref={ref}
     data-slot="select-item"
     className={cn(
-      "relative flex cursor-default select-none items-center gap-2 rounded-md py-1.5 pr-2 pl-7 text-sm outline-none transition-colors",
+      "relative flex cursor-pointer select-none items-center gap-2 rounded-md py-1.5 pr-2 pl-7 text-sm outline-none transition-colors",
       "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
-      "data-disabled:pointer-events-none data-disabled:opacity-50",
+      "data-disabled:pointer-events-none data-disabled:opacity-50 data-disabled:cursor-not-allowed",
       className
     )}
     {...props}

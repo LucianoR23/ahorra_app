@@ -73,7 +73,7 @@ export function ExpensesList() {
             <button
               type="button"
               onClick={() => { setOffset(0); setMonth(shiftMonth(month, -1)); }}
-              className="grid size-8 place-items-center rounded-md hover:bg-muted"
+              className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
               aria-label="Mes anterior"
             >
               <ChevronLeft className="size-4" />
@@ -82,7 +82,7 @@ export function ExpensesList() {
             <button
               type="button"
               onClick={() => { setOffset(0); setMonth(shiftMonth(month, 1)); }}
-              className="grid size-8 place-items-center rounded-md hover:bg-muted"
+              className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
               aria-label="Mes siguiente"
             >
               <ChevronRight className="size-4" />
@@ -121,7 +121,7 @@ export function ExpensesList() {
                 type="button"
                 onClick={() => setFixedFilter(f)}
                 className={cn(
-                  "flex-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
+                  "flex-1 cursor-pointer rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
                   fixedFilter === f
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-muted/70",

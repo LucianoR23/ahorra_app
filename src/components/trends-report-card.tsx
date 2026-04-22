@@ -60,7 +60,7 @@ export function TrendsReportCard() {
             type="button"
             onClick={() => setMonths(m)}
             className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+              "cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
               months === m
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/70",

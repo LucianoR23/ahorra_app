@@ -79,7 +79,7 @@ export function MonthlyReportCard() {
         <button
           type="button"
           onClick={() => setMonth(prevMonth(month))}
-          className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+          className="cursor-pointer rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
         >
           ‹ Anterior
         </button>
@@ -92,7 +92,7 @@ export function MonthlyReportCard() {
             "rounded-md px-2 py-1 text-xs",
             isCurrentOrFuture
               ? "cursor-not-allowed text-muted-foreground/40"
-              : "text-muted-foreground hover:bg-muted",
+              : "cursor-pointer text-muted-foreground hover:bg-muted",
           )}
         >
           Siguiente ›
