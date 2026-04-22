@@ -46,7 +46,9 @@ function AuthSplash() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-primary),transparent_60%)]/10"
       />
       <div className="relative flex flex-col items-center gap-5 animate-in fade-in zoom-in-95 duration-500">
-        <BrandLogo variant="wordmark" size={40} priority />
+        <span className="vt-brand-hero flex items-center">
+          <BrandLogo variant="wordmark" size={40} priority />
+        </span>
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[2px] text-muted-foreground">
           <Loader2 className="size-3 animate-spin text-primary" />
           Cargando

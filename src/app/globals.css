@@ -221,7 +221,7 @@
   view-transition-name: brand-hero;
 }
 ::view-transition-group(brand-hero) {
-  animation-duration: 360ms;
+  animation-duration: 1000ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
