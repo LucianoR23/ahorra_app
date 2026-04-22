@@ -32,7 +32,7 @@ export default function Page() {
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors",
+              "flex-1 cursor-pointer rounded-lg py-1.5 text-xs font-semibold transition-colors",
               tab === t.id
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",

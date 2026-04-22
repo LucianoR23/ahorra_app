@@ -71,7 +71,7 @@ export function ProfileConfig() {
           </div>
           <div>
             <h2 className="text-sm font-bold">Mi perfil</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[12px] text-muted-foreground">
               Nombre, apellido y email de tu cuenta.
             </p>
           </div>

@@ -20,6 +20,7 @@ import { fmtMoney, isoToday } from "@/lib/format";
 import type { Currency } from "@/lib/api/schemas";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { incomeSourceLabel } from "@/lib/labels";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -190,12 +191,9 @@ export function IncomeForm({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="receivedAt">Fecha</Label>
-              <Input
-                id="receivedAt"
-                type="date"
+              <DatePicker
                 value={receivedAt}
-                onChange={(e) => setReceivedAt(e.target.value)}
-                className="h-9"
+                onChange={setReceivedAt}
               />
             </div>
             <div className="space-y-1.5">

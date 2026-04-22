@@ -31,6 +31,7 @@ import { useHouseholdStore } from "@/stores/household";
 import { fmtMoney, fmtDateShort, isoToday } from "@/lib/format";
 import { ApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 function invalidateDebts() {
   swrMutate(
@@ -68,7 +69,7 @@ export function DebtsManager() {
       {/* Mi balance neto */}
       <Card className="rounded-2xl border-0 shadow-card">
         <CardContent className="p-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
             Mi balance neto
           </div>
           {meLoading ? (
@@ -103,7 +104,7 @@ export function DebtsManager() {
         <div className="mb-2 flex items-center justify-between px-1">
           <h2 className="text-sm font-bold">Deudas actuales</h2>
           {balances && (
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[12px] text-muted-foreground">
               {balances.balances.length} pendiente{balances.balances.length === 1 ? "" : "s"}
             </span>
           )}
@@ -192,7 +193,7 @@ export function DebtsManager() {
                       <ArrowRight className="size-3 text-muted-foreground" />
                       <span className="truncate font-semibold">{memberName(s.toUser)}</span>
                     </div>
-                    <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                    <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
                       {fmtDateShort(s.paidAt)}
                       {s.note ? ` · ${s.note}` : ""}
                     </div>
@@ -320,12 +321,7 @@ function PayDebtDialog({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label htmlFor="pay-date">Fecha</Label>
-              <Input
-                id="pay-date"
-                type="date"
-                value={paidAt}
-                onChange={(e) => setPaidAt(e.target.value)}
-              />
+              <DatePicker value={paidAt} onChange={setPaidAt} />
             </div>
             <div>
               <Label htmlFor="pay-note">Nota</Label>
@@ -376,7 +372,7 @@ function SettlementDetailButton({
           <button
             type="button"
             aria-label="Ver detalle del pago"
-            className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="grid size-7 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           />
         }
       >
@@ -474,7 +470,7 @@ function DeleteSettlementButton({ id }: { id: string }) {
       onClick={handleClick}
       disabled={busy}
       aria-label="Eliminar pago"
-      className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:opacity-40"
+      className="grid size-7 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"
     >
       {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
     </button>

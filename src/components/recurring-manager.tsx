@@ -37,6 +37,7 @@ import type { Currency, RecurringExpense, RecurringIncome } from "@/lib/api/sche
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FREQUENCY_LABELS, type RecurringFrequency } from "@/lib/labels";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -65,7 +66,7 @@ export function RecurringManager() {
           type="button"
           onClick={() => setTab("expenses")}
           className={cn(
-            "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+            "cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
             tab === "expenses" ? "bg-card shadow-card" : "text-muted-foreground",
           )}
         >
@@ -75,7 +76,7 @@ export function RecurringManager() {
           type="button"
           onClick={() => setTab("incomes")}
           className={cn(
-            "rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+            "cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
             tab === "incomes" ? "bg-card shadow-card" : "text-muted-foreground",
           )}
         >
@@ -327,7 +328,7 @@ function FrequencyFields({
             type="button"
             onClick={() => setFrequency(f)}
             className={cn(
-              "rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
+              "cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
               frequency === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
             )}
           >
@@ -606,11 +607,11 @@ function RecurringExpenseForm({
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <Label>Desde</Label>
-            <Input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="h-9" />
+            <DatePicker value={startsAt} onChange={setStartsAt} />
           </div>
           <div className="space-y-1.5">
             <Label>Hasta (opcional)</Label>
-            <Input type="date" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className="h-9" />
+            <DatePicker value={endsAt} onChange={setEndsAt} placeholder="Sin fecha fin" />
           </div>
         </div>
 
@@ -762,11 +763,11 @@ function RecurringIncomeForm({
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <Label>Desde</Label>
-            <Input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="h-9" />
+            <DatePicker value={startsAt} onChange={setStartsAt} />
           </div>
           <div className="space-y-1.5">
             <Label>Hasta (opcional)</Label>
-            <Input type="date" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className="h-9" />
+            <DatePicker value={endsAt} onChange={setEndsAt} placeholder="Sin fecha fin" />
           </div>
         </div>
 

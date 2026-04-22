@@ -342,7 +342,7 @@ function FilterChip({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+        "inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
         active
           ? "border-primary/60 bg-primary/10 text-primary"
           : "border-border bg-card text-muted-foreground hover:bg-muted",
@@ -490,7 +490,7 @@ function InsightRow({ insight }: { insight: Insight }) {
             type="button"
             onClick={handleMarkRead}
             aria-label="Marcar como leída"
-            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary active:scale-90"
+            className="grid size-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary active:scale-90"
           >
             {busyAction === "read" ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -503,7 +503,7 @@ function InsightRow({ insight }: { insight: Insight }) {
           type="button"
           onClick={handleDelete}
           aria-label="Eliminar notificación"
-          className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-90"
+          className="grid size-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-90"
         >
           {busyAction === "delete" ? (
             <Loader2 className="size-3.5 animate-spin" />

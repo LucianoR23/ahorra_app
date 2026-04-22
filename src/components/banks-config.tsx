@@ -41,7 +41,7 @@ export function BanksConfig() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold">Bancos</h2>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
               Instituciones financieras asociadas a tus medios de pago.
             </p>
           </div>
@@ -62,7 +62,7 @@ export function BanksConfig() {
                 <div className="min-w-0 flex-1">
                   <span className="text-sm font-semibold">{bank.name}</span>
                   {!bank.isActive && (
-                    <Badge variant="outline" className="ml-2 h-4 px-1.5 text-[9px]">
+                    <Badge variant="outline" className="ml-2 h-4 px-1.5 text-[10px]">
                       Inactivo
                     </Badge>
                   )}

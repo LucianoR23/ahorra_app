@@ -20,15 +20,15 @@ export default function Page() {
   const setUser = useAuthStore((s) => s.setUser);
   const currentHouseholdId = useHouseholdStore((s) => s.currentId);
 
-  const [email, setEmail] = useState<string | null>(null);
+  const [email] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : sessionStorage.getItem("pending_verify_email"),
+  );
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [checking, setChecking] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("pending_verify_email");
-    if (stored) setEmail(stored);
     return () => {
       if (cooldownRef.current) clearTimeout(cooldownRef.current);
     };

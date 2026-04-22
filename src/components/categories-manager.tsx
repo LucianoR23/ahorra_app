@@ -17,11 +17,13 @@ import {
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { useCategories } from "@/lib/api/hooks";
 import { createCategory, patchCategory, deleteCategory, type CategoryInput } from "@/lib/api/mutations";
 import type { Category } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 const PRESET_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e",
@@ -225,19 +227,34 @@ function CategoryFormDialog({
                   type="button"
                   onClick={() => setColor(c)}
                   className={cn(
-                    "size-7 rounded-full transition-all",
+                    "size-7 cursor-pointer rounded-full transition-all",
                     color === c && "ring-2 ring-foreground ring-offset-2",
                   )}
                   style={{ backgroundColor: c }}
                 />
               ))}
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="size-7 cursor-pointer rounded-full border-0 bg-transparent p-0"
-                title="Color personalizado"
-              />
+              <PopoverPrimitive.Root>
+                <PopoverPrimitive.Trigger
+                  type="button"
+                  title="Color personalizado"
+                  className={cn(
+                    "flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-border transition-all hover:border-foreground/40",
+                    !PRESET_COLORS.includes(color) && "border-solid border-foreground ring-2 ring-foreground ring-offset-2",
+                  )}
+                  style={!PRESET_COLORS.includes(color) ? { backgroundColor: color } : undefined}
+                >
+                  {PRESET_COLORS.includes(color) && (
+                    <Plus className="size-3 text-muted-foreground" />
+                  )}
+                </PopoverPrimitive.Trigger>
+                <PopoverPrimitive.Portal>
+                  <PopoverPrimitive.Positioner className="isolate z-60 outline-none" sideOffset={6} align="start">
+                    <PopoverPrimitive.Popup className="rounded-xl bg-popover shadow-md ring-1 ring-foreground/10 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-100 origin-(--transform-origin)">
+                      <ColorPicker value={color} onChange={setColor} />
+                    </PopoverPrimitive.Popup>
+                  </PopoverPrimitive.Positioner>
+                </PopoverPrimitive.Portal>
+              </PopoverPrimitive.Root>
             </div>
           </div>
 

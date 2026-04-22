@@ -97,7 +97,7 @@
 
 .logo:hover .dot,
 .link:hover .dot {
-  animation: dotPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: dotPulse 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .logo:hover .cursor,
@@ -129,11 +129,58 @@
 }
 
 /* ============================================================
+   MOBILE LOOP
+   Dispositivos sin hover: reproducimos el estado hover en bucle
+   cada ~3s para que la firma se sienta viva. */
+@media (hover: none) {
+  .strong {
+    animation: loopStrong 3s ease-in-out infinite;
+  }
+  .muted {
+    animation: loopMuted 3s ease-in-out infinite;
+  }
+  .dot {
+    animation: loopDot 3s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  }
+  .cursor {
+    opacity: 1;
+    transform: translateX(0);
+    animation: cursorBlink 1s step-end infinite;
+  }
+  .icon {
+    animation: loopIcon 3s ease-in-out infinite;
+  }
+}
+
+@keyframes loopStrong {
+  0%, 35%, 100% { font-variation-settings: "wght" 500; font-weight: 500; }
+  10%, 25% { font-variation-settings: "wght" 600; font-weight: 600; }
+}
+
+@keyframes loopMuted {
+  0%, 35%, 100% { opacity: 0.55; }
+  10%, 25% { opacity: 0.8; }
+}
+
+@keyframes loopDot {
+  0%, 100% { transform: scale(1); }
+  8%  { transform: scale(1.6); }
+  13% { transform: scale(0.9); }
+  20% { transform: scale(1); }
+}
+
+@keyframes loopIcon {
+  0%, 35%, 100% { transform: rotate(0deg) scale(1); }
+  10%, 25% { transform: rotate(-3deg) scale(1.05); }
+}
+
+/* ============================================================
    REDUCED MOTION
    Respetamos prefers-reduced-motion. */
 @media (prefers-reduced-motion: reduce) {
   .strong, .muted, .dot, .cursor, .icon {
     transition: none;
+    animation: none !important;
   }
   .logo:hover .dot, .link:hover .dot {
     animation: none;

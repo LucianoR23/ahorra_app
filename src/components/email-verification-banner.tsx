@@ -64,7 +64,7 @@ export function EmailVerificationBanner() {
           type="button"
           onClick={handleResend}
           disabled={busy}
-          className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-500/30 disabled:opacity-60 dark:text-amber-200"
+          className="mt-1.5 inline-flex cursor-pointer items-center gap-1 rounded-md bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:text-amber-200"
         >
           {busy && <Loader2 className="size-3 animate-spin" />}
           Reenviar email
@@ -74,7 +74,7 @@ export function EmailVerificationBanner() {
         type="button"
         onClick={handleDismiss}
         aria-label="Ocultar"
-        className="grid size-6 shrink-0 place-items-center rounded-md text-amber-700/70 transition-colors hover:bg-amber-500/20 hover:text-amber-800 dark:text-amber-300/70 dark:hover:text-amber-200"
+        className="grid size-6 shrink-0 cursor-pointer place-items-center rounded-md text-amber-700/70 transition-colors hover:bg-amber-500/20 hover:text-amber-800 dark:text-amber-300/70 dark:hover:text-amber-200"
       >
         <X className="size-3.5" />
       </button>

@@ -25,6 +25,7 @@ import type { Currency } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { PAYMENT_METHOD_KIND_LABELS } from "@/lib/labels";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -243,13 +244,10 @@ export function ExpenseForm() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="spentAt">Fecha</Label>
-              <Input
-                id="spentAt"
-                type="date"
+              <DatePicker
                 value={spentAt}
-                onChange={(e) => setSpentAt(e.target.value)}
+                onChange={setSpentAt}
                 aria-invalid={!!errors.spentAt}
-                className="h-9"
               />
             </div>
           </div>
