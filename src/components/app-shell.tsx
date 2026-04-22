@@ -139,7 +139,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 min-w-0 flex-col">
         <header className="md:hidden sticky top-0 z-40 flex items-center gap-3 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur-xl safe-top">
           <Link href="/" aria-label="Ahorro — Inicio" className="shrink-0">
-            <BrandLogo variant="icon" size={28} priority />
+            <BrandLogo variant="icon" size={28} priority className="size-7" />
           </Link>
           <div className="min-w-0 flex-1">
             <HouseholdSwitcher />
