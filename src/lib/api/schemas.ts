@@ -256,7 +256,7 @@ export const bankSchema = z.object({
 });
 export type Bank = z.infer<typeof bankSchema>;
 
-export const paymentMethodKindSchema = z.enum(["cash", "debit", "credit", "transfer", "other"]);
+export const paymentMethodKindSchema = z.enum(["cash", "debit", "credit", "wallet", "transfer"]);
 export type PaymentMethodKind = z.infer<typeof paymentMethodKindSchema>;
 
 export const paymentMethodSchema = z.object({

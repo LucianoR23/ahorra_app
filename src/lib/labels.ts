@@ -4,8 +4,8 @@ export const PAYMENT_METHOD_KIND_LABELS: Record<PaymentMethodKind, string> = {
   cash: "Efectivo",
   debit: "Débito",
   credit: "Crédito",
+  wallet: "Billetera Virtual",
   transfer: "Transferencia",
-  other: "Otro",
 };
 
 export type RecurringFrequency = "weekly" | "monthly" | "yearly";
