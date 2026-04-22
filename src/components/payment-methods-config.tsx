@@ -603,6 +603,3 @@ function PMFormDialog({
     </Dialog>
   );
 }
-
-// re-export for convenience
-export { cn };

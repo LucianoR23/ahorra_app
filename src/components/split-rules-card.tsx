@@ -12,6 +12,7 @@ import { patchSplitRules } from "@/lib/api/mutations";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import { ApiError } from "@/lib/api/errors";
+import { cn } from "@/lib/utils";
 
 export function SplitRulesCard() {
   const me = useAuthStore((s) => s.user);
@@ -34,10 +35,17 @@ export function SplitRulesCard() {
     setEdits({});
   }
 
+  const storedTotal = rules ? rules.rules.reduce((acc, r) => acc + r.weight, 0) : 0;
+  const toPct = (w: number) => (storedTotal > 0 ? (w / storedTotal) * 100 : 0);
+  const fmtPct = (n: number) => {
+    const r = Math.round(n * 10) / 10;
+    return Number.isInteger(r) ? r.toString() : r.toFixed(1);
+  };
+
   const weights: Record<string, string> = {};
   if (rules) {
     for (const r of rules.rules) {
-      weights[r.userId] = edits[r.userId] ?? r.weight.toString();
+      weights[r.userId] = edits[r.userId] ?? fmtPct(toPct(r.weight));
     }
   }
 
@@ -56,7 +64,7 @@ export function SplitRulesCard() {
     !!rules &&
     rules.rules.some((r) => {
       const n = Number(weights[r.userId]);
-      return !Number.isFinite(n) || Math.abs(n - r.weight) > 1e-6;
+      return !Number.isFinite(n) || Math.abs(n - toPct(r.weight)) > 1e-2;
     });
 
   const invalid =
@@ -65,6 +73,8 @@ export function SplitRulesCard() {
       const n = Number(v);
       return !Number.isFinite(n) || n < 0;
     });
+
+  const sumsTo100 = Math.abs(totalWeight - 100) < 1e-2;
 
   async function handleSave() {
     if (invalid || !rules) return;
@@ -98,7 +108,7 @@ export function SplitRulesCard() {
           <div>
             <h2 className="text-sm font-bold">Reglas de división</h2>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Pesos usados para dividir gastos compartidos cuando no hay override.
+              Porcentajes usados para dividir gastos compartidos cuando no hay override.
             </p>
           </div>
           {!isOwner && (
@@ -127,17 +137,23 @@ export function SplitRulesCard() {
                         {share.toFixed(1)}% del total
                       </div>
                     </div>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      disabled={!isOwner || saving}
-                      value={weights[r.userId] ?? ""}
-                      onChange={(e) =>
-                        setEdits((prev) => ({ ...prev, [r.userId]: e.target.value }))
-                      }
-                      className="h-9 w-24 text-right"
-                    />
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
+                        disabled={!isOwner || saving}
+                        value={weights[r.userId] ?? ""}
+                        onChange={(e) =>
+                          setEdits((prev) => ({ ...prev, [r.userId]: e.target.value }))
+                        }
+                        className="h-9 w-24 pr-6 text-right"
+                      />
+                      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">
+                        %
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -145,8 +161,10 @@ export function SplitRulesCard() {
 
             {isOwner && (
               <>
-                <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>Total de pesos: {totalWeight.toFixed(2)}</span>
+                <div className="mt-3 flex items-center justify-between text-[11px]">
+                  <span className={cn("text-muted-foreground", !sumsTo100 && "text-amber-500")}>
+                    Total: {fmtPct(totalWeight)}%{!sumsTo100 && " (debería sumar 100)"}
+                  </span>
                   {ok && !dirty && <span className="text-emerald-500">Guardado</span>}
                 </div>
                 {err && (
