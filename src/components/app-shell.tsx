@@ -219,6 +219,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                         return (
                           <SheetClose
                             key={n.id}
+                            nativeButton={false}
                             render={
                               <Link
                                 href={n.href}
