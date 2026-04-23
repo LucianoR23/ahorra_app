@@ -1,6 +1,6 @@
 export function fmtARS(n: number, opts: { compact?: boolean; decimals?: number } = {}) {
   const { compact = false, decimals = 0 } = opts;
-  if (compact && Math.abs(n) >= 1000) {
+  if (compact && Math.abs(n) >= 1000 && Math.abs(n) < 1_000_000) {
     const k = n / 1000;
     return "$" + (k >= 100 ? k.toFixed(0) : k.toFixed(1)) + "k";
   }
@@ -16,7 +16,7 @@ export function fmtARS(n: number, opts: { compact?: boolean; decimals?: number }
 export function fmtMoney(n: number, currency: string, opts: { compact?: boolean; decimals?: number } = {}) {
   const prefix = currency === "USD" ? "US$" : currency === "EUR" ? "€" : "$";
   const { compact = false, decimals = 0 } = opts;
-  if (compact && Math.abs(n) >= 1000) {
+  if (compact && Math.abs(n) >= 1000 && Math.abs(n) < 1_000_000) {
     const k = n / 1000;
     return prefix + (k >= 100 ? k.toFixed(0) : k.toFixed(1)) + "k";
   }

@@ -24,6 +24,8 @@ import {
   type InstallmentPatchInput,
 } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 import { fmtMoney, fmtDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Installment } from "@/lib/api/schemas";
@@ -50,7 +52,13 @@ export function ExpenseDetailView({ id }: { id: string }) {
   }
 
   async function onDelete() {
-    if (!confirm("¿Eliminar este gasto? Esta acción no se puede deshacer.")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este gasto?",
+      description: "Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setDeleting(true);
     try {
       await deleteExpense(id);
@@ -58,7 +66,7 @@ export function ExpenseDetailView({ id }: { id: string }) {
       router.replace("/movimientos");
     } catch (e) {
       setDeleting(false);
-      alert(e instanceof ApiError ? e.message : "No se pudo eliminar");
+      toast.error(e instanceof ApiError ? e.message : "No se pudo eliminar");
     }
   }
 
@@ -283,7 +291,7 @@ function InstallmentRow({
       await patchInstallment(expenseId, installment.installmentNumber, input);
       onChanged();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "No se pudo actualizar");
+      toast.error(e instanceof ApiError ? e.message : "No se pudo actualizar");
     } finally {
       setBusy(false);
     }

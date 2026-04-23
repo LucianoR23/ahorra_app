@@ -31,12 +31,23 @@ import {
   type RecurringIncomeInput,
 } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 import { useHouseholdStore } from "@/stores/household";
 import { fmtMoney, isoToday } from "@/lib/format";
 import type { Currency, RecurringExpense, RecurringIncome } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { FREQUENCY_LABELS, type RecurringFrequency } from "@/lib/labels";
+import {
+  FREQUENCY_LABELS,
+  INCOME_SOURCES,
+  MONTH_LABELS,
+  MONTH_LABELS_SHORT,
+  WEEKDAY_LABELS,
+  WEEKDAY_LABELS_SHORT,
+  incomeSourceLabel,
+  type RecurringFrequency,
+} from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
@@ -133,13 +144,11 @@ export function RecurringManager() {
 
 function frequencyLabel(r: { frequency: string; dayOfMonth?: number | null; dayOfWeek?: number | null; monthOfYear?: number | null }) {
   if (r.frequency === "weekly") {
-    const days = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
-    return `Cada ${days[r.dayOfWeek ?? 1]}`;
+    return `Cada ${WEEKDAY_LABELS_SHORT[r.dayOfWeek ?? 1]}`;
   }
   if (r.frequency === "monthly") return `Día ${r.dayOfMonth ?? 1} del mes`;
   if (r.frequency === "yearly") {
-    const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-    return `${r.dayOfMonth ?? 1} de ${months[(r.monthOfYear ?? 1) - 1]}`;
+    return `${r.dayOfMonth ?? 1} de ${MONTH_LABELS_SHORT[(r.monthOfYear ?? 1) - 1]}`;
   }
   return FREQUENCY_LABELS[r.frequency as RecurringFrequency] ?? r.frequency;
 }
@@ -159,21 +168,27 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
       await toggleRecurringExpense(rec.id, !rec.isActive);
       onChanged();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     } finally {
       setBusy(false);
     }
   }
 
   async function onDelete() {
-    if (!confirm("¿Eliminar este gasto fijo? Los gastos ya generados no se eliminan.")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este gasto fijo?",
+      description: "Los gastos ya generados no se eliminan.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteRecurringExpense(rec.id);
       onChanged();
     } catch (e) {
       setBusy(false);
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     }
   }
 
@@ -235,21 +250,26 @@ function RecurringIncomeCard({ rec, onChanged }: { rec: RecurringIncome; onChang
       await toggleRecurringIncome(rec.id, !rec.isActive);
       onChanged();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     } finally {
       setBusy(false);
     }
   }
 
   async function onDelete() {
-    if (!confirm("¿Eliminar este ingreso fijo?")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este ingreso fijo?",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteRecurringIncome(rec.id);
       onChanged();
     } catch (e) {
       setBusy(false);
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     }
   }
 
@@ -274,7 +294,7 @@ function RecurringIncomeCard({ rec, onChanged }: { rec: RecurringIncome; onChang
               {!rec.isActive && <Badge variant="outline" className="text-[9px]">Pausado</Badge>}
             </div>
             <div className="mt-0.5 text-[11px] text-muted-foreground">
-              {rec.source} · {frequencyLabel(rec)}
+              {incomeSourceLabel(rec.source)} · {frequencyLabel(rec)}
             </div>
           </div>
           <div className="shrink-0 text-right font-mono text-sm font-bold text-positive">
@@ -338,42 +358,26 @@ function FrequencyFields({
       </div>
 
       {frequency === "weekly" && (
-        <Select value={String(dayOfWeek ?? 1)} onValueChange={(v) => setDayOfWeek(Number(v))}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map((d, i) => (
-              <SelectItem key={i} value={String(i)}>{d}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {frequency === "monthly" && (
-        <Input
-          type="number"
-          min={1}
-          max={31}
-          value={dayOfMonth ?? 1}
-          onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
-          className="h-9"
-          placeholder="Día del mes"
-        />
-      )}
-
-      {frequency === "yearly" && (
-        <div className="grid grid-cols-2 gap-2">
-          <Select value={String(monthOfYear ?? 1)} onValueChange={(v) => setMonthOfYear(Number(v))}>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-normal text-muted-foreground">Día de la semana</Label>
+          <Select value={String(dayOfWeek ?? 1)} onValueChange={(v) => setDayOfWeek(Number(v))}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue>
+                {(v: string | null) => (v != null ? WEEKDAY_LABELS[Number(v)] : "")}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map((m, i) => (
-                <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+              {WEEKDAY_LABELS.map((d, i) => (
+                <SelectItem key={i} value={String(i)}>{d}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {frequency === "monthly" && (
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-normal text-muted-foreground">Día del mes</Label>
           <Input
             type="number"
             min={1}
@@ -381,8 +385,38 @@ function FrequencyFields({
             value={dayOfMonth ?? 1}
             onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
             className="h-9"
-            placeholder="Día"
           />
+        </div>
+      )}
+
+      {frequency === "yearly" && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-normal text-muted-foreground">Mes</Label>
+            <Select value={String(monthOfYear ?? 1)} onValueChange={(v) => setMonthOfYear(Number(v))}>
+              <SelectTrigger>
+                <SelectValue>
+                  {(v: string | null) => (v != null ? MONTH_LABELS[Number(v) - 1] : "")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {MONTH_LABELS.map((m, i) => (
+                  <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-normal text-muted-foreground">Día</Label>
+            <Input
+              type="number"
+              min={1}
+              max={31}
+              value={dayOfMonth ?? 1}
+              onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
+              className="h-9"
+            />
+          </div>
         </div>
       )}
     </div>
@@ -648,12 +682,12 @@ function RecurringIncomeForm({
   const { data: paymentMethods } = usePaymentMethods();
 
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [source, setSource] = useState(initial?.source ?? "salario");
+  const [source, setSource] = useState(initial?.source ?? "salary");
   const [amountStr, setAmountStr] = useState(initial ? String(initial.amount) : "");
   const [currency, setCurrency] = useState<Currency>((initial?.currency as Currency) ?? baseCurrency);
   const [paymentMethodId, setPaymentMethodId] = useState(initial?.paymentMethodId ?? "");
   const [frequency, setFrequency] = useState<"weekly" | "monthly" | "yearly">(initial?.frequency ?? "monthly");
-  const [dayOfMonth, setDayOfMonth] = useState<number | null>(initial?.dayOfMonth ?? 5);
+  const [dayOfMonth, setDayOfMonth] = useState<number | null>(initial?.dayOfMonth ?? 1);
   const [dayOfWeek, setDayOfWeek] = useState<number | null>(initial?.dayOfWeek ?? 1);
   const [monthOfYear, setMonthOfYear] = useState<number | null>(initial?.monthOfYear ?? 1);
   const [startsAt, setStartsAt] = useState(initial?.startsAt ?? isoToday());
@@ -708,7 +742,21 @@ function RecurringIncomeForm({
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <Label>Fuente</Label>
-            <Input value={source} onChange={(e) => setSource(e.target.value)} className="h-9" placeholder="salario" />
+            <Select
+              value={(INCOME_SOURCES as readonly string[]).includes(source) ? source : "other"}
+              onValueChange={(v) => setSource(v || "other")}
+            >
+              <SelectTrigger>
+                <SelectValue>
+                  {(v: string | null) => (v ? incomeSourceLabel(v) : "")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {INCOME_SOURCES.map((s) => (
+                  <SelectItem key={s} value={s}>{incomeSourceLabel(s)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label>Descripción</Label>

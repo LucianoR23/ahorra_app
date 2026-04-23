@@ -30,6 +30,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import { fmtMoney, fmtDateShort, isoToday } from "@/lib/format";
 import { ApiError } from "@/lib/api/errors";
+import { confirm } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -453,7 +454,13 @@ function SettlementDetailButton({
 function DeleteSettlementButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   async function handleClick() {
-    if (!confirm("¿Eliminar este pago? La deuda se restaurará.")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este pago?",
+      description: "La deuda se restaurará.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteSettlement(id);

@@ -10,6 +10,7 @@ import { usePushSubscriptions } from "@/lib/api/hooks";
 import { deletePushSubscriptionById } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { toast, toastError } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 
 function parseUserAgent(ua?: string): { label: string; isMobile: boolean } {
   if (!ua) return { label: "Dispositivo desconocido", isMobile: false };
@@ -61,7 +62,12 @@ export function DevicesCard() {
   }, []);
 
   async function handleRevoke(id: string) {
-    if (!confirm("¿Cerrar sesión de este dispositivo?")) return;
+    const ok = await confirm({
+      title: "¿Cerrar sesión de este dispositivo?",
+      confirmLabel: "Cerrar sesión",
+      destructive: true,
+    });
+    if (!ok) return;
     setRevokingId(id);
     try {
       await deletePushSubscriptionById(id);

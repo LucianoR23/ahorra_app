@@ -182,33 +182,39 @@ export function MonthlyReportCard() {
             <Card className="rounded-2xl border-0 shadow-card">
               <CardContent className="p-4">
                 <h3 className="mb-3 text-xs font-bold">Fijo vs Variable</h3>
-                <div className="flex items-center gap-4">
-                  <ResponsiveContainer width={120} height={120}>
-                    <PieChart>
-                      <Pie
-                        data={fvData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={30}
-                        outerRadius={55}
-                        dataKey="value"
-                        strokeWidth={0}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-col gap-2">
-                    {fvData.map((d) => (
-                      <div key={d.name}>
-                        <div className="flex items-center gap-1.5">
-                          <span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: d.fill }} />
-                          <span className="text-xs font-semibold">{d.name}</span>
+                {fvData.every((d) => d.value === 0) ? (
+                  <p className="py-4 text-center text-xs text-muted-foreground">
+                    Sin datos para este mes.
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <ResponsiveContainer width={120} height={120}>
+                      <PieChart>
+                        <Pie
+                          data={fvData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={55}
+                          dataKey="value"
+                          strokeWidth={0}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex flex-col gap-2">
+                      {fvData.map((d) => (
+                        <div key={d.name}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: d.fill }} />
+                            <span className="text-xs font-semibold">{d.name}</span>
+                          </div>
+                          <p className="ml-4 font-mono text-xs">{fmtMoney(d.value, cur)}</p>
+                          <p className="ml-4 text-[11px] text-muted-foreground">{d.pct.toFixed(1)}%</p>
                         </div>
-                        <p className="ml-4 font-mono text-xs">{fmtMoney(d.value, cur)}</p>
-                        <p className="ml-4 text-[11px] text-muted-foreground">{d.pct.toFixed(1)}%</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}

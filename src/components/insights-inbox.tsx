@@ -34,11 +34,22 @@ const PAGE_SIZE = 25;
 const TYPE_LABELS: Record<string, string> = {
   daily_summary: "Resumen diario",
   weekly_review: "Resumen semanal",
+  alert: "Alerta de meta",
   alert_goal_warning: "Alerta de meta",
   alert_goal_exceeded: "Meta excedida",
+  shared_expense: "Gasto compartido",
+  invite: "Invitación a hogar",
+  settlement: "Pago registrado",
 };
 
-type TypeFilter = "all" | "daily_summary" | "weekly_review" | "alert";
+type TypeFilter =
+  | "all"
+  | "daily_summary"
+  | "weekly_review"
+  | "alert"
+  | "shared_expense"
+  | "invite"
+  | "settlement";
 
 function invalidateInsights() {
   swrMutate(
@@ -260,6 +271,33 @@ export function InsightsInbox() {
             }}
           >
             Alertas
+          </FilterChip>
+          <FilterChip
+            active={typeFilter === "shared_expense"}
+            onClick={() => {
+              setTypeFilter("shared_expense");
+              setOffset(0);
+            }}
+          >
+            Gastos compartidos
+          </FilterChip>
+          <FilterChip
+            active={typeFilter === "invite"}
+            onClick={() => {
+              setTypeFilter("invite");
+              setOffset(0);
+            }}
+          >
+            Invitaciones
+          </FilterChip>
+          <FilterChip
+            active={typeFilter === "settlement"}
+            onClick={() => {
+              setTypeFilter("settlement");
+              setOffset(0);
+            }}
+          >
+            Pagos
           </FilterChip>
         </div>
       </div>

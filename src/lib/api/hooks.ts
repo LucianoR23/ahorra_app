@@ -203,7 +203,10 @@ export function useInsightsUnreadCount(userId?: string | null) {
     ? (["/insights/unread-count", Object.keys(query).length ? { query } : {}] as const)
     : null;
   return useSWR<InsightUnreadCount>(key, {
-    refreshInterval: 60_000,
+    // Polling de fallback. El refresh real lo hace useInsightsRealtime via
+    // SSE: ante cada `insight.created` se invalida esta key. Bajamos a 5min
+    // para cubrir caso de SSE caído / proxy que corta conexiones largas.
+    refreshInterval: 300_000,
     revalidateOnFocus: true,
   });
 }

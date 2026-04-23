@@ -22,6 +22,8 @@ import { useCategories } from "@/lib/api/hooks";
 import { createCategory, patchCategory, deleteCategory, type CategoryInput } from "@/lib/api/mutations";
 import type { Category } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
 import { ColorPicker } from "@/components/ui/color-picker";
 
@@ -107,13 +109,19 @@ export function CategoriesManager() {
 function DeleteCategoryButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   async function handle() {
-    if (!confirm("¿Eliminar esta categoría? Los gastos que la usan quedarán sin categoría.")) return;
+    const ok = await confirm({
+      title: "¿Eliminar esta categoría?",
+      description: "Los gastos que la usan quedarán sin categoría.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteCategory(id);
       invalidateCategories();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error al eliminar");
+      toast.error(e instanceof ApiError ? e.message : "Error al eliminar");
     } finally {
       setBusy(false);
     }

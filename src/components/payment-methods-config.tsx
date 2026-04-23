@@ -38,6 +38,8 @@ import {
 } from "@/lib/api/mutations";
 import type { PaymentMethod, PaymentMethodKind } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { PAYMENT_METHOD_KIND_LABELS as KIND_LABELS } from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -151,7 +153,7 @@ function TogglePMButton({ pm }: { pm: PaymentMethod }) {
       else await activatePaymentMethod(pm.id);
       invalidatePMs();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -274,7 +276,12 @@ function CreditCardDetail({ paymentMethodId }: { paymentMethodId: string }) {
 function DeletePeriodButton({ paymentMethodId, ym }: { paymentMethodId: string; ym: string }) {
   const [busy, setBusy] = useState(false);
   async function handle() {
-    if (!confirm(`¿Eliminar el período ${ym}?`)) return;
+    const ok = await confirm({
+      title: `¿Eliminar el período ${ym}?`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteCreditCardPeriod(paymentMethodId, ym);
@@ -284,7 +291,7 @@ function DeletePeriodButton({ paymentMethodId, ym }: { paymentMethodId: string; 
         { revalidate: true },
       );
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     } finally {
       setBusy(false);
     }

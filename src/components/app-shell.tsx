@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Plus, LayoutGrid, Bell } from "lucide-react";
+import { LogOut, Plus, LayoutGrid, Bell, Settings2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 
 const NAV_ORDER_MOBILE = ["home", "history", "add", "goals", "more"] as const;
+const CONFIG_IDS = new Set(["reports", "settings", "security", "admin"]);
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -48,6 +49,12 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
 
   const [moreOpen, setMoreOpen] = useState(false);
+  const configActive =
+    pathname.startsWith("/reportes") ||
+    pathname.startsWith("/ajustes") ||
+    pathname.startsWith("/seguridad") ||
+    pathname.startsWith("/admin");
+  const [configOpen, setConfigOpen] = useState(configActive);
   const popupRef = useRef<HTMLElement | null>(null);
   const overlayRef = useRef<HTMLElement | null>(null);
   const dragStartY = useRef<number | null>(null);
@@ -144,21 +151,21 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-svh">
       {/* Sidebar (md+) */}
-      <aside className="hidden md:flex sticky top-0 h-svh w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar px-3 py-5">
+      <aside className="hidden md:flex sticky top-0 h-svh w-64 shrink-0 flex-col border-r border-border bg-sidebar px-3 py-3">
         <Link
           href="/"
           aria-label="Ahorro — Inicio"
-          className="vt-brand-hero flex items-center px-2 pb-5"
+          className="vt-brand-hero flex items-center px-2 pb-3"
         >
-          <BrandLogo variant="wordmark" size={32} priority />
+          <BrandLogo variant="wordmark" size={30} priority />
         </Link>
 
-        <div className="px-1 pb-3">
+        <div className="px-1 pb-2">
           <HouseholdSwitcher />
         </div>
 
-        <nav className="flex flex-col gap-0.5">
-          {visibleNavItems.map((n) => {
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto pr-0.5">
+          {visibleNavItems.filter((n) => !CONFIG_IDS.has(n.id)).map((n) => {
             const active = isActive(pathname, n.href);
             const Icon = n.icon;
             return (
@@ -166,37 +173,93 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                 key={n.id}
                 href={n.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[15px] font-medium transition-colors",
+                  "flex items-center gap-3 rounded-[10px] px-3 py-2 text-sm font-medium transition-colors",
                   active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
                 )}
               >
-                <Icon className={cn("size-5", active && "text-primary")} />
+                <Icon className={cn("size-4.5", active && "text-primary")} />
                 <span className="flex-1">{n.label}</span>
                 {n.id === "notifications" && <InsightsUnreadBadge />}
               </Link>
             );
           })}
+
+          <button
+            type="button"
+            onClick={() => setConfigOpen((v) => !v)}
+            aria-expanded={configOpen}
+            className={cn(
+              "mt-0.5 flex cursor-pointer items-center gap-3 rounded-[10px] px-3 py-2 text-sm font-medium transition-colors",
+              configActive
+                ? "text-foreground"
+                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+            )}
+          >
+            <Settings2 className={cn("size-4.5", configActive && "text-primary")} />
+            <span className="flex-1 text-left">Configuración</span>
+            <ChevronDown
+              className={cn("size-4 transition-transform", configOpen && "rotate-180")}
+            />
+          </button>
+
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+              configOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+            )}
+          >
+            <div className="overflow-hidden">
+              <div className="flex flex-col gap-0.5 pl-3 pt-0.5">
+                {visibleNavItems.filter((n) => CONFIG_IDS.has(n.id)).map((n) => {
+                  const active = isActive(pathname, n.href);
+                  const Icon = n.icon;
+                  return (
+                    <Link
+                      key={n.id}
+                      href={n.href}
+                      tabIndex={configOpen ? 0 : -1}
+                      className={cn(
+                        "flex items-center gap-3 rounded-[10px] px-3 py-1.5 text-[13px] font-medium transition-colors",
+                        active
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                      )}
+                    >
+                      <Icon className={cn("size-4", active && "text-primary")} />
+                      <span className="flex-1">{n.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </nav>
 
-        <div className="mt-auto flex flex-col gap-3">
+        <div className="mt-3 flex flex-col gap-2">
           <Link
             href="/agregar"
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-card transition-colors hover:bg-primary/90"
+            className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold shadow-card transition-colors hover:bg-primary/90"
           >
-            <Plus className="size-4" />
+            <Plus className="size-3.5" />
             Agregar gasto
           </Link>
 
           <div className="flex items-center gap-2.5 rounded-xl bg-secondary p-3">
-            <div className="grid size-8 place-items-center rounded-[10px] bg-linear-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold">{displayName}</div>
-              <div className="truncate text-[10px] text-muted-foreground">{user?.email}</div>
-            </div>
+            <Link
+              href="/ajustes"
+              aria-label="Ir a ajustes"
+              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-lg transition-opacity hover:opacity-80"
+            >
+              <div className="grid size-8 place-items-center rounded-[10px] bg-linear-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-semibold">{displayName}</div>
+                <div className="truncate text-[10px] text-muted-foreground">{user?.email}</div>
+              </div>
+            </Link>
             <ThemeToggle />
             <button
               type="button"

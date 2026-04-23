@@ -37,6 +37,8 @@ import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import { fmtMoney } from "@/lib/format";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -186,7 +188,7 @@ export function GoalsManager() {
                         await toggleGoal(p.goal.id, !p.goal.isActive);
                         invalidateGoals();
                       } catch (e) {
-                        alert(e instanceof ApiError ? e.message : "Error");
+                        toast.error(e instanceof ApiError ? e.message : "Error");
                       }
                     }}
                   >
@@ -323,13 +325,18 @@ function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: st
 function DeleteGoalButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   async function handle() {
-    if (!confirm("¿Eliminar este objetivo?")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este objetivo?",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteGoal(id);
       invalidateGoals();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     } finally {
       setBusy(false);
     }

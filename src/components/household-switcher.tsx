@@ -49,7 +49,10 @@ export function HouseholdSwitcher({ className }: { className?: string }) {
         )}
         <ChevronsUpDown className="size-3 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-50">
+      <DropdownMenuContent
+        align="start"
+        className="min-w-50 duration-200 ease-out"
+      >
         <DropdownMenuGroup>
           <DropdownMenuLabel>Cambiar hogar</DropdownMenuLabel>
         </DropdownMenuGroup>

@@ -54,6 +54,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import { ApiError } from "@/lib/api/errors";
 import { toast, toastError } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 function invalidateHouseholds() {
@@ -454,7 +455,14 @@ function InviteRow({
   }
 
   async function handleRevoke() {
-    if (!confirm(`¿Cancelar la invitación a ${invite.email}?`)) return;
+    const ok = await confirm({
+      title: "¿Cancelar invitación?",
+      description: `Se cancelará la invitación a ${invite.email}.`,
+      confirmLabel: "Cancelar invitación",
+      cancelLabel: "Volver",
+      destructive: true,
+    });
+    if (!ok) return;
     setBusy("revoke");
     try {
       await revokeHouseholdInvite(invite.id);

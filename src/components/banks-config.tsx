@@ -22,6 +22,7 @@ import { useBanks } from "@/lib/api/hooks";
 import { createBank, patchBank, activateBank, deactivateBank } from "@/lib/api/mutations";
 import type { Bank } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
 
 function invalidateBanks() {
   swrMutate(
@@ -102,7 +103,7 @@ function ToggleBankButton({ bank }: { bank: Bank }) {
       }
       invalidateBanks();
     } catch (e) {
-      alert(e instanceof ApiError ? e.message : "Error");
+      toast.error(e instanceof ApiError ? e.message : "Error");
     } finally {
       setBusy(false);
     }

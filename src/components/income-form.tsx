@@ -24,7 +24,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
-const SOURCE_PRESETS = ["salario", "freelance", "venta", "regalo", "interes", "otro"];
+const SOURCE_PRESETS = ["salary", "freelance", "gift", "investment", "refund", "other"];
 
 export function IncomeForm({
   initial,
@@ -50,7 +50,7 @@ export function IncomeForm({
 
   const [amountStr, setAmountStr] = useState(initial ? String(initial.amount) : "");
   const [currency, setCurrency] = useState<Currency>((initial?.currency as Currency) ?? baseCurrency);
-  const [source, setSource] = useState(initial?.source ?? "salario");
+  const [source, setSource] = useState(initial?.source ?? "salary");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [receivedAt, setReceivedAt] = useState(initial?.receivedAt ?? isoToday());
   const [receivedBy, setReceivedBy] = useState<string>("");
@@ -152,8 +152,8 @@ export function IncomeForm({
           <div className="space-y-1.5">
             <Label htmlFor="source">Fuente</Label>
             <Select
-              value={SOURCE_PRESETS.includes(source) ? source : "otro"}
-              onValueChange={(v) => setSource(v === "otro" || v == null ? "" : v)}
+              value={SOURCE_PRESETS.includes(source) ? source : "other"}
+              onValueChange={(v) => setSource(v === "other" || v == null ? "" : v)}
             >
               <SelectTrigger id="source">
                 <SelectValue>

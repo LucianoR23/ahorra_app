@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { useIncome, useHouseholdMembers } from "@/lib/api/hooks";
 import { deleteIncome, patchIncome } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
+import { confirm } from "@/lib/confirm";
 import { fmtMoney, fmtDateShort } from "@/lib/format";
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -32,7 +34,12 @@ export function IncomeDetailView({ id }: { id: string }) {
   }
 
   async function onDelete() {
-    if (!confirm("¿Eliminar este ingreso?")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este ingreso?",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
     setDeleting(true);
     try {
       await deleteIncome(id);
@@ -40,7 +47,7 @@ export function IncomeDetailView({ id }: { id: string }) {
       router.replace("/ingresos");
     } catch (e) {
       setDeleting(false);
-      alert(e instanceof ApiError ? e.message : "No se pudo eliminar");
+      toast.error(e instanceof ApiError ? e.message : "No se pudo eliminar");
     }
   }
 

@@ -129,9 +129,11 @@ export function TrendsReportCard() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-2 gap-3">
-            {data?.points.slice(-1).map((p) => (
-              <>
+          {(() => {
+            const last = data?.points.at(-1);
+            if (!last) return null;
+            return (
+              <div className="grid grid-cols-2 gap-3">
                 {LINES.map((l) => (
                   <Card key={l.key} className="rounded-2xl border-0 shadow-card">
                     <CardContent className="p-3">
@@ -140,14 +142,14 @@ export function TrendsReportCard() {
                         <p className="text-[10px] text-muted-foreground">{l.label} (último mes)</p>
                       </div>
                       <p className="mt-0.5 font-mono text-sm font-bold">
-                        {fmtMoney(p[l.key], cur)}
+                        {fmtMoney(last[l.key], cur)}
                       </p>
                     </CardContent>
                   </Card>
                 ))}
-              </>
-            ))}
-          </div>
+              </div>
+            );
+          })()}
         </>
       )}
     </div>

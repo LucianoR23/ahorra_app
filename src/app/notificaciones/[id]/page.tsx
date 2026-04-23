@@ -170,17 +170,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               {data.body}
             </div>
 
-            {data.metadata && Object.keys(data.metadata).length > 0 && (
-              <details className="rounded-lg border border-border/60 bg-muted/20 p-3 text-xs">
-                <summary className="cursor-pointer font-semibold text-muted-foreground">
-                  Metadatos
-                </summary>
-                <pre className="mt-2 overflow-x-auto font-mono text-[10px] text-muted-foreground">
-                  {JSON.stringify(data.metadata, null, 2)}
-                </pre>
-              </details>
-            )}
-
             <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-3">
               {!data.isRead && (
                 <Button
