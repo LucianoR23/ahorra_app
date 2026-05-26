@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Repeat, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Repeat, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,17 @@ export function ExpensesList() {
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [fixedFilter, setFixedFilter] = useState<FixedFilter>("all");
   const [offset, setOffset] = useState(0);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    setOffset(0);
+  }, [debouncedQuery]);
 
   const { data: categories } = useCategories();
   const { data: paymentMethods } = usePaymentMethods();
@@ -34,6 +46,7 @@ export function ExpensesList() {
     to: monthEnd(month),
     categoryId: categoryId || undefined,
     paymentMethodId: paymentMethodId || undefined,
+    q: debouncedQuery || undefined,
     limit: PAGE,
     offset,
   });
@@ -87,6 +100,28 @@ export function ExpensesList() {
             >
               <ChevronRight className="size-4" />
             </button>
+          </div>
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por descripción"
+              className="pl-9 pr-9 text-xs"
+              aria-label="Buscar movimientos"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Limpiar búsqueda"
+                className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-2">

@@ -69,6 +69,7 @@ export type ExpenseFilters = {
   paymentMethodId?: string;
   from?: string;
   to?: string;
+  q?: string;
   limit?: number;
   offset?: number;
 };
@@ -80,6 +81,7 @@ export function useExpenses(filters: ExpenseFilters = {}) {
   if (filters.paymentMethodId) query.paymentMethodId = filters.paymentMethodId;
   if (filters.from) query.from = filters.from;
   if (filters.to) query.to = filters.to;
+  if (filters.q) query.q = filters.q;
   query.limit = filters.limit ?? 50;
   query.offset = filters.offset ?? 0;
   const key = token && householdId ? (["/expenses", { query }] as const) : null;
@@ -167,6 +169,7 @@ export type InsightFilters = {
   from?: string;
   to?: string;
   type?: string;
+  q?: string;
   limit?: number;
   offset?: number;
 };
@@ -179,6 +182,7 @@ export function useInsights(filters: InsightFilters = {}) {
   if (filters.from) query.from = filters.from;
   if (filters.to) query.to = filters.to;
   if (filters.type) query.type = filters.type;
+  if (filters.q) query.q = filters.q;
   if (typeof filters.limit === "number") query.limit = filters.limit;
   if (typeof filters.offset === "number") query.offset = filters.offset;
   const key = token && householdId ? (["/insights", { query }] as const) : null;
@@ -267,6 +271,7 @@ export function useBalancesMe() {
 export type SettlementsFilters = {
   fromUser?: string;
   toUser?: string;
+  withUser?: string;
   from?: string;
   to?: string;
   limit?: number;
@@ -278,6 +283,7 @@ export function useSettlements(filters: SettlementsFilters = {}) {
   const query: Record<string, string | number | undefined> = {};
   if (filters.fromUser) query.fromUser = filters.fromUser;
   if (filters.toUser) query.toUser = filters.toUser;
+  if (filters.withUser) query.withUser = filters.withUser;
   if (filters.from) query.from = filters.from;
   if (filters.to) query.to = filters.to;
   query.limit = filters.limit ?? 50;

@@ -20,5 +20,5 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "notifications", label: "Notificaciones", href: "/notificaciones", icon: Bell },
   { id: "settings", label: "Ajustes", href: "/ajustes", icon: Settings },
   { id: "security", label: "Seguridad", href: "/seguridad", icon: Shield },
-  { id: "admin", label: "Admin", href: "/admin", icon: ShieldCheck, adminOnly: true },
+  { id: "admin", label: "Superadmin", href: "/admin", icon: ShieldCheck, adminOnly: true },
 ];

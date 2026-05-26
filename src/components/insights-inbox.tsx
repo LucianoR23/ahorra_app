@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { mutate as swrMutate } from "swr";
 import {
@@ -15,9 +15,12 @@ import {
   Filter,
   ChevronRight,
   ChevronLeft,
+  Search,
+  X,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInsights, useInsightsUnreadCount } from "@/lib/api/hooks";
 import {
@@ -132,6 +135,19 @@ export function InsightsInbox() {
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [offset, setOffset] = useState(0);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  // Debounce 250ms para no pegarle al backend en cada tecla.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Reset offset cuando cambia la búsqueda (la página actual ya no aplica).
+  useEffect(() => {
+    setOffset(0);
+  }, [debouncedQuery]);
 
   const typeQuery =
     typeFilter === "all"
@@ -143,6 +159,7 @@ export function InsightsInbox() {
   const { data: insights, isLoading, error } = useInsights({
     unread: onlyUnread || undefined,
     type: typeQuery,
+    q: debouncedQuery || undefined,
     limit: PAGE_SIZE,
     offset,
   });
@@ -150,11 +167,14 @@ export function InsightsInbox() {
   const { data: unreadData } = useInsightsUnreadCount();
   const unreadTotal = unreadData?.unread ?? 0;
 
+  // Búsqueda (debouncedQuery) ya se hizo server-side. Solo queda el
+  // narrow client-side cuando typeFilter="alert" porque la API no soporta
+  // el or de dos tipos en un solo request.
   const filtered = useMemo(() => {
     if (!insights) return [];
     if (typeFilter === "alert") {
-      return insights.filter((i) =>
-        i.insightType === "alert_goal_warning" || i.insightType === "alert_goal_exceeded",
+      return insights.filter(
+        (i) => i.insightType === "alert_goal_warning" || i.insightType === "alert_goal_exceeded",
       );
     }
     return insights;
@@ -221,6 +241,28 @@ export function InsightsInbox() {
       </div>
 
       <div className="flex flex-col gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar en notificaciones"
+            className="pl-9 pr-9"
+            aria-label="Buscar en notificaciones"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Limpiar búsqueda"
+              className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+
         <div
           className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
@@ -317,7 +359,7 @@ export function InsightsInbox() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState onlyUnread={onlyUnread} />
+        <EmptyState onlyUnread={onlyUnread} searching={debouncedQuery.length > 0} />
       ) : (
         <div className="flex flex-col gap-4">
           {grouped.map(([key, items]) => (
@@ -392,22 +434,34 @@ function FilterChip({
   );
 }
 
-function EmptyState({ onlyUnread }: { onlyUnread: boolean }) {
+function EmptyState({
+  onlyUnread,
+  searching = false,
+}: {
+  onlyUnread: boolean;
+  searching?: boolean;
+}) {
+  let title: string;
+  let body: string;
+  if (searching) {
+    title = "Sin resultados";
+    body = "Ninguna notificación coincide con la búsqueda. Probá con otras palabras.";
+  } else if (onlyUnread) {
+    title = "No hay notificaciones sin leer";
+    body = "Ya estás al día con todo.";
+  } else {
+    title = "No tenés notificaciones";
+    body = "Tu coach te avisará cuando haya novedades en los gastos.";
+  }
   return (
     <Card className="rounded-2xl border-0 shadow-card">
       <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
         <div className="grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
-          <Inbox className="size-6" />
+          {searching ? <Search className="size-6" /> : <Inbox className="size-6" />}
         </div>
         <div>
-          <p className="text-sm font-semibold">
-            {onlyUnread ? "No hay notificaciones sin leer" : "No tenés notificaciones"}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {onlyUnread
-              ? "Ya estás al día con todo."
-              : "Tu coach te avisará cuando haya novedades en los gastos."}
-          </p>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{body}</p>
         </div>
       </CardContent>
     </Card>

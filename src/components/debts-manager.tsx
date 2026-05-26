@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { mutate as swrMutate } from "swr";
 import { ArrowRight, TrendingDown, TrendingUp, Trash2, Loader2, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +33,7 @@ import { ApiError } from "@/lib/api/errors";
 import { confirm } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 function invalidateDebts() {
   swrMutate(
@@ -55,7 +56,26 @@ export function DebtsManager() {
   const { data: balances, isLoading: balLoading } = useBalances();
   const { data: meBal, isLoading: meLoading } = useBalancesMe();
   const { data: members } = useHouseholdMembers();
-  const { data: settlements, isLoading: sLoading } = useSettlements({ limit: 50 });
+
+  // Filtros del historial. "withUser" = OR (from o to), 'datePreset' resuelve
+  // a from/to ISO via computeRange().
+  const [withUserId, setWithUserId] = useState<string>("");
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
+  const [singleDay, setSingleDay] = useState<string>("");
+
+  const dateRange = useMemo(
+    () => computeRange(datePreset, customFrom, customTo, singleDay),
+    [datePreset, customFrom, customTo, singleDay],
+  );
+
+  const { data: settlements, isLoading: sLoading } = useSettlements({
+    limit: 50,
+    withUser: withUserId || undefined,
+    from: dateRange.from,
+    to: dateRange.to,
+  });
 
   const memberName = (id: string) => {
     if (id === me?.id) return "Yo";
@@ -166,7 +186,73 @@ export function DebtsManager() {
 
       {/* Historial */}
       <div>
-        <h2 className="mb-2 px-1 text-sm font-bold">Historial de pagos</h2>
+        <div className="mb-2 flex items-center justify-between gap-2 px-1">
+          <h2 className="text-sm font-bold">Historial de pagos</h2>
+          {(withUserId || datePreset !== "all") && (
+            <button
+              type="button"
+              onClick={() => {
+                setWithUserId("");
+                setDatePreset("all");
+                setCustomFrom("");
+                setCustomTo("");
+                setSingleDay("");
+              }}
+              className="cursor-pointer text-[11px] font-semibold text-primary hover:underline"
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+
+        {/* Filtros */}
+        <Card className="mb-2 rounded-2xl border-0 shadow-card">
+          <CardContent className="space-y-2 p-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <FilterChip active={withUserId === ""} onClick={() => setWithUserId("")}>
+                Todos
+              </FilterChip>
+              {members?.map((m) => {
+                const label = m.userId === me?.id ? "Yo" : `${m.firstName} ${m.lastName[0] ?? ""}.`;
+                return (
+                  <FilterChip
+                    key={m.userId}
+                    active={withUserId === m.userId}
+                    onClick={() => setWithUserId(m.userId)}
+                  >
+                    {label}
+                  </FilterChip>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Select value={datePreset} onValueChange={(v) => setDatePreset((v as DatePreset) ?? "all")}>
+                <SelectTrigger className="text-xs">
+                  <SelectValue>
+                    {(v: string | null) => DATE_PRESET_LABELS[(v ?? "all") as DatePreset]}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(DATE_PRESET_LABELS) as DatePreset[]).map((k) => (
+                    <SelectItem key={k} value={k}>{DATE_PRESET_LABELS[k]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {datePreset === "day" && (
+                <DatePicker value={singleDay} onChange={setSingleDay} placeholder="Día" />
+              )}
+              {datePreset === "range" && (
+                <div className="flex flex-1 gap-2">
+                  <DatePicker value={customFrom} onChange={setCustomFrom} placeholder="Desde" />
+                  <DatePicker value={customTo} onChange={setCustomTo} placeholder="Hasta" />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="rounded-2xl border-0 shadow-card overflow-hidden">
           {sLoading ? (
             <div className="p-3 space-y-2">
@@ -213,6 +299,96 @@ export function DebtsManager() {
         </Card>
       </div>
     </div>
+  );
+}
+
+type DatePreset = "all" | "this_month" | "last_month" | "last_30" | "last_90" | "year" | "day" | "range";
+
+const DATE_PRESET_LABELS: Record<DatePreset, string> = {
+  all: "Todo el período",
+  this_month: "Este mes",
+  last_month: "Mes pasado",
+  last_30: "Últimos 30 días",
+  last_90: "Últimos 90 días",
+  year: "Este año",
+  day: "Día específico",
+  range: "Rango personalizado",
+};
+
+function toIso(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function computeRange(
+  preset: DatePreset,
+  customFrom: string,
+  customTo: string,
+  singleDay: string,
+): { from?: string; to?: string } {
+  const now = new Date();
+  switch (preset) {
+    case "all":
+      return {};
+    case "this_month": {
+      const from = new Date(now.getFullYear(), now.getMonth(), 1);
+      const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { from: toIso(from), to: toIso(to) };
+    }
+    case "last_month": {
+      const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const to = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { from: toIso(from), to: toIso(to) };
+    }
+    case "last_30": {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 30);
+      return { from: toIso(from), to: toIso(now) };
+    }
+    case "last_90": {
+      const from = new Date(now);
+      from.setDate(from.getDate() - 90);
+      return { from: toIso(from), to: toIso(now) };
+    }
+    case "year": {
+      const from = new Date(now.getFullYear(), 0, 1);
+      const to = new Date(now.getFullYear(), 11, 31);
+      return { from: toIso(from), to: toIso(to) };
+    }
+    case "day":
+      return singleDay ? { from: singleDay, to: singleDay } : {};
+    case "range":
+      return {
+        from: customFrom || undefined,
+        to: customTo || undefined,
+      };
+  }
+}
+
+function FilterChip({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex shrink-0 cursor-pointer items-center rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors",
+        active
+          ? "border-primary/60 bg-primary/10 text-primary"
+          : "border-border bg-card text-muted-foreground hover:bg-muted",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
