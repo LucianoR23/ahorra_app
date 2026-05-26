@@ -3,3 +3,5 @@ onlyBuiltDependencies:
 ignoredBuiltDependencies:
   - msw
   - unrs-resolver
+allowBuilds:
+  msw: false
