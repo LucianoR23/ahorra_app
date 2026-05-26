@@ -322,9 +322,15 @@ function PeriodFormDialog({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const dueBeforeClosing = !!closingDate && !!dueDate && dueDate < closingDate;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!ym || !closingDate || !dueDate) return;
+    if (dueBeforeClosing) {
+      setErr("El vencimiento no puede ser anterior al cierre.");
+      return;
+    }
     setErr(null);
     setSaving(true);
     try {
@@ -345,21 +351,26 @@ function PeriodFormDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div>
-            <Label htmlFor="period-ym">Mes (YYYY-MM)</Label>
+            <Label htmlFor="period-ym">Mes (YYYY-MM) *</Label>
             <Input id="period-ym" value={ym} onChange={(e) => setYm(e.target.value)} placeholder="2026-04" />
           </div>
           <div>
-            <Label htmlFor="period-closing">Fecha de cierre</Label>
+            <Label htmlFor="period-closing">Fecha de cierre *</Label>
             <DatePicker value={closingDate} onChange={setClosingDate} />
           </div>
           <div>
-            <Label htmlFor="period-due">Fecha de vencimiento</Label>
-            <DatePicker value={dueDate} onChange={setDueDate} />
+            <Label htmlFor="period-due">Fecha de vencimiento *</Label>
+            <DatePicker value={dueDate} onChange={setDueDate} aria-invalid={dueBeforeClosing} />
           </div>
+          {dueBeforeClosing && (
+            <p className="text-[11px] font-medium text-destructive">
+              El vencimiento no puede ser anterior al cierre.
+            </p>
+          )}
           {err && <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{err}</div>}
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="ghost" />}>Cancelar</DialogClose>
-            <Button type="submit" disabled={!ym || !closingDate || !dueDate || saving}>
+            <Button type="submit" disabled={!ym || !closingDate || !dueDate || dueBeforeClosing || saving}>
               {saving && <Loader2 className="mr-1 size-3.5 animate-spin" />}
               Guardar
             </Button>
@@ -418,7 +429,7 @@ function CreditCardEditDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div>
-            <Label htmlFor="cc-alias">Alias</Label>
+            <Label htmlFor="cc-alias">Alias *</Label>
             <Input id="cc-alias" value={alias} onChange={(e) => setAlias(e.target.value)} />
           </div>
           <div>
@@ -427,11 +438,11 @@ function CreditCardEditDialog({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label htmlFor="cc-closing">Día de cierre</Label>
+              <Label htmlFor="cc-closing">Día de cierre *</Label>
               <Input id="cc-closing" type="number" min={1} max={31} value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="cc-due">Día de vencimiento</Label>
+              <Label htmlFor="cc-due">Día de vencimiento *</Label>
               <Input id="cc-due" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} />
             </div>
           </div>
@@ -483,6 +494,11 @@ function PMFormDialog({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Validación derivada: si el vencimiento ya quedó cargado antes del cierre,
+  // mostramos el aviso enseguida (sin esperar al submit) y bloqueamos "Crear".
+  const dueBeforeClosing =
+    kind === "credit" && !!ccClosingDate && !!ccDueDate && ccDueDate < ccClosingDate;
+
   function resetForm() {
     setName(pm?.name ?? "");
     setKind(pm?.kind ?? "cash");
@@ -505,7 +521,12 @@ function PMFormDialog({
           bankId: bankId || null,
           allowsInstallments,
         };
-        if (kind === "credit" && ccAlias.trim()) {
+        if (kind === "credit") {
+          if (!ccAlias.trim()) {
+            setErr("Ingresá el alias de la tarjeta.");
+            setSaving(false);
+            return;
+          }
           if (!ccClosingDate || !ccDueDate) {
             setErr("Ingresá la fecha del próximo cierre y vencimiento.");
             setSaving(false);
@@ -561,16 +582,18 @@ function PMFormDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div>
-            <Label htmlFor="pm-name">Nombre</Label>
+            <Label htmlFor="pm-name">Nombre *</Label>
             <Input id="pm-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Visa Galicia" autoFocus />
           </div>
 
           {mode === "create" && (
             <div>
-              <Label>Tipo</Label>
+              <Label>Tipo *</Label>
               <Select value={kind} onValueChange={(v) => v && setKind(v as PaymentMethodKind)}>
                 <SelectTrigger className="text-xs">
-                  <SelectValue />
+                  <SelectValue>
+                    {(v: PaymentMethodKind | null) => (v ? KIND_LABELS[v] : "")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(KIND_LABELS) as PaymentMethodKind[]).map((k) => (
@@ -611,7 +634,7 @@ function PMFormDialog({
               <p className="mb-2 text-[12px] font-semibold">Datos de la tarjeta de crédito</p>
               <div className="flex flex-col gap-2">
                 <div>
-                  <Label htmlFor="cc-alias-new">Alias</Label>
+                  <Label htmlFor="cc-alias-new">Alias *</Label>
                   <Input id="cc-alias-new" value={ccAlias} onChange={(e) => setCcAlias(e.target.value)} placeholder="Ej. Visa" />
                 </div>
                 <div>
@@ -620,14 +643,19 @@ function PMFormDialog({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label htmlFor="cc-closing-new">Próximo cierre</Label>
-                    <Input id="cc-closing-new" type="date" value={ccClosingDate} onChange={(e) => setCcClosingDate(e.target.value)} />
+                    <Label htmlFor="cc-closing-new">Próximo cierre *</Label>
+                    <DatePicker value={ccClosingDate} onChange={setCcClosingDate} />
                   </div>
                   <div>
-                    <Label htmlFor="cc-due-new">Próximo vencimiento</Label>
-                    <Input id="cc-due-new" type="date" value={ccDueDate} onChange={(e) => setCcDueDate(e.target.value)} />
+                    <Label htmlFor="cc-due-new">Próximo vencimiento *</Label>
+                    <DatePicker value={ccDueDate} onChange={setCcDueDate} aria-invalid={dueBeforeClosing} />
                   </div>
                 </div>
+                {dueBeforeClosing && (
+                  <p className="text-[11px] font-medium text-destructive">
+                    El vencimiento no puede ser anterior al cierre.
+                  </p>
+                )}
                 <p className="text-[10px] text-muted-foreground">
                   Si el cierre cae en un mes y el vencimiento en otro (ej. 30/04 y 20/05), cargá las fechas exactas del próximo ciclo.
                 </p>
@@ -639,7 +667,15 @@ function PMFormDialog({
 
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="ghost" />}>Cancelar</DialogClose>
-            <Button type="submit" disabled={!name.trim() || saving}>
+            <Button
+              type="submit"
+              disabled={
+                !name.trim() ||
+                saving ||
+                dueBeforeClosing ||
+                (mode === "create" && kind === "credit" && (!ccAlias.trim() || !ccClosingDate || !ccDueDate))
+              }
+            >
               {saving && <Loader2 className="mr-1 size-3.5 animate-spin" />}
               {mode === "create" ? "Crear" : "Guardar"}
             </Button>

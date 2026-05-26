@@ -649,6 +649,19 @@ export function generateInsights(at?: string) {
   });
 }
 
+export type AdminTestPushResult = {
+  sent: boolean;
+  subscriptions: number;
+  reason?: string;
+};
+
+export function adminSendTestPush() {
+  return apiMutate<AdminTestPushResult>({
+    method: "POST",
+    path: "/admin/push/test",
+  });
+}
+
 // --- Categories -----------------------------------------------------------
 
 export type CategoryInput = {

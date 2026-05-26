@@ -2,7 +2,7 @@
   "name": "ahorra_app",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@11.3.0",
   "scripts": {
     "dev": "next dev -p 3005",
     "build": "next build --webpack",

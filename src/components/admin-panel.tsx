@@ -4,6 +4,7 @@ import { useState } from "react";
 import { mutate as swrMutate } from "swr";
 import {
   AlertTriangle,
+  Bell,
   Loader2,
   RotateCcw,
   ShieldCheck,
@@ -31,6 +32,7 @@ import {
   purgeAdminHousehold,
   restoreAdminHousehold,
   generateInsights,
+  adminSendTestPush,
 } from "@/lib/api/mutations";
 import type { AdminDeletedHousehold } from "@/lib/api/schemas";
 import { toast, toastError } from "@/lib/toast";
@@ -92,8 +94,55 @@ export function AdminPanel() {
       </Card>
 
       <GenerateInsightsCard />
+      <TestPushCard />
       <DeletedHouseholdsCard />
     </div>
+  );
+}
+
+function TestPushCard() {
+  const [busy, setBusy] = useState(false);
+
+  async function handle() {
+    setBusy(true);
+    try {
+      const r = await adminSendTestPush();
+      if (r.sent) {
+        toast.success(`Push enviada a ${r.subscriptions} dispositivo(s)`);
+      } else {
+        toast.error(r.reason ?? "No se pudo enviar la push");
+      }
+    } catch (e) {
+      toastError(e, "No se pudo enviar la push");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="rounded-2xl border-0 shadow-card">
+      <CardContent className="p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Bell className="size-3.5" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold">Probar push notification</h2>
+            <p className="text-[11px] text-muted-foreground">
+              Envía una notificación de prueba solo a tu usuario (a todos los dispositivos suscriptos).
+            </p>
+          </div>
+        </div>
+        <Button type="button" onClick={handle} disabled={busy}>
+          {busy ? (
+            <Loader2 className="mr-1 size-3.5 animate-spin" />
+          ) : (
+            <Bell className="mr-1 size-3.5" />
+          )}
+          Enviar push de prueba
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
