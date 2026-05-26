@@ -21,6 +21,8 @@ import type {
   CreditCardPeriodStatus,
   RecurringExpense,
   RecurringIncome,
+  SeriesStats,
+  Expense,
   Rate,
   BalancesResponse,
   BalancesMeResponse,
@@ -138,6 +140,26 @@ export function useRecurringExpense(id: string | null | undefined) {
   const { token, householdId } = useReady();
   const key = token && householdId && id ? ([`/recurring-expenses/${id}`] as const) : null;
   return useSWR<RecurringExpense>(key);
+}
+
+// useDraftExpenses: gastos en status='draft' del hogar — generados por
+// recurrentes de monto variable que esperan que el user confirme el monto
+// real. Refresca rápido porque el worker puede crear nuevos drafts.
+export function useDraftExpenses() {
+  const { token, householdId } = useReady();
+  const key = token && householdId ? (["/expenses/drafts"] as const) : null;
+  return useSWR<Expense[]>(key);
+}
+
+// useSeriesStats: histórico confirmado + variación % de una recurrente
+// (típicamente útil para series variables tipo luz/expensas/wifi). limit
+// default 6 meses; el endpoint clampa a 120 si te pasás.
+export function useSeriesStats(id: string | null | undefined, limit = 6) {
+  const { token, householdId } = useReady();
+  const key = token && householdId && id
+    ? ([`/recurring-expenses/${id}/stats`, { query: { limit } }] as const)
+    : null;
+  return useSWR<SeriesStats>(key);
 }
 
 export function useRecurringIncomes() {

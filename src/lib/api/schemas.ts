@@ -135,6 +135,7 @@ export const expenseSchema = z.object({
   installments: z.number(),
   isShared: z.boolean(),
   recurringExpenseId: z.string().nullable().optional(),
+  status: z.enum(["draft", "confirmed"]).default("confirmed"),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -223,8 +224,29 @@ export const recurringExpenseSchema = z.object({
   endsAt: z.string().nullable().optional(),
   lastGenerated: z.string().nullable().optional(),
   createdAt: z.string(),
+  amountIsVariable: z.boolean().default(false),
+  alertThresholdPct: z.number().nullable().optional(),
+  lastAmount: z.number().nullable().optional(),
+  lastConfirmedAt: z.string().nullable().optional(),
 });
 export type RecurringExpense = z.infer<typeof recurringExpenseSchema>;
+
+export const seriesPointSchema = z.object({
+  expenseId: z.string(),
+  amount: z.number(),
+  currency: z.string(),
+  spentAt: z.string(),
+  variationPct: z.number().nullable().optional(),
+});
+export type SeriesPoint = z.infer<typeof seriesPointSchema>;
+
+export const seriesStatsSchema = z.object({
+  recurringExpenseId: z.string(),
+  history: z.array(seriesPointSchema),
+  averageLastN: z.number(),
+  lastVariationPct: z.number().nullable().optional(),
+});
+export type SeriesStats = z.infer<typeof seriesStatsSchema>;
 
 export const recurringIncomeSchema = z.object({
   id: z.string(),

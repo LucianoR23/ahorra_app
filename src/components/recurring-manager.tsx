@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { Plus, Repeat, Trash2, Pause, Play, Edit3, X } from "lucide-react";
+import { Plus, Repeat, Trash2, Pause, Play, Edit3, X, LineChart } from "lucide-react";
+import { SeriesStatsDialog } from "@/components/series-stats-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   useRecurringExpenses,
   useRecurringIncomes,
@@ -157,6 +159,7 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
   const { data: categories } = useCategories();
   const { data: paymentMethods } = usePaymentMethods();
   const [editing, setEditing] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const cat = categories?.find((c) => c.id === rec.categoryId);
@@ -203,6 +206,10 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
     );
   }
 
+  // Para series variables, el monto "actual" más útil es el último confirmado
+  // (lo que realmente pagaste el mes pasado), no el estimado de la plantilla.
+  const displayAmount = rec.amountIsVariable && rec.lastAmount != null ? rec.lastAmount : rec.amount;
+
   return (
     <Card className={cn("rounded-2xl border-0 shadow-card", !rec.isActive && "opacity-60")}>
       <CardContent className="p-4 space-y-2">
@@ -213,6 +220,9 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
               <Badge variant="secondary" className="gap-0.5 text-[9px]">
                 <Repeat className="size-2.5" />
               </Badge>
+              {rec.amountIsVariable && (
+                <Badge variant="outline" className="text-[9px]">Variable</Badge>
+              )}
               {!rec.isActive && <Badge variant="outline" className="text-[9px]">Pausado</Badge>}
             </div>
             <div className="mt-0.5 text-[11px] text-muted-foreground">
@@ -220,22 +230,38 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
             </div>
           </div>
           <div className="shrink-0 text-right font-mono text-sm font-bold">
-            {fmtMoney(rec.amount, rec.currency, { decimals: 0 })}
-            {rec.installments > 1 && <div className="text-[10px] text-muted-foreground">en {rec.installments}c</div>}
+            {fmtMoney(displayAmount, rec.currency, { decimals: 0 })}
+            {rec.amountIsVariable && (
+              <div className="text-[10px] text-muted-foreground">
+                {rec.lastAmount != null ? "último" : "estimado"}
+              </div>
+            )}
+            {!rec.amountIsVariable && rec.installments > 1 && (
+              <div className="text-[10px] text-muted-foreground">en {rec.installments}c</div>
+            )}
           </div>
         </div>
         <div className="flex gap-1.5 pt-2 border-t border-border">
+          <Button variant="outline" size="sm" onClick={() => setShowStats(true)} disabled={busy} className="flex-1">
+            <LineChart className="size-3" /> Histórico
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setEditing(true)} disabled={busy} className="flex-1">
             <Edit3 className="size-3" /> Editar
           </Button>
-          <Button variant="outline" size="sm" onClick={onToggle} disabled={busy} className="flex-1">
-            {rec.isActive ? <><Pause className="size-3" /> Pausar</> : <><Play className="size-3" /> Activar</>}
+          <Button variant="outline" size="sm" onClick={onToggle} disabled={busy}>
+            {rec.isActive ? <Pause className="size-3" /> : <Play className="size-3" />}
           </Button>
           <Button variant="destructive" size="sm" onClick={onDelete} disabled={busy}>
             <Trash2 className="size-3" />
           </Button>
         </div>
       </CardContent>
+
+      <SeriesStatsDialog
+        recurring={rec}
+        open={showStats}
+        onClose={() => setShowStats(false)}
+      />
     </Card>
   );
 }
@@ -513,6 +539,12 @@ function RecurringExpenseForm({
   const [monthOfYear, setMonthOfYear] = useState<number | null>(initial?.monthOfYear ?? 1);
   const [startsAt, setStartsAt] = useState(initial?.startsAt ?? isoToday());
   const [endsAt, setEndsAt] = useState(initial?.endsAt ?? "");
+  // amountIsVariable: para servicios donde el monto cambia mes a mes
+  // (luz/expensas/wifi). Cuando está activo, el monto cargado funciona como
+  // estimado y cada mes generamos un gasto en estado "pendiente de
+  // confirmar". Forzamos cuotas=1 porque no podemos repartir un monto
+  // que todavía no conocemos.
+  const [amountIsVariable, setAmountIsVariable] = useState(initial?.amountIsVariable ?? false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -525,13 +557,17 @@ function RecurringExpenseForm({
       setBusy(false);
       return;
     }
+    const pm = paymentMethods?.find((p) => p.id === paymentMethodId);
+    const effectiveInstallments = amountIsVariable || !pm?.allowsInstallments ? 1 : installments;
     const body: RecurringExpenseInput = {
       categoryId: categoryId || null,
       paymentMethodId,
       amount,
       currency,
       description: description.trim(),
-      installments,
+      // Variable o método sin cuotas → siempre 1. Evita mandar cuotas>1
+      // si el usuario seteó cuotas con crédito y después cambió a débito.
+      installments: effectiveInstallments,
       isShared: false,
       frequency,
       dayOfMonth: frequency === "weekly" ? null : dayOfMonth,
@@ -539,6 +575,7 @@ function RecurringExpenseForm({
       monthOfYear: frequency === "yearly" ? monthOfYear : null,
       startsAt,
       endsAt: endsAt || null,
+      amountIsVariable,
     };
     try {
       if (initial) await patchRecurringExpense(initial.id, body);
@@ -569,7 +606,7 @@ function RecurringExpenseForm({
 
         <div className="grid grid-cols-[1fr_auto] gap-2">
           <div className="space-y-1.5">
-            <Label>Monto</Label>
+            <Label>{amountIsVariable ? "Monto estimado" : "Monto"}</Label>
             <Input inputMode="decimal" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} className="h-9 font-mono" />
           </div>
           <div className="space-y-1.5">
@@ -583,6 +620,23 @@ function RecurringExpenseForm({
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="flex items-start justify-between gap-3 rounded-xl border bg-muted/40 p-3">
+          <div className="flex-1">
+            <Label htmlFor="amountIsVariable" className="text-[13px] font-medium">
+              Importe variable
+            </Label>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Activá esto si el monto cambia mes a mes (luz, expensas, wifi).
+              Cada mes vas a confirmar la factura real.
+            </p>
+          </div>
+          <Switch
+            id="amountIsVariable"
+            checked={amountIsVariable}
+            onCheckedChange={setAmountIsVariable}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -616,16 +670,22 @@ function RecurringExpenseForm({
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Cuotas</Label>
-          <Input
-            type="number"
-            min={1}
-            value={installments}
-            onChange={(e) => setInstallments(Math.max(1, Number(e.target.value) || 1))}
-            className="h-9 w-24"
-          />
-        </div>
+        {!amountIsVariable
+          && paymentMethods?.find((p) => p.id === paymentMethodId)?.allowsInstallments && (
+          <div className="space-y-1.5">
+            <Label>Cuotas por cargo</Label>
+            <Input
+              type="number"
+              min={1}
+              value={installments}
+              onChange={(e) => setInstallments(Math.max(1, Number(e.target.value) || 1))}
+              className="h-9 w-24"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Cada vez que se genere el gasto se divide en N cuotas (solo crédito).
+            </p>
+          </div>
+        )}
 
         <FrequencyFields
           frequency={frequency}

@@ -9,6 +9,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { PushProvider } from "@/components/push-provider";
 import { InstallPrompt } from "@/components/install-prompt";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
+import { PendingDraftsCard } from "@/components/pending-drafts-card";
 import { fmtARS, greeting } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useIsClient } from "@/lib/hooks";
@@ -74,6 +75,8 @@ export function Dashboard() {
       </div>
 
       <CoachBubble insight={insight} loading={loadingInsight} />
+
+      <PendingDraftsCard />
 
       <IncomeCard spent={report?.spentThisMonth ?? 0} loadingReport={loadingReport} />
 

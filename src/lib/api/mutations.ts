@@ -117,6 +117,17 @@ export function deleteExpense(id: string) {
   return apiMutate<void>({ method: "DELETE", path: `/expenses/${id}` });
 }
 
+// confirmDraftExpense: el usuario carga el monto real de una factura variable
+// (luz/expensas/wifi) y el draft pasa a confirmed. El backend chequea el
+// threshold y dispara insight recurring_spike si supera.
+export function confirmDraftExpense(id: string, amount: number) {
+  return apiMutate<Expense>({
+    method: "POST",
+    path: `/expenses/${id}/confirm`,
+    body: { amount },
+  });
+}
+
 /**
  * Tri-state for dueDate:
  *   undefined → omit field (keep)
@@ -188,6 +199,8 @@ export type RecurringExpenseInput = {
   monthOfYear?: number | null;
   startsAt: string;
   endsAt?: string | null;
+  amountIsVariable?: boolean;
+  alertThresholdPct?: number | null;
 };
 
 export function createRecurringExpense(input: RecurringExpenseInput) {
