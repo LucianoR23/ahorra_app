@@ -9,9 +9,11 @@
 import { apiFetch } from "./client";
 import {
   authResponseSchema,
+  googleAuthResponseSchema,
   refreshResponseSchema,
   userSchema,
   type AuthResponse,
+  type GoogleAuthResponse,
   type RefreshResponse,
   type LoginInput,
   type RegisterInput,
@@ -26,6 +28,15 @@ export async function login(input: LoginInput): Promise<AuthResponse> {
 export async function register(input: RegisterInput): Promise<AuthResponse> {
   const json = await apiFetch({ method: "POST", path: "/auth/register", body: input });
   return authResponseSchema.parse(json);
+}
+
+export async function loginWithGoogle(idToken: string): Promise<GoogleAuthResponse> {
+  const json = await apiFetch({
+    method: "POST",
+    path: "/auth/google",
+    body: { idToken },
+  });
+  return googleAuthResponseSchema.parse(json);
 }
 
 export async function refresh(): Promise<RefreshResponse> {

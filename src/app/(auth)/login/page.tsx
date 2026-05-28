@@ -13,6 +13,7 @@ import { loginInputSchema } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
 import { toastError } from "@/lib/toast";
+import { GoogleSignInButton } from "@/components/auth/google-button";
 
 const REMEMBER_KEY = "ahorra.remembered_email";
 
@@ -131,7 +132,17 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="h-px flex-1 bg-border" />
+        <span>o</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
+      <div className="flex justify-center">
+        <GoogleSignInButton />
+      </div>
+
+      <p className="mt-4 text-center text-sm text-muted-foreground">
         ¿No tenés cuenta?{" "}
         <Link href="/register" className="text-foreground underline-offset-4 hover:underline">
           Crear cuenta

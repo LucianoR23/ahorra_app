@@ -17,6 +17,11 @@ export const authResponseSchema = z.object({
 });
 export type AuthResponse = z.infer<typeof authResponseSchema>;
 
+export const googleAuthResponseSchema = authResponseSchema.extend({
+  isNewUser: z.boolean(),
+});
+export type GoogleAuthResponse = z.infer<typeof googleAuthResponseSchema>;
+
 export const refreshResponseSchema = z.object({
   accessToken: z.string(),
   accessExpiresAt: z.string(),
