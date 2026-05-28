@@ -27,7 +27,6 @@ export function GoogleSignInButton() {
       shape="pill"
       text="continue_with"
       logo_alignment="left"
-      locale="es"
       // width en px; el componente clamp a 400 max y centra el contenido.
       width="320"
       onSuccess={async (cred) => {
