@@ -17,18 +17,16 @@ import type { Household } from "@/lib/api/schemas";
 //
 // Forzamos siempre theme="outline" (botón blanco): cuando el user ya está
 // logueado en Google, GSI cambia al variant personalizado ("Sign in as X")
-// que IGNORA el prop theme y siempre se renderiza blanco. Para evitar el
-// salto visual filled_black ↔ blanco, usamos blanco siempre y lo envolvemos
-// en un wrapper que lo "enmarca" como elemento intencional en dark mode.
+// que IGNORA el prop theme y siempre se renderiza blanco. Usamos blanco
+// siempre para evitar el salto visual filled_black ↔ blanco.
 export function GoogleSignInButton() {
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
   const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
 
   return (
-    <div className="rounded-full bg-white p-1 ring-1 ring-border shadow-sm dark:shadow-none">
-      <GoogleLogin
-        theme="outline"
+    <GoogleLogin
+      theme="outline"
         size="large"
         shape="pill"
         text="continue_with"
@@ -73,10 +71,9 @@ export function GoogleSignInButton() {
           }
         }
       }}
-        onError={() => {
-          toastError(new Error("Error al iniciar sesión con Google"));
-        }}
-      />
-    </div>
+      onError={() => {
+        toastError(new Error("Error al iniciar sesión con Google"));
+      }}
+    />
   );
 }
