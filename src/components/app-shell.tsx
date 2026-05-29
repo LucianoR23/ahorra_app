@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sheet";
 
 const NAV_ORDER_MOBILE = ["home", "history", "add", "goals", "more"] as const;
-const CONFIG_IDS = new Set(["reports", "settings", "security", "admin"]);
+const CONFIG_IDS = new Set(["reports", "settings", "security", "support", "admin"]);
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -53,6 +53,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/reportes") ||
     pathname.startsWith("/ajustes") ||
     pathname.startsWith("/seguridad") ||
+    pathname.startsWith("/soporte") ||
     pathname.startsWith("/admin");
   const [configOpen, setConfigOpen] = useState(configActive);
   const popupRef = useRef<HTMLElement | null>(null);

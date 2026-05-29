@@ -21,9 +21,12 @@ En el servicio Next.js, sección **Environment Variables**:
 ```
 NEXT_PUBLIC_API_URL=https://api-ahorra.lemydev.com
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=<clave pública del backend>
+NEXT_PUBLIC_APP_VERSION=0.1.0+${SOURCE_COMMIT}
 ```
 
 > La VAPID public key la obtenés del backend con `go run ./cmd/vapidgen` o desde las env vars de Coolify del API (`VAPID_PUBLIC_KEY`).
+>
+> `NEXT_PUBLIC_APP_VERSION` se adjunta a los reportes de soporte para identificar el build del usuario. `${SOURCE_COMMIT}` lo expone Coolify con el hash del commit deployado.
 
 ---
 
@@ -34,6 +37,7 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=<clave pública del backend>
 3. **Build args** (Coolify los pasa como `--build-arg`):
    - `NEXT_PUBLIC_API_URL`
    - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+   - `NEXT_PUBLIC_APP_VERSION`
 4. **Port**: `3000`
 5. **Domain**: `ahorra.lemydev.com` → Traefik genera HTTPS solo
 

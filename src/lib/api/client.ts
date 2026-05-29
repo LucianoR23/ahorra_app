@@ -26,8 +26,12 @@ export async function apiFetch<T = unknown>(req: ApiRequest): Promise<T> {
     }
   }
 
+  // FormData (uploads de adjuntos): NO seteamos Content-Type — el browser
+  // pone `multipart/form-data` con su boundary — ni serializamos a JSON.
+  const isFormData = typeof FormData !== "undefined" && req.body instanceof FormData;
+
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (req.body !== undefined) headers["Content-Type"] = "application/json";
+  if (req.body !== undefined && !isFormData) headers["Content-Type"] = "application/json";
   if (req.token) headers["Authorization"] = `Bearer ${req.token}`;
   if (req.householdId) headers["X-Household-ID"] = req.householdId;
 
@@ -37,7 +41,12 @@ export async function apiFetch<T = unknown>(req: ApiRequest): Promise<T> {
       method: req.method ?? "GET",
       headers,
       credentials: req.credentials ?? "include",
-      body: req.body !== undefined ? JSON.stringify(req.body) : undefined,
+      body:
+        req.body === undefined
+          ? undefined
+          : isFormData
+            ? (req.body as FormData)
+            : JSON.stringify(req.body),
       signal: req.signal,
       cache: "no-store",
     });

@@ -5,6 +5,8 @@ export type ApiErrorCode =
   | "not_found"
   | "conflict"
   | "rate_limited"
+  | "file_too_large"
+  | "unsupported_format"
   | "internal"
   | "network";
 
@@ -58,6 +60,8 @@ function statusToCode(status: number): ApiErrorCode {
   if (status === 409) return "conflict";
   if (status === 422) return "validation";
   if (status === 429) return "rate_limited";
+  if (status === 413) return "file_too_large";
+  if (status === 415) return "unsupported_format";
   if (status >= 500) return "internal";
   return "internal";
 }
@@ -79,6 +83,10 @@ function defaultMessage(code: ApiErrorCode, retryAfterSeconds?: number): string 
         return `Demasiados intentos. Reintentá en ${retryAfterSeconds}s.`;
       }
       return "Demasiados intentos. Esperá unos minutos e intentá de nuevo.";
+    case "file_too_large":
+      return "Alguno de los archivos supera el límite (5 MB imágenes, 20 MB video).";
+    case "unsupported_format":
+      return "Solo se aceptan PNG, JPG, WebP y MP4.";
     case "network":
       return "Sin conexión con el servidor";
     case "internal":

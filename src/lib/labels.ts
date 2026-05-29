@@ -1,4 +1,21 @@
-import type { PaymentMethodKind } from "@/lib/api/schemas";
+import type { PaymentMethodKind, TicketStatus, TicketType } from "@/lib/api/schemas";
+
+export const TICKET_TYPE_LABELS: Record<TicketType, string> = {
+  bug: "Error",
+  improvement: "Mejora",
+};
+
+export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
+  nuevo: "Nuevo",
+  en_revision: "En revisión",
+  respondido: "Respondido",
+  resuelto: "Resuelto",
+  cerrado: "Cerrado",
+  descartado: "Descartado",
+};
+
+/** Estados que el usuario considera "abiertos" (en juego). */
+export const TICKET_OPEN_STATUSES: TicketStatus[] = ["nuevo", "en_revision", "respondido"];
 
 export const PAYMENT_METHOD_KIND_LABELS: Record<PaymentMethodKind, string> = {
   cash: "Efectivo",

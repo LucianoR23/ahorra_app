@@ -498,3 +498,82 @@ export const creditCardPeriodStatusSchema = z.object({
   latestPeriod: creditCardPeriodSchema.nullable().optional(),
 });
 export type CreditCardPeriodStatus = z.infer<typeof creditCardPeriodStatusSchema>;
+
+// ── Soporte (Lemy Support) ─────────────────────────────────────────────────
+// Tipos canónicos del servicio externo (ver integracion.md §5). El API Go
+// hace pass-through, así que el shape llega tal cual del servicio.
+
+export const ticketTypeSchema = z.enum(["bug", "improvement"]);
+export type TicketType = z.infer<typeof ticketTypeSchema>;
+
+export const ticketStatusSchema = z.enum([
+  "nuevo",
+  "en_revision",
+  "respondido",
+  "resuelto",
+  "cerrado",
+  "descartado",
+]);
+export type TicketStatus = z.infer<typeof ticketStatusSchema>;
+
+export const ticketPrioritySchema = z.enum(["baja", "media", "alta"]);
+export type TicketPriority = z.infer<typeof ticketPrioritySchema>;
+
+export const attachmentSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["image", "video"]),
+  mime_type: z.string(),
+  size_bytes: z.number(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  url: z.string(),
+  thumbnail_url: z.string().optional(),
+  processing_status: z.enum(["pending", "ready", "failed"]),
+});
+export type Attachment = z.infer<typeof attachmentSchema>;
+
+export const ticketMessageSchema = z.object({
+  id: z.string(),
+  author_type: z.enum(["user", "admin"]),
+  author_id: z.string(),
+  body: z.string(),
+  created_at: z.string(),
+});
+export type TicketMessage = z.infer<typeof ticketMessageSchema>;
+
+export const ticketSchema = z.object({
+  id: z.string(),
+  app_id: z.string(),
+  reporter_user_id: z.string(),
+  reporter_email: z.string(),
+  type: ticketTypeSchema,
+  subject: z.string().optional(),
+  description: z.string(),
+  status: ticketStatusSchema,
+  priority: ticketPrioritySchema,
+  attachments: z.array(attachmentSchema).default([]),
+  messages: z.array(ticketMessageSchema).optional(), // solo en getTicket
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type Ticket = z.infer<typeof ticketSchema>;
+
+export const ticketSummarySchema = z.object({
+  id: z.string(),
+  type: ticketTypeSchema,
+  subject: z.string().optional(),
+  description_preview: z.string(),
+  status: ticketStatusSchema,
+  priority: ticketPrioritySchema,
+  attachments_count: z.number(),
+  public_messages_count: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type TicketSummary = z.infer<typeof ticketSummarySchema>;
+
+export const pagedTicketsSchema = z.object({
+  items: z.array(ticketSummarySchema),
+  next_cursor: z.string().optional(), // ausente = última página
+});
+export type PagedTickets = z.infer<typeof pagedTicketsSchema>;
