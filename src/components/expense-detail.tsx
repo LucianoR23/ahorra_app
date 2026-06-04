@@ -31,6 +31,29 @@ import { cn } from "@/lib/utils";
 import type { Installment } from "@/lib/api/schemas";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
+
+const DETALLE_HELP: InfoHelpContent = {
+  titulo: "Detalle del gasto",
+  acciones: [
+    "Editá la descripción, la fecha y la categoría del gasto con «Editar».",
+    "Eliminá el gasto con «Eliminar».",
+    "Expandí cada cuota para marcarla como pagada o impaga.",
+    "Editá las fechas de factura y vencimiento de cada cuota.",
+  ],
+  consideraciones: [
+    "Eliminar el gasto no se puede deshacer.",
+    "Desde acá solo se editan la descripción, la fecha y la categoría: el monto, la moneda y el medio de pago no se modifican.",
+    "Si necesitás una categoría que no aparece en la lista, creala primero en Categorías.",
+    "En gastos compartidos, cada cuota muestra la división entre los miembros del hogar.",
+  ],
+  relacionado: [
+    { label: "Volver a Movimientos", href: "/movimientos" },
+    { label: "Categorías", href: "/categorias" },
+    { label: "Recurrentes", href: "/recurrentes" },
+    { label: "Hogar y miembros", href: "/ajustes/hogares" },
+  ],
+};
 
 export function ExpenseDetailView({ id }: { id: string }) {
   const router = useRouter();
@@ -105,9 +128,12 @@ export function ExpenseDetailView({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/movimientos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> Movimientos
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/movimientos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> Movimientos
+        </Link>
+        <InfoHelp content={DETALLE_HELP} />
+      </div>
 
       {/* Header */}
       <Card className="rounded-2xl border-0 shadow-card">
