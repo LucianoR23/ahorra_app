@@ -7,7 +7,12 @@
       "PowerShell(pnpm add *)",
       "Bash(echo \"exit=$?\")",
       "Bash(pnpm lint *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "PowerShell(pnpm exec *)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "code-review-graph"
+  ]
 }

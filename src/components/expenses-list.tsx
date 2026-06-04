@@ -35,9 +35,13 @@ export function ExpensesList() {
     return () => clearTimeout(t);
   }, [query]);
 
-  useEffect(() => {
+  // Reset offset cuando cambia la búsqueda — patrón render-time (sin useEffect)
+  // para evitar el cascading render que desaconseja react-hooks/set-state-in-effect.
+  const [prevDebouncedQuery, setPrevDebouncedQuery] = useState(debouncedQuery);
+  if (debouncedQuery !== prevDebouncedQuery) {
+    setPrevDebouncedQuery(debouncedQuery);
     setOffset(0);
-  }, [debouncedQuery]);
+  }
 
   const { data: categories } = useCategories();
   const { data: paymentMethods } = usePaymentMethods();

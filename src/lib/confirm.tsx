@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,58 +21,67 @@ export type ConfirmOptions = {
 
 type PendingConfirm = ConfirmOptions & { resolve: (v: boolean) => void };
 
-let setPending: ((p: PendingConfirm | null) => void) | null = null;
-const queue: PendingConfirm[] = [];
+// Store imperativo fuera de React: confirm() puede llamarse desde cualquier
+// handler. El host se suscribe con useSyncExternalStore (el patrón canónico
+// para stores externos) en vez de registrar el setter vía useEffect — así
+// evitamos el setState-in-effect que desaconseja el React Compiler.
+let pending: PendingConfirm | null = null;
+const listeners = new Set<() => void>();
+
+function emit() {
+  for (const l of listeners) l();
+}
+
+function subscribe(onChange: () => void): () => void {
+  listeners.add(onChange);
+  return () => listeners.delete(onChange);
+}
+
+function getSnapshot(): PendingConfirm | null {
+  return pending;
+}
 
 export function confirm(options: ConfirmOptions): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
-    const p: PendingConfirm = { ...options, resolve };
-    if (setPending) setPending(p);
-    else queue.push(p);
+    pending = { ...options, resolve };
+    emit();
   });
 }
 
 export function ConfirmDialogHost() {
-  const [pending, setPendingState] = useState<PendingConfirm | null>(null);
-
-  useEffect(() => {
-    setPending = setPendingState;
-    if (queue.length) setPendingState(queue.shift()!);
-    return () => {
-      setPending = null;
-    };
-  }, []);
+  const current = useSyncExternalStore(subscribe, getSnapshot, () => null);
 
   const close = (value: boolean) => {
-    if (!pending) return;
-    pending.resolve(value);
-    setPendingState(null);
+    if (!current) return;
+    current.resolve(value);
+    pending = null;
+    emit();
   };
 
   return (
     <Dialog
-      open={pending !== null}
+      open={current !== null}
       onOpenChange={(open) => {
         if (!open) close(false);
       }}
     >
-      {pending && (
+      {current && (
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{pending.title}</DialogTitle>
-            {pending.description && (
-              <DialogDescription>{pending.description}</DialogDescription>
+            <DialogTitle>{current.title}</DialogTitle>
+            {current.description && (
+              <DialogDescription>{current.description}</DialogDescription>
             )}
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => close(false)}>
-              {pending.cancelLabel ?? "Cancelar"}
+              {current.cancelLabel ?? "Cancelar"}
             </Button>
             <Button
-              variant={pending.destructive ? "destructive" : "default"}
+              variant={current.destructive ? "destructive" : "default"}
               onClick={() => close(true)}
             >
-              {pending.confirmLabel ?? "Confirmar"}
+              {current.confirmLabel ?? "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>

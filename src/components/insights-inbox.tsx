@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { mutate as swrMutate } from "swr";
 import {
@@ -145,9 +145,13 @@ export function InsightsInbox() {
   }, [query]);
 
   // Reset offset cuando cambia la búsqueda (la página actual ya no aplica).
-  useEffect(() => {
+  // Patrón render-time (sin useEffect) para evitar el cascading render que
+  // desaconseja react-hooks/set-state-in-effect bajo el React Compiler.
+  const [prevDebouncedQuery, setPrevDebouncedQuery] = useState(debouncedQuery);
+  if (debouncedQuery !== prevDebouncedQuery) {
+    setPrevDebouncedQuery(debouncedQuery);
     setOffset(0);
-  }, [debouncedQuery]);
+  }
 
   const typeQuery =
     typeFilter === "all"
@@ -170,17 +174,16 @@ export function InsightsInbox() {
   // Búsqueda (debouncedQuery) ya se hizo server-side. Solo queda el
   // narrow client-side cuando typeFilter="alert" porque la API no soporta
   // el or de dos tipos en un solo request.
-  const filtered = useMemo(() => {
-    if (!insights) return [];
-    if (typeFilter === "alert") {
-      return insights.filter(
-        (i) => i.insightType === "alert_goal_warning" || i.insightType === "alert_goal_exceeded",
-      );
-    }
-    return insights;
-  }, [insights, typeFilter]);
+  const filtered =
+    !insights
+      ? []
+      : typeFilter === "alert"
+        ? insights.filter(
+            (i) => i.insightType === "alert_goal_warning" || i.insightType === "alert_goal_exceeded",
+          )
+        : insights;
 
-  const grouped = useMemo(() => {
+  const grouped = (() => {
     const map = new Map<string, Insight[]>();
     for (const i of filtered) {
       const k = dayKey(i.createdAt || i.insightDate);
@@ -188,7 +191,7 @@ export function InsightsInbox() {
       map.get(k)!.push(i);
     }
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
-  }, [filtered]);
+  })();
 
   const hasNextPage = (insights?.length ?? 0) === PAGE_SIZE;
   const hasPrevPage = offset > 0;

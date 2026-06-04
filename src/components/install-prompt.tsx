@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Download, Share, Plus, X, Sparkles, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,7 +70,7 @@ export function InstallPrompt() {
     };
   }, []);
 
-  const handleInstall = useCallback(async () => {
+  const handleInstall = async () => {
     if (platform === "ios") {
       setIosDialogOpen(true);
       return;
@@ -87,12 +87,12 @@ export function InstallPrompt() {
     } finally {
       setInstalling(false);
     }
-  }, [deferredPrompt, platform]);
+  };
 
-  const handleDismiss = useCallback(() => {
+  const handleDismiss = () => {
     localStorage.setItem(DISMISSED_KEY, String(Date.now()));
     setDismissed(true);
-  }, []);
+  };
 
   const isClient = useIsClient();
   if (!isClient || dismissed || !platform) return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { mutate as swrMutate } from "swr";
 import { ArrowRight, TrendingDown, TrendingUp, Trash2, Loader2, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,10 +65,7 @@ export function DebtsManager() {
   const [customTo, setCustomTo] = useState<string>("");
   const [singleDay, setSingleDay] = useState<string>("");
 
-  const dateRange = useMemo(
-    () => computeRange(datePreset, customFrom, customTo, singleDay),
-    [datePreset, customFrom, customTo, singleDay],
-  );
+  const dateRange = computeRange(datePreset, customFrom, customTo, singleDay);
 
   const { data: settlements, isLoading: sLoading } = useSettlements({
     limit: 50,
