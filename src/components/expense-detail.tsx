@@ -51,7 +51,7 @@ const DETALLE_HELP: InfoHelpContent = {
     { label: "Volver a Movimientos", href: "/movimientos" },
     { label: "Categorías", href: "/categorias" },
     { label: "Recurrentes", href: "/recurrentes" },
-    { label: "Hogar y miembros", href: "/ajustes/hogares" },
+    { label: "Hogar y miembros", href: "/ajustes" },
   ],
 };
 

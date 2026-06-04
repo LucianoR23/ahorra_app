@@ -459,7 +459,9 @@ function GoalFormDialog({
                 <Label>Alcance</Label>
                 <Select value={scope} onValueChange={(v) => setScope(v as "household" | "user")}>
                   <SelectTrigger className="text-xs">
-                    <SelectValue />
+                    <SelectValue>
+                      {(v: string | null) => (v === "user" ? "Usuario" : "Hogar")}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="household">Hogar</SelectItem>

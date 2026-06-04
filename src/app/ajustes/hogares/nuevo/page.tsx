@@ -16,6 +16,22 @@ import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { useHouseholdStore } from "@/stores/household";
 import type { Currency } from "@/lib/api/schemas";
+import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
+
+const NUEVO_HOGAR_HELP: InfoHelpContent = {
+  titulo: "Crear nuevo hogar",
+  acciones: [
+    "Ponele un nombre al hogar (Casa, Familia, Depto…).",
+    "Elegí la moneda base (ARS, USD o EUR) en la que se mostrarán los reportes.",
+    "Creá el hogar: quedás como dueño y pasa a ser tu hogar activo.",
+  ],
+  consideraciones: [
+    "Vas a ser el dueño del hogar; podés invitar miembros después desde Ajustes.",
+    "Todos los montos se convierten a la moneda base para los reportes.",
+    "Al crearlo, se vuelve tu hogar activo y te lleva a Ajustes.",
+  ],
+  relacionado: [{ label: "Volver a Ajustes", href: "/ajustes" }],
+};
 
 export default function Page() {
   return (
@@ -64,12 +80,15 @@ function NewHouseholdInner() {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-8">
-      <Link
-        href="/ajustes"
-        className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-3" /> Volver a Ajustes
-      </Link>
+      <div className="mb-4 flex items-center justify-between">
+        <Link
+          href="/ajustes"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-3" /> Volver a Ajustes
+        </Link>
+        <InfoHelp content={NUEVO_HOGAR_HELP} />
+      </div>
 
       <Card className="p-6">
         <div className="mb-5 flex items-center gap-3">

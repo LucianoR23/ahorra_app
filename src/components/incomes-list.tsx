@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useIncomes, useHouseholdMembers } from "@/lib/api/hooks";
 import { fmtMoney, fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
+import { incomeSourceLabel } from "@/lib/labels";
 
 const PAGE = 20;
 
@@ -103,7 +104,7 @@ export function IncomesList() {
                   {inc.description || inc.source}
                 </div>
                 <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                  {inc.source} · {memberName.get(inc.receivedBy) ?? "—"} · {fmtDateShort(inc.receivedAt)}
+                  {incomeSourceLabel(inc.source)} · {memberName.get(inc.receivedBy) ?? "—"} · {fmtDateShort(inc.receivedAt)}
                 </div>
               </div>
               <div className="shrink-0 text-right">

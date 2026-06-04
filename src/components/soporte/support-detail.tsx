@@ -14,9 +14,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SupportStatusBadge } from "./support-status-badge";
+import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 
 const MESSAGE_MAX = 4000;
 const POLL_MS = 3000;
+
+const SOPORTE_DETALLE_HELP: InfoHelpContent = {
+  titulo: "Detalle del reporte",
+  acciones: [
+    "Seguí el estado del reporte y leé las respuestas del equipo.",
+    "Mirá los adjuntos que enviaste (imágenes y videos).",
+    "Respondé en la conversación para sumar información o seguir el hilo.",
+  ],
+  consideraciones: [
+    "Los adjuntos pueden tardar unos segundos en procesarse; la vista se actualiza sola.",
+    "El reporte es personal: solo vos y el equipo de soporte pueden verlo.",
+  ],
+  relacionado: [
+    { label: "Mis reportes", href: "/soporte" },
+    { label: "Nuevo reporte", href: "/soporte/nuevo" },
+  ],
+};
 
 export function SupportDetail({ id }: { id: string }) {
   // Polling solo mientras haya adjuntos procesándose (thumbnails/validación).
@@ -77,7 +95,10 @@ export function SupportDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-5">
-      <BackLink />
+      <div className="flex items-center justify-between">
+        <BackLink />
+        <InfoHelp content={SOPORTE_DETALLE_HELP} />
+      </div>
 
       {/* Encabezado */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-card">

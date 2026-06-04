@@ -14,6 +14,7 @@ import {
   useExchangeRates,
 } from "@/lib/api/hooks";
 import { useHouseholdStore } from "@/stores/household";
+import { useAuthStore } from "@/stores/auth";
 import { createIncome, type IncomeCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, isoToday } from "@/lib/format";
@@ -47,6 +48,7 @@ export function IncomeForm({
   const { data: members } = useHouseholdMembers();
   const { data: paymentMethods } = usePaymentMethods();
   const { data: rates } = useExchangeRates();
+  const me = useAuthStore((s) => s.user);
 
   const [amountStr, setAmountStr] = useState(initial ? String(initial.amount) : "");
   const [currency, setCurrency] = useState<Currency>((initial?.currency as Currency) ?? baseCurrency);
@@ -210,7 +212,7 @@ export function IncomeForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Yo</SelectItem>
-                  {members?.map((m) => (
+                  {members?.filter((m) => m.userId !== me?.id).map((m) => (
                     <SelectItem key={m.userId} value={m.userId}>
                       {m.firstName} {m.lastName}
                     </SelectItem>

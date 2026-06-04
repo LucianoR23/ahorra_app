@@ -17,6 +17,25 @@ import { toast } from "@/lib/toast";
 import { confirm } from "@/lib/confirm";
 import { fmtMoney, fmtDateShort } from "@/lib/format";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { INCOME_SOURCES, incomeSourceLabel } from "@/lib/labels";
+import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
+
+const INGRESO_DETALLE_HELP: InfoHelpContent = {
+  titulo: "Detalle del ingreso",
+  acciones: [
+    "Editá la fuente, la descripción y la fecha del ingreso.",
+    "Eliminá el ingreso si lo cargaste por error.",
+  ],
+  consideraciones: [
+    "Desde acá se editan la fuente, la descripción y la fecha; el monto, la moneda y el destinatario no se cambian.",
+    "Eliminar un ingreso no se puede deshacer.",
+  ],
+  relacionado: [
+    { label: "Volver a Ingresos", href: "/ingresos" },
+    { label: "Recurrentes", href: "/recurrentes" },
+  ],
+};
 
 export function IncomeDetailView({ id }: { id: string }) {
   const router = useRouter();
@@ -73,19 +92,22 @@ export function IncomeDetailView({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/ingresos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> Ingresos
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/ingresos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> Ingresos
+        </Link>
+        <InfoHelp content={INGRESO_DETALLE_HELP} />
+      </div>
 
       <Card className="rounded-2xl border-0 shadow-card">
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-xl font-bold tracking-tight">
-                {income.description || income.source}
+                {income.description || incomeSourceLabel(income.source)}
               </h1>
               <div className="mt-1 text-xs text-muted-foreground">
-                {income.source} · Para {receiver ? `${receiver.firstName} ${receiver.lastName}` : "—"} · {fmtDateShort(income.receivedAt)}
+                {incomeSourceLabel(income.source)} · Para {receiver ? `${receiver.firstName} ${receiver.lastName}` : "—"} · {fmtDateShort(income.receivedAt)}
               </div>
             </div>
             <div className="text-right shrink-0">
@@ -152,7 +174,29 @@ function EditIncome({
       <CardContent className="p-4 space-y-3">
         <div className="space-y-1.5">
           <Label>Fuente</Label>
-          <Input value={source} onChange={(e) => setSource(e.target.value)} className="h-9" />
+          <Select
+            value={(INCOME_SOURCES as readonly string[]).includes(source) ? source : "other"}
+            onValueChange={(v) => setSource(v === "other" || v == null ? "" : v)}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue>
+                {(v: string | null) => (v ? incomeSourceLabel(v) : "")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {INCOME_SOURCES.map((s) => (
+                <SelectItem key={s} value={s}>{incomeSourceLabel(s)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {(!(INCOME_SOURCES as readonly string[]).includes(source) || source === "") && (
+            <Input
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder="Ej: alquiler"
+              className="h-9 mt-2"
+            />
+          )}
         </div>
         <div className="space-y-1.5">
           <Label>Descripción</Label>
