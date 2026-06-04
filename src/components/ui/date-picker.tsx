@@ -30,6 +30,9 @@ interface DatePickerProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+  /** Fecha mínima seleccionable. Bloquea días anteriores y la navegación a
+   *  meses previos. Útil para "solo del mes en curso hacia adelante". */
+  minDate?: Date
   "aria-invalid"?: boolean
 }
 
@@ -39,6 +42,7 @@ function DatePicker({
   placeholder = "Seleccionar fecha",
   className,
   disabled,
+  minDate,
   "aria-invalid": ariaInvalid,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
@@ -90,6 +94,7 @@ function DatePicker({
               locale={es}
               weekStartsOn={1}
               autoFocus
+              {...(minDate ? { disabled: { before: minDate }, startMonth: minDate } : {})}
             />
           </PopoverPrimitive.Popup>
         </PopoverPrimitive.Positioner>

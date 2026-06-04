@@ -54,6 +54,22 @@ import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
+// Primer día del mes en curso. Lo usamos como mínimo del selector "Desde" al
+// crear: solo se puede arrancar un recurrente dentro del mes vigente hacia
+// adelante (no en meses pasados), así el backend puede materializar el cargo
+// de este mes al instante.
+function firstOfCurrentMonth(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+// Día del mes (1..31) a partir de un ISO "YYYY-MM-DD". Para frecuencia mensual,
+// el día de cobro se deriva de la fecha de inicio en vez de pedirse aparte.
+function dayFromIso(iso: string): number {
+  const d = Number(iso?.slice(8, 10));
+  return d >= 1 && d <= 31 ? d : 1;
+}
+
 type Tab = "expenses" | "incomes";
 
 export function RecurringManager() {
@@ -402,17 +418,11 @@ function FrequencyFields({
       )}
 
       {frequency === "monthly" && (
-        <div className="space-y-1.5">
-          <Label className="text-[11px] font-normal text-muted-foreground">Día del mes</Label>
-          <Input
-            type="number"
-            min={1}
-            max={31}
-            value={dayOfMonth ?? 1}
-            onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
-            className="h-9"
-          />
-        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Se cobrará el día{" "}
+          <span className="font-semibold text-foreground">{dayOfMonth ?? 1}</span>{" "}
+          de cada mes, según la fecha de inicio que elijas abajo.
+        </p>
       )}
 
       {frequency === "yearly" && (
@@ -548,6 +558,12 @@ function RecurringExpenseForm({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Mensual al crear: el día de cobro lo define la fecha de inicio (no se pide
+  // aparte), así que lo derivamos en render. En edición/anual usamos el estado
+  // (la fecha de inicio es inmutable y preservamos el día original de
+  // plantillas viejas). Lo comparten el hint y el body — sin efectos.
+  const dayOfMonthToSend = frequency === "monthly" && !initial ? dayFromIso(startsAt) : dayOfMonth;
+
   async function save() {
     setBusy(true);
     setErr(null);
@@ -559,7 +575,10 @@ function RecurringExpenseForm({
     }
     const pm = paymentMethods?.find((p) => p.id === paymentMethodId);
     const effectiveInstallments = amountIsVariable || !pm?.allowsInstallments ? 1 : installments;
-    const body: RecurringExpenseInput = {
+    // startsAt va aparte: solo se manda al crear. El backend no acepta cambiar
+    // la fecha de inicio en el PATCH (es inmutable), así que en edición no la
+    // incluimos para no romper la request.
+    const base: Omit<RecurringExpenseInput, "startsAt"> = {
       categoryId: categoryId || null,
       paymentMethodId,
       amount,
@@ -570,16 +589,15 @@ function RecurringExpenseForm({
       installments: effectiveInstallments,
       isShared: false,
       frequency,
-      dayOfMonth: frequency === "weekly" ? null : dayOfMonth,
+      dayOfMonth: frequency === "weekly" ? null : dayOfMonthToSend,
       dayOfWeek: frequency === "weekly" ? dayOfWeek : null,
       monthOfYear: frequency === "yearly" ? monthOfYear : null,
-      startsAt,
       endsAt: endsAt || null,
       amountIsVariable,
     };
     try {
-      if (initial) await patchRecurringExpense(initial.id, body);
-      else await createRecurringExpense(body);
+      if (initial) await patchRecurringExpense(initial.id, base);
+      else await createRecurringExpense({ ...base, startsAt });
       onDone();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Error");
@@ -690,7 +708,7 @@ function RecurringExpenseForm({
         <FrequencyFields
           frequency={frequency}
           setFrequency={setFrequency}
-          dayOfMonth={dayOfMonth}
+          dayOfMonth={dayOfMonthToSend}
           setDayOfMonth={setDayOfMonth}
           dayOfWeek={dayOfWeek}
           setDayOfWeek={setDayOfWeek}
@@ -700,8 +718,16 @@ function RecurringExpenseForm({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
-            <Label>Desde</Label>
-            <DatePicker value={startsAt} onChange={setStartsAt} />
+            <Label>{frequency === "monthly" ? "Arranca el" : "Desde"}</Label>
+            <DatePicker
+              value={startsAt}
+              onChange={setStartsAt}
+              minDate={initial ? undefined : firstOfCurrentMonth()}
+              disabled={!!initial}
+            />
+            {initial && (
+              <p className="text-[10px] text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Hasta (opcional)</Label>
@@ -755,6 +781,10 @@ function RecurringIncomeForm({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Mensual al crear: el día de cobro deriva de la fecha de inicio (ver
+  // RecurringExpenseForm para el detalle). Sin efectos: se deriva en render.
+  const dayOfMonthToSend = frequency === "monthly" && !initial ? dayFromIso(startsAt) : dayOfMonth;
+
   async function save() {
     setBusy(true);
     setErr(null);
@@ -764,22 +794,22 @@ function RecurringIncomeForm({
       setBusy(false);
       return;
     }
-    const body: RecurringIncomeInput = {
+    // startsAt va aparte: solo al crear (el backend no lo acepta en el PATCH).
+    const base: Omit<RecurringIncomeInput, "startsAt"> = {
       paymentMethodId: paymentMethodId || null,
       amount,
       currency,
       description: description.trim() || undefined,
       source: source.trim(),
       frequency,
-      dayOfMonth: frequency === "weekly" ? null : dayOfMonth,
+      dayOfMonth: frequency === "weekly" ? null : dayOfMonthToSend,
       dayOfWeek: frequency === "weekly" ? dayOfWeek : null,
       monthOfYear: frequency === "yearly" ? monthOfYear : null,
-      startsAt,
       endsAt: endsAt || null,
     };
     try {
-      if (initial) await patchRecurringIncome(initial.id, body);
-      else await createRecurringIncome(body);
+      if (initial) await patchRecurringIncome(initial.id, base);
+      else await createRecurringIncome({ ...base, startsAt });
       onDone();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Error");
@@ -860,7 +890,7 @@ function RecurringIncomeForm({
         <FrequencyFields
           frequency={frequency}
           setFrequency={setFrequency}
-          dayOfMonth={dayOfMonth}
+          dayOfMonth={dayOfMonthToSend}
           setDayOfMonth={setDayOfMonth}
           dayOfWeek={dayOfWeek}
           setDayOfWeek={setDayOfWeek}
@@ -870,8 +900,16 @@ function RecurringIncomeForm({
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
-            <Label>Desde</Label>
-            <DatePicker value={startsAt} onChange={setStartsAt} />
+            <Label>{frequency === "monthly" ? "Arranca el" : "Desde"}</Label>
+            <DatePicker
+              value={startsAt}
+              onChange={setStartsAt}
+              minDate={initial ? undefined : firstOfCurrentMonth()}
+              disabled={!!initial}
+            />
+            {initial && (
+              <p className="text-[10px] text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Hasta (opcional)</Label>
