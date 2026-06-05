@@ -108,7 +108,7 @@ function Header() {
           {dateLabel}
         </h1>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="hidden md:flex items-center gap-2">
         <ThemeToggle className="size-10.5 rounded-2xl bg-card shadow-card border border-border" />
         <Link
           href="/notificaciones"
