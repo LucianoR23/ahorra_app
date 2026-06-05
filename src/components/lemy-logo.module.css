@@ -1,14 +1,17 @@
 /* ============================================================
-   LemyLogo animations
-   - Weight shift (variable font)
-   - Dot pulse (elastic)
-   - Cursor blink (terminal vibe)
+   LemyLogo — Typewriter edition
+   Animaciones:
+   - Typewriter (orquestado desde el TSX, no CSS)
+   - Dot pulse (CSS animation, retriggered por React via key)
+   - Cursor blink (CSS animation, infinite)
    ============================================================ */
 
 .logo {
   display: inline-flex;
   align-items: center;
   gap: 0.5em;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-weight: 500;
   line-height: 1;
   letter-spacing: -0.06em;
   user-select: none;
@@ -20,10 +23,9 @@
   text-decoration: none;
   color: inherit;
   display: inline-block;
-  cursor: pointer;
 }
-
-.link .logo {
+.link .logo,
+.link:hover .logo {
   cursor: pointer;
 }
 
@@ -39,73 +41,39 @@
   position: relative;
 }
 
-/* ------- "lemy" -------
-   Weight shift sutil en hover, requiere Geist Mono variable
-   (que ya es el caso con geist/font/mono). */
+.text {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .strong {
-  font-weight: 500;
-  font-variation-settings: "wght" 500;
-  transition: font-variation-settings 0.35s ease, font-weight 0.35s ease;
-  will-change: font-variation-settings;
+  color: currentColor;
 }
 
-/* ------- "dev" -------
-   Más opaco, baja jerarquía. */
 .muted {
-  font-weight: 400;
+  color: currentColor;
   opacity: 0.55;
-  transition: opacity 0.35s ease;
 }
 
-/* ------- "." -------
-   Dot pulse: escala con bounce elástico en hover. */
 .dot {
   color: var(--accent, #7c5cff);
-  font-weight: 500;
   display: inline-block;
   transform-origin: center;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: dotPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
 }
 
-/* ------- cursor "|" -------
-   Aparece en hover, parpadea como terminal. */
 .cursor {
   display: inline-block;
-  margin-left: 0.1em;
+  margin-left: 0.05em;
   color: var(--accent, #7c5cff);
-  font-weight: 400;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.25s ease 0.05s, transform 0.25s ease 0.05s;
+  width: 0.55em;
+  animation: cursorBlink 1s step-end infinite;
 }
 
 /* ============================================================
    HOVER STATE
    ============================================================ */
-
-.logo:hover .strong,
-.link:hover .strong {
-  font-weight: 600;
-  font-variation-settings: "wght" 600;
-}
-
-.logo:hover .muted,
-.link:hover .muted {
-  opacity: 0.8;
-}
-
-.logo:hover .dot,
-.link:hover .dot {
-  animation: dotPulse 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.logo:hover .cursor,
-.link:hover .cursor {
-  opacity: 1;
-  transform: translateX(0);
-  animation: cursorBlink 1s step-end infinite 0.3s;
-}
 
 .logo:hover .icon,
 .link:hover .icon {
@@ -124,69 +92,25 @@
 }
 
 @keyframes cursorBlink {
-  0%, 50%   { opacity: 1; }
+  0%, 50%      { opacity: 1; }
   50.01%, 100% { opacity: 0; }
 }
 
 /* ============================================================
-   MOBILE LOOP
-   Dispositivos sin hover: reproducimos el estado hover en bucle
-   cada ~3s para que la firma se sienta viva. */
-@media (hover: none) {
-  .strong {
-    animation: loopStrong 3s ease-in-out infinite;
-  }
-  .muted {
-    animation: loopMuted 3s ease-in-out infinite;
-  }
-  .dot {
-    animation: loopDot 3s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .icon,
+  .dot,
+  .cursor {
+    transition: none;
+    animation: none;
   }
   .cursor {
     opacity: 1;
-    transform: translateX(0);
-    animation: cursorBlink 1s step-end infinite;
   }
-  .icon {
-    animation: loopIcon 3s ease-in-out infinite;
-  }
-}
-
-@keyframes loopStrong {
-  0%, 35%, 100% { font-variation-settings: "wght" 500; font-weight: 500; }
-  10%, 25% { font-variation-settings: "wght" 600; font-weight: 600; }
-}
-
-@keyframes loopMuted {
-  0%, 35%, 100% { opacity: 0.55; }
-  10%, 25% { opacity: 0.8; }
-}
-
-@keyframes loopDot {
-  0%, 100% { transform: scale(1); }
-  8%  { transform: scale(1.6); }
-  13% { transform: scale(0.9); }
-  20% { transform: scale(1); }
-}
-
-@keyframes loopIcon {
-  0%, 35%, 100% { transform: rotate(0deg) scale(1); }
-  10%, 25% { transform: rotate(-3deg) scale(1.05); }
-}
-
-/* ============================================================
-   REDUCED MOTION
-   Respetamos prefers-reduced-motion. */
-@media (prefers-reduced-motion: reduce) {
-  .strong, .muted, .dot, .cursor, .icon {
-    transition: none;
-    animation: none !important;
-  }
-  .logo:hover .dot, .link:hover .dot {
-    animation: none;
-    transform: scale(1.2);
-  }
-  .logo:hover .cursor, .link:hover .cursor {
-    animation: none;
+  .logo:hover .icon,
+  .link:hover .icon {
+    transform: none;
   }
 }
