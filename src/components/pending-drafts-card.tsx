@@ -83,7 +83,6 @@ export function PendingDraftsCard() {
                 <DraftRow
                   key={d.id}
                   draft={d}
-                  series={d.recurringExpenseId ? recurringById.get(d.recurringExpenseId) : undefined}
                   onClick={() => setConfirming(d)}
                 />
               ))}
@@ -101,11 +100,9 @@ export function PendingDraftsCard() {
 
 function DraftRow({
   draft,
-  series,
   onClick,
 }: {
   draft: Expense;
-  series?: RecurringExpense;
   onClick: () => void;
 }) {
   return (

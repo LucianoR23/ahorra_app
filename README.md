@@ -86,7 +86,7 @@ A full-stack personal finance app for individuals and shared households. Track e
 **Key patterns:**
 - All API requests are scoped by `X-Household-ID` header; missing header returns 400 for household-scoped routes
 - Access token lives in Zustand (memory only); `AuthBootstrap` calls `POST /auth/refresh` on mount to hydrate it from the httpOnly cookie — zero tokens in `localStorage`
-- SWR keys include `currentHouseholdId` so cache invalidates automatically on household switch
+- SWR keys are `[path, {query, householdScoped}]`; the household goes in the `X-Household-ID` header, and the whole cache is invalidated on household switch
 - `apiMutate` auto-retries on 401 with a fresh token before failing — transparent token refresh for all mutations
 - Background worker runs in the same Go process: three goroutines (`recurring`, `insights`, `rates`) with independent tickers — no Redis or external queue required
 
@@ -111,27 +111,26 @@ src/
 
 ## Local Development
 
-**Prerequisites:** Node 20, pnpm, Go 1.25+, Docker
+**Prerequisites:** Node 24 (see `.nvmrc`), pnpm via corepack (version pinned in `packageManager`), Go (see the API's `go.mod`), Docker
 
 ```bash
 # 1. Clone and install
 git clone <repo>
 cd ahorra_app
-pnpm install
+corepack pnpm install
 
 # 2. Environment
 cp .env.example .env.local
 # Set NEXT_PUBLIC_API_URL=http://localhost:8080
 
-# 3. Start database (port 5433 to avoid conflicts)
-docker-compose up -d
-
-# 4. Run backend
-cd ../api_go_ahorra
-go run ./cmd/api/main.go
+# 3. Start database and backend (in ../api_go_ahorro; Postgres on port 5433)
+cd ../api_go_ahorro
+docker compose up -d
+go run ./cmd/api
+cd ../ahorra_app
 
 # 5. Run frontend
-pnpm dev   # http://localhost:3000
+corepack pnpm dev   # http://localhost:3005
 ```
 
 ---
@@ -179,7 +178,7 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY=<from backend>
 DATABASE_URL=postgresql://ahorra:password@localhost:5433/ahorra
 JWT_SECRET=<32+ chars>
 JWT_REFRESH_SECRET=<32+ chars>
-ALLOWED_ORIGINS=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3005
 VAPID_PUBLIC_KEY=<generated>
 VAPID_PRIVATE_KEY=<generated>
 VAPID_SUBJECT=mailto:you@example.com

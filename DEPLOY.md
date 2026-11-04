@@ -22,6 +22,7 @@ En el servicio Next.js, sección **Environment Variables**:
 NEXT_PUBLIC_API_URL=https://api-ahorra.lemydev.com
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=<clave pública del backend>
 NEXT_PUBLIC_APP_VERSION=0.1.0+${SOURCE_COMMIT}
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<OAuth web client ID, mismo que GOOGLE_OAUTH_CLIENT_ID del API>
 ```
 
 > La VAPID public key la obtenés del backend con `go run ./cmd/vapidgen` o desde las env vars de Coolify del API (`VAPID_PUBLIC_KEY`).
@@ -38,6 +39,7 @@ NEXT_PUBLIC_APP_VERSION=0.1.0+${SOURCE_COMMIT}
    - `NEXT_PUBLIC_API_URL`
    - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
    - `NEXT_PUBLIC_APP_VERSION`
+   - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
 4. **Port**: `3000`
 5. **Domain**: `ahorra.lemydev.com` → Traefik genera HTTPS solo
 
@@ -88,6 +90,7 @@ curl -I https://ahorra.lemydev.com
 
 - [ ] `NEXT_PUBLIC_API_URL` configurado en Coolify
 - [ ] `NEXT_PUBLIC_VAPID_PUBLIC_KEY` = misma que `VAPID_PUBLIC_KEY` del backend
+- [ ] `NEXT_PUBLIC_GOOGLE_CLIENT_ID` = mismo client que `GOOGLE_OAUTH_CLIENT_ID` del backend, con el dominio del front en *Authorized JavaScript origins*
 - [ ] `ALLOWED_ORIGINS` en el API incluye el dominio del front
 - [ ] Healthcheck `/` responde 200
 - [ ] Manifest PWA accesible en `https://ahorra.lemydev.com/manifest.webmanifest`

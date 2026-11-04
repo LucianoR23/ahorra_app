@@ -85,10 +85,8 @@ export function LemyLogo({
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
-		if (reducedMotion) {
-			setShown(texts[0] ?? "");
-			return;
-		}
+		// Reduced motion: no animation; the static text is derived at render time.
+		if (reducedMotion) return;
 
 		if (!pageVisible || hovered) {
 			if (timerRef.current) clearTimeout(timerRef.current);
@@ -156,10 +154,11 @@ export function LemyLogo({
 		}
 	}, [hovered, reducedMotion, texts]);
 
-	const dotIdx = shown.indexOf(".");
-	const strong = dotIdx >= 0 ? shown.slice(0, dotIdx) : shown;
+	const display = reducedMotion ? (texts[0] ?? "") : shown;
+	const dotIdx = display.indexOf(".");
+	const strong = dotIdx >= 0 ? display.slice(0, dotIdx) : display;
 	const hasDot = dotIdx >= 0;
-	const muted = dotIdx >= 0 ? shown.slice(dotIdx + 1) : "";
+	const muted = dotIdx >= 0 ? display.slice(dotIdx + 1) : "";
 
 	const content = (
 		<span

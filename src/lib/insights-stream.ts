@@ -55,7 +55,6 @@ export function useInsightsRealtime() {
         );
         // Hint para debugging — no es obligatorio.
         if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
           console.debug("[insights-stream] insight.created", parsed.insight.id);
         }
       } catch {
@@ -66,7 +65,6 @@ export function useInsightsRealtime() {
     es.addEventListener("insight.created", onCreated as EventListener);
     es.addEventListener("ready", () => {
       if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
         console.debug("[insights-stream] connected");
       }
     });
@@ -77,7 +75,6 @@ export function useInsightsRealtime() {
       // Cuando el token expire (15min), refresh-on-401 del cliente HTTP
       // refrescará el token; este efecto se re-ejecutará por cambio de token.
       if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
         console.debug("[insights-stream] error / reconnecting");
       }
     };
