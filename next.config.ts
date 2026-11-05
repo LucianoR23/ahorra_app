@@ -18,11 +18,8 @@ const nextConfig: NextConfig = {
   // Turbopack by default in dev and errors on webpack-only configs — an
   // empty turbopack object silences the error without changing behavior.
   turbopack: {},
-  // Enables React 19 <ViewTransition> wrapping for router transitions,
-  // powered by the browser's native document.startViewTransition API.
-  experimental: {
-    viewTransition: true,
-  },
+  // React <ViewTransition> (used in app/layout.tsx) needs no flag since
+  // Next 16.4: the App Router supports it out of the box.
 };
 
 export default withSerwist(nextConfig);
