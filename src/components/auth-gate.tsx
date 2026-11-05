@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
+import { useHouseholdStore, useHouseholdsResolved } from "@/stores/household";
 import { BrandLogo } from "@/components/brand-logo";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
@@ -13,6 +13,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const hydrated = useAuthStore((s) => s.hydrated);
   const user = useAuthStore((s) => s.user);
   const currentHouseholdId = useHouseholdStore((s) => s.currentId);
+  const householdsResolved = useHouseholdsResolved(user?.id);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -20,12 +21,15 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
+    // Decide only once the user's households are known; until then the
+    // splash stays (no onboarding flash right after logging in).
+    if (!householdsResolved) return;
     if (!currentHouseholdId && pathname !== "/onboarding") {
       router.replace("/onboarding");
     }
-  }, [hydrated, user, currentHouseholdId, pathname, router]);
+  }, [hydrated, user, householdsResolved, currentHouseholdId, pathname, router]);
 
-  if (!hydrated || !user || !currentHouseholdId) {
+  if (!hydrated || !user || !householdsResolved || !currentHouseholdId) {
     return <AuthSplash />;
   }
   return (
@@ -38,7 +42,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AuthSplash() {
+export function AuthSplash() {
   return (
     <div className="relative grid min-h-svh place-items-center overflow-hidden bg-background">
       <div
