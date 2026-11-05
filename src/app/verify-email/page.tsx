@@ -11,11 +11,12 @@ import { verifyEmail } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
+import { brand } from "@/config/brand";
 
 export default function Page() {
   return (
     <div className="flex min-h-svh flex-col items-center px-4 py-10">
-      <Link href="/" aria-label="Ahorro — Inicio" className="mb-6 flex items-center">
+      <Link href="/" aria-label={`${brand.name} — Inicio`} className="mb-6 flex items-center">
         <BrandLogo variant="wordmark" size={40} priority />
       </Link>
       <div className="w-full max-w-sm">

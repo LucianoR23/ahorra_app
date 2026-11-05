@@ -55,16 +55,12 @@ const rows: Row[] = [
   ["useBalancesMe", () => h.useBalancesMe(), "/balances/me", {}, true],
   ["useSettlements", () => h.useSettlements({ withUser: "u2" }), "/settlements", { withUser: "u2", limit: "50", offset: "0" }, true],
   ["useSplitRules", () => h.useSplitRules(), "/split", {}, true],
-  ["useGoals", () => h.useGoals({ active: true }), "/goals", { active: "true" }, true],
   ["useGoalsProgress", () => h.useGoalsProgress({ at: "2026-03-15" }), "/goals/progress", { at: "2026-03-15" }, true],
-  ["useGoal", () => h.useGoal("g1"), "/goals/g1", {}, true],
   ["useGoalProgress", () => h.useGoalProgress("g1", "2026-03-15"), "/goals/g1/progress", { at: "2026-03-15" }, true],
   ["useSettlement", () => h.useSettlement("s1"), "/settlements/s1", {}, true],
   ["useExchangeRates", () => h.useExchangeRates(), "/exchange-rates/current", {}, false],
-  ["useHousehold", () => h.useHousehold("h9"), "/households/h9", {}, false],
   ["useTrendsReport", () => h.useTrendsReport(12), "/reports/trends", { months: "12" }, true],
   ["useAiExport", () => h.useAiExport("2026-03"), "/reports/ai-export", { month: "2026-03" }, true],
-  ["useCreditCardPeriodStatus", () => h.useCreditCardPeriodStatus("p1"), "/payment-methods/p1/credit-card/periods/status", {}, false],
   ["useHouseholdInvites", () => h.useHouseholdInvites("h9"), "/households/h9/invites", {}, false],
   ["usePushSubscriptions", () => h.usePushSubscriptions(), "/push/subscriptions", {}, false],
 ];
@@ -107,7 +103,7 @@ describe("SWR hooks", () => {
   });
 
   it("id-based hooks wait for an id", async () => {
-    renderHook(() => [h.useExpense(null), h.useGoal(undefined), h.useCreditCard(null)], { wrapper });
+    renderHook(() => [h.useExpense(null), h.useIncome(undefined), h.useCreditCard(null)], { wrapper });
     await new Promise((r) => setTimeout(r, 50));
     expect(requests()).toHaveLength(0);
   });

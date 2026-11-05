@@ -13,8 +13,9 @@ import {
   isStandalone,
   isIosSafari,
 } from "@/lib/push";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
-const DISMISSED_KEY = "ahorra.push.dismissed";
+const DISMISSED_KEY = STORAGE_KEYS.pushDismissed;
 
 /**
  * Drop this inside the Dashboard (authenticated context only).

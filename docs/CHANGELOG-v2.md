@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.15b: brand config, brand-neutral storage keys, dead code (front end)
+- `src/config/brand.ts` (`NEXT_PUBLIC_BRAND_NAME`, `_TAGLINE`, `_DESCRIPTION`; defaults are today's "Ahorro — Personal Finance Coach") is the single source for the name users see: page metadata, manifest, social preview image, install prompt, login copy, aria-labels, logo alt text and the service worker's default notification title. Nothing visible changes except two spots that said "Ahorra" (push title default, one aria-label). 1.1 sets Valuo. Build args added to the `Dockerfile` and `DEPLOY.md`.
+- Storage keys are brand-neutral (`app.*`, `src/lib/storage-keys.ts`). The five old keys (`ahorro.household`, `ahorra.remembered_email`, `ahorra.emailVerifyBannerDismissedAt`, `ahorra.install.dismissed`, `ahorra.push.dismissed`) are migrated once on load, before any reader, so nobody loses the selected household or the remembered email. The default notification tag is neutral too.
+- No deployed domain as fallback: without `NEXT_PUBLIC_API_URL` the app calls `http://localhost:8080`, not the old production API.
+- One `refreshOnce` (`src/lib/api/refresh.ts`) for SWR reads, mutations and the scheduled silent refresh (it was copied in three places): a rotating refresh token is never spent twice in parallel.
+- Dead code removed: `useGoals`, `useGoal`, `useHousehold`, `useCreditCardPeriodStatus`, `listPushSubscriptions`, `listAdminDeletedHouseholds`, `getAdminHousehold`, `getMyTickets`, `getAuthSnapshot`, `getCurrentHouseholdId`.
+- Tests: key migration (including the household store reading the migrated value on first load), brand defaults and env values (manifest included), reads and writes sharing one refresh.
+
 ### 0.21i: coverage baseline and floors
 - Vitest coverage thresholds (one point under the baseline): `src/lib/**` and `src/stores/**` 94% statements / 82% branches / 97% functions / 98% lines; global 22 / 15 / 23 / 23. `pnpm check` and CI now run `pnpm test:coverage`, which fails below any floor.
 - `docs/testing/coverage-baseline.md` with the starting numbers.

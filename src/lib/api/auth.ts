@@ -2,7 +2,7 @@
 
 /**
  * Auth lives entirely client-side: cross-origin httpOnly refresh cookie
- * (set by api-ahorra.lemydev.com) is only attached on requests from the
+ * (set by the API's origin) is only attached on requests from the
  * browser to that origin. Server Action proxying breaks the Set-Cookie flow.
  */
 

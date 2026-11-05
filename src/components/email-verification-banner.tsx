@@ -6,8 +6,9 @@ import { resendVerificationEmail } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
 import { toast, toastError } from "@/lib/toast";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
-const DISMISS_KEY = "ahorra.emailVerifyBannerDismissedAt";
+const DISMISS_KEY = STORAGE_KEYS.emailVerifyBannerDismissedAt;
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
 
 export function EmailVerificationBanner() {

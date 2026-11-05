@@ -24,6 +24,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { brand } from "@/config/brand";
 
 const NAV_ORDER_MOBILE = ["home", "history", "add", "goals", "more"] as const;
 const CONFIG_IDS = new Set(["reports", "settings", "security", "support", "admin"]);
@@ -155,7 +156,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex sticky top-0 h-svh w-64 shrink-0 flex-col border-r border-border bg-sidebar px-3 py-3">
         <Link
           href="/"
-          aria-label="Ahorro — Inicio"
+          aria-label={`${brand.name} — Inicio`}
           className="vt-brand-hero flex items-center px-2 pb-3"
         >
           <BrandLogo variant="wordmark" size={30} priority />
@@ -279,7 +280,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       {/* Main */}
       <div className="flex flex-1 min-w-0 flex-col">
         <header className="md:hidden sticky top-0 z-40 flex items-center gap-3 border-b border-border/60 bg-background/85 px-4 py-2 backdrop-blur-xl safe-top">
-          <Link href="/" aria-label="Ahorro — Inicio" className="shrink-0">
+          <Link href="/" aria-label={`${brand.name} — Inicio`} className="shrink-0">
             <BrandLogo variant="icon" size={28} priority className="size-7" />
           </Link>
           <div className="min-w-0 flex-1">

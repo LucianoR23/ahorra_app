@@ -11,6 +11,7 @@ import { getMe, resendVerificationEmail } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth";
 import { toastError } from "@/lib/toast";
 import { toast } from "@/lib/toast";
+import { brand } from "@/config/brand";
 
 export default function Page() {
   const router = useRouter();
@@ -106,7 +107,7 @@ export default function Page() {
 
   return (
     <div className="flex min-h-svh flex-col items-center px-4 py-10">
-      <Link href="/" aria-label="Ahorra — Inicio" className="mb-6 flex items-center">
+      <Link href="/" aria-label={`${brand.name} — Inicio`} className="mb-6 flex items-center">
         <BrandLogo variant="wordmark" size={40} priority />
       </Link>
       <div className="w-full max-w-sm">

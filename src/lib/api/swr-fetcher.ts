@@ -2,7 +2,7 @@
 
 import { apiFetch, type ApiRequest } from "./client";
 import { ApiError } from "./errors";
-import { refresh } from "./auth";
+import { refreshOnce } from "./refresh";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 
@@ -10,24 +10,6 @@ export type SwrKey =
   | string
   | readonly [path: string, opts?: { query?: ApiRequest["query"]; householdScoped?: boolean }];
 
-let refreshInflight: Promise<string | null> | null = null;
-
-async function refreshOnce(): Promise<string | null> {
-  if (refreshInflight) return refreshInflight;
-  refreshInflight = (async () => {
-    try {
-      const r = await refresh();
-      useAuthStore.getState().setToken(r.accessToken, r.accessExpiresAt);
-      return r.accessToken;
-    } catch {
-      useAuthStore.getState().clear();
-      return null;
-    } finally {
-      refreshInflight = null;
-    }
-  })();
-  return refreshInflight;
-}
 
 /**
  * SWR fetcher: pulls token + householdId from stores, retries once on 401

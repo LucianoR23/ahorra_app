@@ -61,11 +61,7 @@ describe("support API", () => {
     server.use(http.all(`${API}/support/*`, () => HttpResponse.json({})));
   });
 
-  it("lists, reads and replies", async () => {
-    await support.getMyTickets();
-    expect(lastRequest()).toMatchObject({ path: "/support/tickets/mine", query: { limit: "20" } });
-    await support.getMyTickets({ cursor: "c1", limit: 5 });
-    expect(lastRequest().query).toEqual({ cursor: "c1", limit: "5" });
+  it("reads a ticket and replies", async () => {
     await support.getTicket("t1");
     expect(lastRequest().path).toBe("/support/tickets/t1");
     await support.addTicketMessage("t1", "hola");
