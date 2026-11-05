@@ -14,8 +14,10 @@ import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
 import { toastError } from "@/lib/toast";
 import { GoogleSignInButton } from "@/components/auth/google-button";
+import { brand } from "@/config/brand";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
-const REMEMBER_KEY = "ahorra.remembered_email";
+const REMEMBER_KEY = STORAGE_KEYS.rememberedEmail;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -74,7 +76,7 @@ export default function LoginPage() {
     <Card className="p-6 md:p-8">
       <div className="mb-6 space-y-1">
         <h1 className="text-xl md:text-2xl font-semibold">Iniciar sesión</h1>
-        <p className="text-sm md:text-base text-muted-foreground">Bienvenido de vuelta a Ahorro.</p>
+        <p className="text-sm md:text-base text-muted-foreground">Bienvenido de vuelta a {brand.name}.</p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4 md:space-y-5">

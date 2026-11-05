@@ -1,6 +1,7 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { Serwist } from "serwist";
+import { brand } from "@/config/brand";
 
 declare global {
   interface ServiceWorkerGlobalScope extends SerwistGlobalConfig {
@@ -39,12 +40,12 @@ self.addEventListener("push", (event: PushEvent) => {
     payload = { body: event.data.text() };
   }
 
-  const title = payload.title ?? "Ahorra";
+  const title = payload.title ?? brand.name;
   const options: NotificationOptions = {
     body: payload.body ?? "",
     icon: "/pwa/icon-192.png",
     badge: "/pwa/icon-96.png",
-    tag: payload.tag ?? "ahorra",
+    tag: payload.tag ?? "app",
     data: { url: payload.url ?? "/" },
     requireInteraction: false,
   };

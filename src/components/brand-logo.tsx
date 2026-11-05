@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { brand } from "@/config/brand";
 
 type Variant = "icon" | "wordmark";
 
@@ -32,7 +33,7 @@ const SOURCES: Record<Variant, { light: string; dark: string; ratio: number }> =
 export function BrandLogo({ variant = "icon", size = 32, className, priority }: Props) {
   const src = SOURCES[variant];
   const width = Math.round(size * src.ratio);
-  const alt = "Ahorro";
+  const alt = brand.name;
   const imgClass = cn("h-auto w-auto", className);
 
   return (

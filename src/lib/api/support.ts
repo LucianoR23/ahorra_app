@@ -8,7 +8,7 @@
  */
 
 import { apiMutate } from "./mutations";
-import type { Ticket, TicketMessage, TicketType, PagedTickets } from "./schemas";
+import type { Ticket, TicketMessage, TicketType } from "./schemas";
 import type { ClientMetadata } from "@/lib/support-metadata";
 
 const MAX_FILES = 3;
@@ -33,15 +33,6 @@ export function createTicket(input: CreateTicketInput): Promise<Ticket> {
     method: "POST",
     path: "/support/tickets",
     body: fd,
-    householdScoped: false,
-  });
-}
-
-export function getMyTickets(params: { cursor?: string; limit?: number } = {}): Promise<PagedTickets> {
-  return apiMutate<PagedTickets>({
-    method: "GET",
-    path: "/support/tickets/mine",
-    query: { cursor: params.cursor, limit: params.limit ?? 20 },
     householdScoped: false,
   });
 }

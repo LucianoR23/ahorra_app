@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { brand } from "@/config/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Ahorro — Personal Finance Coach",
-    short_name: "Ahorro",
-    description: "Gestión de gastos compartidos, multi-moneda.",
+    name: brand.title,
+    short_name: brand.name,
+    description: brand.description,
     start_url: "/",
     scope: "/",
     display: "standalone",

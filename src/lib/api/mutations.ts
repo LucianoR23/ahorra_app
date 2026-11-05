@@ -2,7 +2,7 @@
 
 import { apiFetch, type ApiRequest } from "./client";
 import { ApiError } from "./errors";
-import { refresh } from "./auth";
+import { refreshOnce } from "./refresh";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type {
@@ -25,28 +25,10 @@ import type {
   HouseholdMember,
   Category,
   User,
-  AdminDeletedHousehold,
   InsightGenerateResult,
 } from "./schemas";
 import { userSchema } from "./schemas";
 
-let refreshInflight: Promise<string | null> | null = null;
-async function refreshOnce(): Promise<string | null> {
-  if (refreshInflight) return refreshInflight;
-  refreshInflight = (async () => {
-    try {
-      const r = await refresh();
-      useAuthStore.getState().setToken(r.accessToken, r.accessExpiresAt);
-      return r.accessToken;
-    } catch {
-      useAuthStore.getState().clear();
-      return null;
-    } finally {
-      refreshInflight = null;
-    }
-  })();
-  return refreshInflight;
-}
 
 type MutateOpts = {
   method: NonNullable<ApiRequest["method"]>;
@@ -586,14 +568,6 @@ export type PushSubscriptionDTO = {
   lastSeenAt: string;
 };
 
-export function listPushSubscriptions() {
-  return apiMutate<PushSubscriptionDTO[]>({
-    method: "GET",
-    path: "/push/subscriptions",
-    householdScoped: false,
-  });
-}
-
 export function deletePushSubscriptionById(id: string) {
   return apiMutate<void>({
     method: "DELETE",
@@ -603,22 +577,6 @@ export function deletePushSubscriptionById(id: string) {
 }
 
 // --- Admin (superadmin) ---------------------------------------------------
-
-export function listAdminDeletedHouseholds() {
-  return apiMutate<AdminDeletedHousehold[]>({
-    method: "GET",
-    path: "/admin/households/deleted",
-    householdScoped: false,
-  });
-}
-
-export function getAdminHousehold(id: string) {
-  return apiMutate<AdminDeletedHousehold>({
-    method: "GET",
-    path: `/admin/households/${id}`,
-    householdScoped: false,
-  });
-}
 
 export function restoreAdminHousehold(id: string) {
   return apiMutate<void>({

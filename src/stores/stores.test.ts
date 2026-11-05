@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { getAuthSnapshot, useAuthStore } from "./auth";
-import { getCurrentHouseholdId, useHouseholdStore, useHouseholdsResolved } from "./household";
+import { useAuthStore } from "./auth";
+import { useHouseholdStore, useHouseholdsResolved } from "./household";
 
 const user = { id: "u1", email: "ana@example.test", firstName: "Ana", lastName: "Test", isSuperadmin: false };
 
@@ -14,7 +14,7 @@ describe("auth store", () => {
   it("setSession, setToken, setUser, setHydrated and clear", () => {
     const s = useAuthStore.getState();
     s.setSession({ user, accessToken: "t1", accessExpiresAt: "2099-01-01T00:00:00Z" });
-    expect(getAuthSnapshot()).toEqual({ token: "t1", user });
+    expect(useAuthStore.getState()).toMatchObject({ accessToken: "t1", user });
 
     s.setToken("t2", "2099-02-01T00:00:00Z");
     expect(useAuthStore.getState()).toMatchObject({ accessToken: "t2", accessExpiresAt: "2099-02-01T00:00:00Z", user });
@@ -38,13 +38,13 @@ describe("household store", () => {
   it("persists only the selected household", () => {
     useHouseholdStore.getState().setCurrentId("h1");
     useHouseholdStore.getState().markResolved("u1");
-    expect(getCurrentHouseholdId()).toBe("h1");
-    const saved = JSON.parse(localStorage.getItem("ahorro.household") ?? "{}");
+    expect(useHouseholdStore.getState().currentId).toBe("h1");
+    const saved = JSON.parse(localStorage.getItem("app.household") ?? "{}");
     expect(saved.state).toEqual({ currentId: "h1" });
   });
 
   it("restores the selected household from storage", async () => {
-    localStorage.setItem("ahorro.household", JSON.stringify({ state: { currentId: "h7" }, version: 0 }));
+    localStorage.setItem("app.household", JSON.stringify({ state: { currentId: "h7" }, version: 0 }));
     await useHouseholdStore.persist.rehydrate();
     expect(useHouseholdStore.getState()).toMatchObject({ currentId: "h7", resolvedFor: null });
   });

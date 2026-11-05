@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth";
 import { BrandLogo } from "@/components/brand-logo";
 import { DevSignature } from "@/components/dev-signature";
+import { brand } from "@/config/brand";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-svh flex-col items-center px-4 py-10">
       <Link
         href="/login"
-        aria-label="Ahorro — Inicio"
+        aria-label={`${brand.name} — Inicio`}
         className="vt-brand-hero mb-6 flex items-center"
       >
         <BrandLogo variant="wordmark" size={40} priority />

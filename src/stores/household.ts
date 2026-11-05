@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 type HouseholdState = {
   currentId: string | null;
@@ -25,16 +26,12 @@ export const useHouseholdStore = create<HouseholdState>()(
       markResolved: (resolvedFor) => set({ resolvedFor }),
     }),
     {
-      name: "ahorro.household",
+      name: STORAGE_KEYS.household,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ currentId: s.currentId }),
     },
   ),
 );
-
-export function getCurrentHouseholdId() {
-  return useHouseholdStore.getState().currentId;
-}
 
 /** True once the households of `userId` are known (see `resolvedFor`). */
 export function useHouseholdsResolved(userId: string | undefined) {

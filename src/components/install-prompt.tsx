@@ -13,8 +13,10 @@ import {
 import { isStandalone, isIosSafari } from "@/lib/push";
 import { useIsClient } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
+import { brand } from "@/config/brand";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
-const DISMISSED_KEY = "ahorra.install.dismissed";
+const DISMISSED_KEY = STORAGE_KEYS.installDismissed;
 const DISMISS_DAYS = 7;
 
 interface BeforeInstallPromptEvent extends Event {
@@ -124,7 +126,7 @@ export function InstallPrompt() {
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1 text-xs font-bold text-primary-foreground">
                 <Sparkles className="size-3" />
-                Instalá Ahorro como app
+                Instalá {brand.name} como app
               </p>
               <p className="mt-0.5 text-[11px] leading-relaxed text-primary-foreground/80">
                 {platform === "ios"
@@ -176,7 +178,7 @@ function IosInstallDialog({
       n: 3,
       icon: <Smartphone className="size-4" />,
       title: "Confirmá “Añadir”",
-      desc: "Vas a ver el ícono de Ahorro en tu pantalla principal.",
+      desc: `Vas a ver el ícono de ${brand.name} en tu pantalla principal.`,
     },
   ];
 
@@ -187,7 +189,7 @@ function IosInstallDialog({
           <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
             <Smartphone className="size-5 text-primary" />
           </div>
-          <DialogTitle className="text-center">Instalar Ahorro en iPhone</DialogTitle>
+          <DialogTitle className="text-center">Instalar {brand.name} en iPhone</DialogTitle>
           <DialogDescription className="text-center">
             Seguí estos pasos desde <strong>Safari</strong> (no funciona en Chrome en iOS).
           </DialogDescription>

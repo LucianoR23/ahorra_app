@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
+import { brand } from "@/config/brand";
 
-export const alt = "Ahorro — Personal Finance Coach";
+export const alt = brand.title;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -51,7 +52,7 @@ export default function OpengraphImage() {
               letterSpacing: -4,
             }}
           >
-            Ahorro
+            {brand.name}
           </div>
         </div>
         <div

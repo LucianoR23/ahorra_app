@@ -18,7 +18,6 @@ import type {
   Bank,
   CreditCard,
   CreditCardPeriod,
-  CreditCardPeriodStatus,
   RecurringExpense,
   RecurringIncome,
   SeriesStats,
@@ -28,7 +27,6 @@ import type {
   BalancesMeResponse,
   Settlement,
   SplitRulesResponse,
-  Goal,
   GoalProgress,
   TrendsReport,
   AiExport,
@@ -326,16 +324,6 @@ export type GoalsFilters = {
   active?: boolean;
 };
 
-export function useGoals(filters: GoalsFilters = {}) {
-  const { token, householdId } = useReady();
-  const query: Record<string, string | number | undefined> = {};
-  if (filters.scope) query.scope = filters.scope;
-  if (filters.userId) query.userId = filters.userId;
-  if (typeof filters.active === "boolean") query.active = filters.active ? "true" : "false";
-  const key = token && householdId ? (["/goals", { query }] as const) : null;
-  return useSWR<Goal[]>(key);
-}
-
 export function useGoalsProgress(filters: GoalsFilters & { at?: string } = {}) {
   const { token, householdId } = useReady();
   const query: Record<string, string | number | undefined> = {};
@@ -345,12 +333,6 @@ export function useGoalsProgress(filters: GoalsFilters & { at?: string } = {}) {
   if (filters.at) query.at = filters.at;
   const key = token && householdId ? (["/goals/progress", { query }] as const) : null;
   return useSWR<GoalProgress[]>(key);
-}
-
-export function useGoal(id: string | null | undefined) {
-  const { token, householdId } = useReady();
-  const key = token && householdId && id ? ([`/goals/${id}`] as const) : null;
-  return useSWR<Goal>(key);
 }
 
 export function useGoalProgress(id: string | null | undefined, at?: string) {
@@ -376,13 +358,6 @@ export function useExchangeRates() {
   );
 }
 
-export function useHousehold(id?: string | null) {
-  const token = useAuthStore((s) => s.accessToken);
-  return useSWR<Household>(
-    token && id ? ([`/households/${id}`, { householdScoped: false }] as const) : null,
-  );
-}
-
 export function useTrendsReport(months = 6) {
   const { token, householdId } = useReady();
   const key = token && householdId
@@ -397,15 +372,6 @@ export function useAiExport(month?: string) {
     ? (["/reports/ai-export", { query: { month } }] as const)
     : null;
   return useSWR<AiExport>(key);
-}
-
-export function useCreditCardPeriodStatus(paymentMethodId?: string | null) {
-  const token = useAuthStore((s) => s.accessToken);
-  return useSWR<CreditCardPeriodStatus>(
-    token && paymentMethodId
-      ? ([`/payment-methods/${paymentMethodId}/credit-card/periods/status`, { householdScoped: false }] as const)
-      : null,
-  );
 }
 
 export function useHouseholdInvites(householdId?: string | null) {

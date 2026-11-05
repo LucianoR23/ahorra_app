@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { refresh, getMe } from "@/lib/api/auth";
+import { refreshOnce } from "@/lib/api/refresh";
 import { apiFetch } from "@/lib/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
@@ -101,15 +102,11 @@ export function AuthBootstrap() {
     if (!accessToken || !accessExpiresAt) return;
 
     const runRefresh = async () => {
-      try {
-        const r = await refresh();
-        setToken(r.accessToken, r.accessExpiresAt);
-      } catch {
-        // Refresh falló — sesión perdida. Limpiamos para que AuthGate
-        // mande a /login en vez de dejar al usuario en un estado raro.
-        clearAuth();
-        useHouseholdStore.getState().setCurrentId(null);
-      }
+      // Shared with SWR reads and mutations (one refresh in flight at a time).
+      // On failure refreshOnce clears the session; drop the household too so
+      // AuthGate sends the user to /login instead of a half-empty state.
+      const token = await refreshOnce();
+      if (!token) useHouseholdStore.getState().setCurrentId(null);
     };
 
     const expiresMs = new Date(accessExpiresAt).getTime();

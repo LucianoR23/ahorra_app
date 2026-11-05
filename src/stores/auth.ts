@@ -27,8 +27,3 @@ export const useAuthStore = create<AuthState>((set) => ({
   clear: () => set({ user: null, accessToken: null, accessExpiresAt: null }),
 }));
 
-/** Snapshot for non-React contexts (Server Action callers). */
-export function getAuthSnapshot() {
-  const s = useAuthStore.getState();
-  return { token: s.accessToken, user: s.user };
-}

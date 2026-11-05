@@ -93,3 +93,19 @@ it("swrFetcher accepts a plain string key and forwards query params", async () =
   await swrFetcher(["/expenses", { query: { limit: 5 } }] as const);
   expect(lastRequest().query).toEqual({ limit: "5" });
 });
+
+it("reads and writes share one refresh in flight", async () => {
+  signIn({ token: "access-1" });
+  let refreshes = 0;
+  server.use(
+    http.get(`${API}/categories`, ({ request }) =>
+      request.headers.get("authorization") === "Bearer access-2" ? HttpResponse.json([]) : unauthorized(),
+    ),
+    http.post(`${API}/auth/refresh`, () => {
+      refreshes++;
+      return refreshOK();
+    }),
+  );
+  await Promise.all([runners.swrFetcher("/categories"), runners.apiMutate("/categories")]);
+  expect(refreshes).toBe(1);
+});

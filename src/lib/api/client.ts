@@ -1,6 +1,9 @@
 import { ApiError } from "./errors";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://api-ahorra.lemydev.com";
+// Set NEXT_PUBLIC_API_URL at build time. The fallback is the local API, never
+// a deployed one: a misconfigured build fails visibly instead of silently
+// talking to another environment.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export type ApiRequest = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
