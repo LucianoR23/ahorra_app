@@ -7,3 +7,15 @@ allowBuilds:
   msw: false
   sharp: true
   unrs-resolver: true
+# Security patches newer than pnpm's minimumReleaseAge, allowed one by one (0.19).
+minimumReleaseAgeExclude:
+  - brace-expansion@5.0.12
+  - source-map-js@1.2.2
+# Security overrides (plan 0.19): patched versions of build-time transitive
+# deps whose parents (next/styled-jsx, @serwist/build) pin vulnerable ones.
+# Same major only. Remove each once its parent ships the fix.
+overrides:
+  browserslist@<4.28.7: ^4.28.7
+  baseline-browser-mapping@<2.11.0: ^2.11.0
+  "@babel/core@<7.29.1": ^7.29.1
+  zod@<4.6.6: ^4.6.6
