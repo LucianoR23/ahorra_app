@@ -129,9 +129,11 @@ docker compose up -d
 go run ./cmd/api
 cd ../ahorra_app
 
-# 5. Run frontend
+# 4. Run frontend
 corepack pnpm dev   # http://localhost:3005
 ```
+
+**Before pushing:** `corepack pnpm check` runs what CI runs (lint, typecheck, build, `pnpm audit --prod --audit-level high`). CI (`.github/workflows/ci.yml`) also scans the git history with gitleaks. Dependabot opens weekly update PRs against `next`.
 
 ---
 
