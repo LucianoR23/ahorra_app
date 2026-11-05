@@ -48,8 +48,8 @@ jobs:
       - name: Typecheck
         run: pnpm exec tsc --noEmit
 
-      - name: Unit tests (Vitest)
-        run: pnpm test
+      - name: Unit tests + coverage floors (Vitest)
+        run: pnpm test:coverage
 
       - name: Build
         run: pnpm build

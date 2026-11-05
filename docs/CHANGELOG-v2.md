@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.21i: coverage baseline and floors
+- Vitest coverage thresholds (one point under the baseline): `src/lib/**` and `src/stores/**` 94% statements / 82% branches / 97% functions / 98% lines; global 22 / 15 / 23 / 23. `pnpm check` and CI now run `pnpm test:coverage`, which fails below any floor.
+- `docs/testing/coverage-baseline.md` with the starting numbers.
+
 ### 0.21h: Playwright E2E; fix dev stuck on the loading screen
 - Playwright 1.64.1 (approved). `pnpm test:e2e`; `playwright.config.ts` starts the real API (migrating on start) and the app against a disposable Postgres, one worker, Buenos Aires timezone for helpers, browser and API.
 - Flows (3 now, decided 2026-11-05): sign up → household → session kept on reload (refresh cookie across ports) → log in again without passing through onboarding; an expense in 3 installments, shared, whose first installment reaches the balances (+$150); a variable monthly bill confirmed from its draft. Setup data goes through the API (`e2e/helpers.ts`), only the flow under test uses the UI.
