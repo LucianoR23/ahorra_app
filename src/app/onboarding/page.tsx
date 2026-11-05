@@ -13,7 +13,8 @@ import { createHousehold, createHouseholdInvite } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
+import { useHouseholdStore, useHouseholdsResolved } from "@/stores/household";
+import { AuthSplash } from "@/components/auth-gate";
 import type { Currency } from "@/lib/api/schemas";
 
 const EMAIL_RE = /^[^\s@]+@[a-zA-Z0-9-]+(\.[a-zA-Z]+)+$/;
@@ -24,6 +25,7 @@ export default function OnboardingPage() {
   const user = useAuthStore((s) => s.user);
   const currentHouseholdId = useHouseholdStore((s) => s.currentId);
   const setCurrentId = useHouseholdStore((s) => s.setCurrentId);
+  const householdsResolved = useHouseholdsResolved(user?.id);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [createdId, setCreatedId] = useState<string | null>(null);
@@ -43,18 +45,15 @@ export default function OnboardingPage() {
     if (hydrated && !user) router.replace("/login");
   }, [hydrated, user, router]);
 
+  // Users who already have a household don't belong here. Decide only once
+  // their households are known, so nobody sees onboarding for a split second.
+  const hasHousehold = householdsResolved && !!currentHouseholdId && step === 1 && !createdId;
   useEffect(() => {
-    if (hydrated && user && currentHouseholdId && step === 1 && !createdId) {
-      router.replace("/");
-    }
-  }, [hydrated, user, currentHouseholdId, step, createdId, router]);
+    if (hasHousehold) router.replace("/");
+  }, [hasHousehold, router]);
 
-  if (!hydrated || !user) {
-    return (
-      <div className="grid min-h-svh place-items-center text-sm text-muted-foreground">
-        Cargando…
-      </div>
-    );
+  if (!hydrated || !user || !householdsResolved || hasHousehold) {
+    return <AuthSplash />;
   }
 
   async function handleCreate(e: React.FormEvent) {

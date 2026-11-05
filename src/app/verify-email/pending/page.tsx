@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 import { getMe, resendVerificationEmail } from "@/lib/api/auth";
 import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
 import { toastError } from "@/lib/toast";
 import { toast } from "@/lib/toast";
 
@@ -18,7 +17,6 @@ export default function Page() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  const currentHouseholdId = useHouseholdStore((s) => s.currentId);
 
   const [email] = useState<string | null>(() =>
     typeof window === "undefined" ? null : sessionStorage.getItem("pending_verify_email"),
@@ -36,8 +34,9 @@ export default function Page() {
 
   const redirectAfterVerified = useCallback(() => {
     sessionStorage.removeItem("pending_verify_email");
-    router.replace(currentHouseholdId ? "/" : "/onboarding");
-  }, [router, currentHouseholdId]);
+    // AuthGate on "/" waits for the households and sends to /onboarding if none.
+    router.replace("/");
+  }, [router]);
 
   const checkVerified = useCallback(
     async (opts?: { showToast?: boolean }) => {

@@ -24,6 +24,7 @@ export function AuthBootstrap() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const accessExpiresAt = useAuthStore((s) => s.accessExpiresAt);
   const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
+  const markHouseholdsResolved = useHouseholdStore((s) => s.markResolved);
 
   // Evita que StrictMode (dev) o remounts rápidos disparen dos refresh en
   // paralelo, lo que contra un backend con rotación estricta invalida la
@@ -53,6 +54,7 @@ export function AuthBootstrap() {
         if (!storedIsValid) {
           setHouseholdId(households.length > 0 ? households[0].id : null);
         }
+        markHouseholdsResolved(me.id);
       } catch {
         // No active session — public state.
       } finally {
@@ -62,13 +64,16 @@ export function AuthBootstrap() {
     return () => {
       cancelled = true;
     };
-  }, [setToken, setUser, setHydrated, setHouseholdId]);
+  }, [setToken, setUser, setHydrated, setHouseholdId, markHouseholdsResolved]);
 
   // When the user logs in via form, fetch households and reconcile the stored
   // currentHouseholdId — if it's stale (doesn't belong to this user), fall back
   // to the first household or null so AuthGate can route to /onboarding.
+  // Keyed on the user id (not the token): silent refreshes must not refetch.
+  const userId = user?.id;
   useEffect(() => {
-    if (!user || !accessToken) return;
+    if (!userId || !accessToken) return;
+    if (useHouseholdStore.getState().resolvedFor === userId) return;
     let cancelled = false;
     (async () => {
       try {
@@ -80,13 +85,16 @@ export function AuthBootstrap() {
           setHouseholdId(households.length > 0 ? households[0].id : null);
         }
       } catch {
-        // ignore — onboarding flow will handle creation
+        // Keep the previous behavior: if the list can't be fetched, let the
+        // guards decide with what we have (onboarding handles creation).
+      } finally {
+        if (!cancelled) markHouseholdsResolved(userId);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, accessToken, setHouseholdId]);
+  }, [userId, accessToken, setHouseholdId, markHouseholdsResolved]);
 
   // Silent refresh programado: se re-agenda cada vez que cambia
   // accessExpiresAt. Si el tab estuvo en background y se pasó el tiempo,
