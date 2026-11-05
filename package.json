@@ -15,7 +15,8 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm audit --prod --audit-level high",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
@@ -42,6 +43,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",

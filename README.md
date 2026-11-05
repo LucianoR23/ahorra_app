@@ -133,7 +133,14 @@ cd ../ahorra_app
 corepack pnpm dev   # http://localhost:3005
 ```
 
-**Before pushing:** `corepack pnpm check` runs what CI runs (lint, typecheck, build, `pnpm audit --prod --audit-level high`). CI (`.github/workflows/ci.yml`) also scans the git history with gitleaks. Dependabot opens weekly update PRs against `next`.
+**Before pushing:** `corepack pnpm check` runs what CI runs (lint, typecheck, unit tests, build, `pnpm audit --prod --audit-level high`). CI (`.github/workflows/ci.yml`) also scans the git history with gitleaks and, on PRs, runs the E2E. Dependabot opens weekly update PRs against `next`.
+
+### Tests
+
+- **Unit and component (Vitest):** `corepack pnpm test` (`test:watch`, `test:coverage`). The API is mocked with MSW (`src/test/msw.ts`); a request without a handler fails the test.
+- **E2E (Playwright):** `corepack pnpm test:e2e` starts the API (`go run ./cmd/api` in `../api_go_ahorro`, migrating on start) and the app, against the database in `E2E_DATABASE_URL` (default `postgres://postgres:postgres@localhost:5433/ahorra_e2e`, which must exist and be disposable; never your dev data). Ports 8080 and 3005 must be free, or the running servers are reused. First time: `corepack pnpm exec playwright install chromium`.
+  - Flows covered (plan 0.21h): sign up → household → session kept on reload → log in again; an expense in installments shared with the household reaching the balances; a variable monthly bill confirmed from its draft.
+  - In CI the API (branch `next`) is checked out with a read-only deploy key (secret `API_DEPLOY_KEY`).
 
 ---
 

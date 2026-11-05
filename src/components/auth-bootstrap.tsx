@@ -31,23 +31,24 @@ export function AuthBootstrap() {
   // cookie buena y deslogea al usuario al recargar.
   const bootstrapped = useRef(false);
 
-  // Initial session recovery via refresh cookie.
+  // Initial session recovery via refresh cookie. Runs once per page load: the
+  // ref skips StrictMode's second mount. No cancellation on cleanup: in dev,
+  // StrictMode's simulated unmount would cancel the only run and the app would
+  // never hydrate. The stores are global, so writing them after an unmount is
+  // harmless.
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
 
-    let cancelled = false;
     (async () => {
       try {
         const r = await refresh();
-        if (cancelled) return;
         setToken(r.accessToken, r.accessExpiresAt);
 
         const [me, households] = await Promise.all([
           getMe(r.accessToken),
           apiFetch<Household[]>({ path: "/households", token: r.accessToken }),
         ]);
-        if (cancelled) return;
         setUser(me);
         const storedId = useHouseholdStore.getState().currentId;
         const storedIsValid = storedId ? households.some((h) => h.id === storedId) : false;
@@ -58,12 +59,9 @@ export function AuthBootstrap() {
       } catch {
         // No active session — public state.
       } finally {
-        if (!cancelled) setHydrated(true);
+        setHydrated(true);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [setToken, setUser, setHydrated, setHouseholdId, markHouseholdsResolved]);
 
   // When the user logs in via form, fetch households and reconcile the stored
