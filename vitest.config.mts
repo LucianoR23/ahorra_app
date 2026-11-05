@@ -19,6 +19,17 @@ export default defineConfig({
       provider: "v8",
       include: ["src/lib/**", "src/stores/**", "src/components/**"],
       reporter: ["text-summary", "html"],
+      // Coverage ratchet (plan §0, item 0.21i): floors about one point under
+      // the 0.21 baseline (docs/testing/coverage-baseline.md). Raise them when
+      // coverage goes up; never lower them.
+      thresholds: {
+        statements: 22,
+        branches: 15,
+        functions: 23,
+        lines: 23,
+        "src/lib/**": { statements: 94, branches: 82, functions: 97, lines: 98 },
+        "src/stores/**": { statements: 94, branches: 82, functions: 97, lines: 98 },
+      },
     },
   },
 });
