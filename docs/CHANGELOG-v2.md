@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.9: insights stream with a ticket
+- The live insights stream asks for a single-use ticket (`POST /insights/stream-ticket`) before each connection and opens `/insights/stream?ticket=`; the access token no longer goes in the URL.
+- A ticket works once, so the browser's own reconnect (same URL) would fail: on any error the hook closes the stream and reconnects with a new ticket, backing off 1 s, 2 s, 4 s ... up to 30 s, and back to 1 s once connected.
+- Needs `api_go_ahorro` 0.9.
+
 ### 0.1 (part 4): goals screen matches the API
 - A goal in USD or EUR shows its target converted to the base currency, the original amount next to it, and "Calculado con la cotización de hoy (1 USD = $1.500)". Current spending is shown in the base currency (it was labeled with the goal's currency).
 - Goal status follows the API (`ok`, `warning`, `exceeded`); the app expected `on_track`/`achieved`, so a goal on track had no badge style and broke its card.
