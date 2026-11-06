@@ -30,7 +30,7 @@ export function Dashboard() {
   const { data: insights, isLoading: loadingInsight } = useLatestInsight();
   const { data: categories } = useCategories();
 
-  const insight = insights?.[0];
+  const insight = insights?.items[0];
   const expenses = expensesResp?.items ?? [];
   const categoriesById = new Map<string, Category>(
     categories?.map((c) => [c.id, c]) ?? [],
@@ -186,8 +186,8 @@ function CoachBubble({ insight, loading }: { insight: Insight | undefined; loadi
       </Card>
     );
   }
-  const Icon = insight.severity === "danger" ? AlertTriangle : insight.severity === "warning" ? Info : Sparkles;
-  const tone = insight.severity === "danger" ? "text-warn" : insight.severity === "warning" ? "text-warn" : "text-ai";
+  const Icon = insight.severity === "critical" ? AlertTriangle : insight.severity === "warning" ? Info : Sparkles;
+  const tone = insight.severity === "critical" ? "text-warn" : insight.severity === "warning" ? "text-warn" : "text-ai";
   const bgFrom = insight.severity === "info" ? "from-ai" : "from-warn";
   const bgTo = insight.severity === "info" ? "to-ai/60" : "to-warn/60";
   return (

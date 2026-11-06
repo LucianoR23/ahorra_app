@@ -51,17 +51,13 @@ export function ExpensesList() {
     categoryId: categoryId || undefined,
     paymentMethodId: paymentMethodId || undefined,
     q: debouncedQuery || undefined,
+    kind: fixedFilter === "all" ? undefined : fixedFilter,
     limit: PAGE,
     offset,
   });
 
+  // The fixed/variable filter runs on the server, so totalCount and paging match it.
   const items = data?.items ?? [];
-  const filtered =
-    fixedFilter === "all"
-      ? items
-      : fixedFilter === "fixed"
-        ? items.filter((e) => !!e.recurringExpenseId)
-        : items.filter((e) => !e.recurringExpenseId);
 
   const total = data?.totalCount ?? 0;
   const showingStart = total === 0 ? 0 : offset + 1;
@@ -162,7 +158,10 @@ export function ExpensesList() {
               <button
                 key={f}
                 type="button"
-                onClick={() => setFixedFilter(f)}
+                onClick={() => {
+                  setFixedFilter(f);
+                  setOffset(0);
+                }}
                 className={cn(
                   "flex-1 cursor-pointer rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
                   fixedFilter === f
@@ -185,13 +184,13 @@ export function ExpensesList() {
               <Skeleton key={i} className="h-14 w-full rounded-md" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="p-6 text-center text-sm text-muted-foreground">
             Sin movimientos para este filtro.
           </div>
         ) : (
-          filtered.map((e, i) => {
-            const isLast = i === filtered.length - 1;
+          items.map((e, i) => {
+            const isLast = i === items.length - 1;
             const cat = e.categoryId ? categoriesById.get(e.categoryId) : "Sin categoría";
             const pm = pmById.get(e.paymentMethodId) ?? "—";
             return (

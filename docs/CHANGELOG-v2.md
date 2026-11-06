@@ -4,6 +4,15 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.1 (part 3): contract alignment with the API
+- Insight `severity` is `critical` (what the API emits) instead of `danger`, so critical alerts no longer fail validation or render as plain info.
+- Insight type labels match the API: `alert`, `tip`, `credit_period_reminder` and `recurring_spike` have labels; the never-emitted `alert_goal_*` are gone. The "Alertas" filter asks the API for `type=alert` (it filtered client-side for types that do not exist, so it was always empty).
+- `GET /insights` is read as a page; the inbox offers a next page from `totalCount` instead of guessing from a full page. Settlements carry `totalCount` too.
+- The movements list sends the fixed/variable filter to the API (`kind`), so the count and the pages match the filter; changing it goes back to page 1.
+- `transferHouseholdOwnership` is typed as returning nothing (the API answers 204).
+- `ui-helpers` confirm test: timeout 15 s (two animated dialogs time out under the full `pnpm check` load).
+- Needs `api_go_ahorro` 0.1 part 3 (`GET /insights` page shape).
+
 ### 0.15b: brand config, brand-neutral storage keys, dead code (front end)
 - `src/config/brand.ts` (`NEXT_PUBLIC_BRAND_NAME`, `_TAGLINE`, `_DESCRIPTION`; defaults are today's "Ahorro — Personal Finance Coach") is the single source for the name users see: page metadata, manifest, social preview image, install prompt, login copy, aria-labels, logo alt text and the service worker's default notification title. Nothing visible changes except two spots that said "Ahorra" (push title default, one aria-label). 1.1 sets Valuo. Build args added to the `Dockerfile` and `DEPLOY.md`.
 - Storage keys are brand-neutral (`app.*`, `src/lib/storage-keys.ts`). The five old keys (`ahorro.household`, `ahorra.remembered_email`, `ahorra.emailVerifyBannerDismissedAt`, `ahorra.install.dismissed`, `ahorra.push.dismissed`) are migrated once on load, before any reader, so nobody loses the selected household or the remembered email. The default notification tag is neutral too.

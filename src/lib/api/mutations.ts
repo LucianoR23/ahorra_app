@@ -22,7 +22,6 @@ import type {
   CreditCard,
   CreditCardPeriod,
   Household,
-  HouseholdMember,
   Category,
   User,
   InsightGenerateResult,
@@ -456,7 +455,8 @@ export function removeHouseholdMember(householdId: string, userId: string) {
  * Endpoint real: PATCH /households/{id}/members/{userId}/role con { role: "owner" }.
  */
 export function transferHouseholdOwnership(householdId: string, userId: string) {
-  return apiMutate<HouseholdMember>({
+  // The API answers 204 with no body.
+  return apiMutate<void>({
     method: "PATCH",
     path: `/households/${householdId}/members/${userId}/role`,
     body: { role: "owner" },

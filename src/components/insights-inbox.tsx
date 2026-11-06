@@ -37,12 +37,13 @@ const PAGE_SIZE = 25;
 const TYPE_LABELS: Record<string, string> = {
   daily_summary: "Resumen diario",
   weekly_review: "Resumen semanal",
-  alert: "Alerta de meta",
-  alert_goal_warning: "Alerta de meta",
-  alert_goal_exceeded: "Meta excedida",
+  alert: "Alerta",
+  tip: "Consejo",
   shared_expense: "Gasto compartido",
   invite: "Invitación a hogar",
   settlement: "Pago registrado",
+  credit_period_reminder: "Cierre de tarjeta",
+  recurring_spike: "Aumento de un gasto fijo",
 };
 
 type TypeFilter =
@@ -66,7 +67,7 @@ function invalidateInsights() {
 }
 
 function severityVisual(sev: Insight["severity"]) {
-  if (sev === "danger") {
+  if (sev === "critical") {
     return {
       Icon: AlertTriangle,
       dot: "bg-destructive",
@@ -153,14 +154,9 @@ export function InsightsInbox() {
     setOffset(0);
   }
 
-  const typeQuery =
-    typeFilter === "all"
-      ? undefined
-      : typeFilter === "alert"
-        ? undefined
-        : typeFilter;
+  const typeQuery = typeFilter === "all" ? undefined : typeFilter;
 
-  const { data: insights, isLoading, error } = useInsights({
+  const { data, isLoading, error } = useInsights({
     unread: onlyUnread || undefined,
     type: typeQuery,
     q: debouncedQuery || undefined,
@@ -171,17 +167,8 @@ export function InsightsInbox() {
   const { data: unreadData } = useInsightsUnreadCount();
   const unreadTotal = unreadData?.unread ?? 0;
 
-  // Búsqueda (debouncedQuery) ya se hizo server-side. Solo queda el
-  // narrow client-side cuando typeFilter="alert" porque la API no soporta
-  // el or de dos tipos en un solo request.
-  const filtered =
-    !insights
-      ? []
-      : typeFilter === "alert"
-        ? insights.filter(
-            (i) => i.insightType === "alert_goal_warning" || i.insightType === "alert_goal_exceeded",
-          )
-        : insights;
+  // Type and text filters run on the server.
+  const filtered = data?.items ?? [];
 
   const grouped = (() => {
     const map = new Map<string, Insight[]>();
@@ -193,7 +180,7 @@ export function InsightsInbox() {
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
   })();
 
-  const hasNextPage = (insights?.length ?? 0) === PAGE_SIZE;
+  const hasNextPage = offset + filtered.length < (data?.totalCount ?? 0);
   const hasPrevPage = offset > 0;
 
   const [markingAll, setMarkingAll] = useState(false);

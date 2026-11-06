@@ -52,7 +52,9 @@ describe("confirm", () => {
     });
     await userEvent.click(await screen.findByRole("button", { name: "Cancelar" }));
     await expect(answer).resolves.toBe(false);
-  });
+    // Two dialogs with their open/close animations: under a loaded machine
+    // (the full `pnpm check` run) this takes longer than the default 5 s.
+  }, 15_000);
 });
 
 describe("small helpers", () => {
