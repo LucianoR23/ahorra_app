@@ -13,6 +13,8 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // No "X-Powered-By: Next.js" (plan 0.16): no need to advertise the stack.
+  poweredByHeader: false,
   // Required for Docker standalone output (no node_modules in image)
   output: "standalone",
   // @serwist/next injects a webpack config unconditionally. Next 16 uses
