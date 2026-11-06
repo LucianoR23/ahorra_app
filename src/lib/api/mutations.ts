@@ -608,6 +608,11 @@ export function markAllInsightsRead(userId?: string | null) {
   });
 }
 
+/** Ends every session of the account, on every device (plan 0.5). */
+export function logoutAll() {
+  return apiMutate<void>({ method: "POST", path: "/auth/logout-all", householdScoped: false });
+}
+
 /** A single-use ticket to open the insights stream (valid 60 s, plan 0.9). */
 export function requestStreamTicket() {
   return apiMutate<{ ticket: string; expiresIn: number }>({ method: "POST", path: "/insights/stream-ticket" });

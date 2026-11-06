@@ -44,7 +44,13 @@ export function ProfileConfig() {
       const updated = await patchMe(input);
       setUser(updated);
       setDraft({});
-      toast.success("Perfil actualizado");
+      if (input.email && updated.pendingEmail) {
+        toast.success("Revisá tu nuevo email", {
+          description: `Te mandamos un link a ${updated.pendingEmail}. El cambio se aplica cuando lo confirmes.`,
+        });
+      } else {
+        toast.success("Perfil actualizado");
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === "conflict") {
@@ -119,6 +125,12 @@ export function ProfileConfig() {
             />
             {errors.email && (
               <p className="mt-1 text-xs text-destructive">{errors.email}</p>
+            )}
+            {user.pendingEmail && !errors.email && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Cambio pendiente a <span className="font-medium text-foreground">{user.pendingEmail}</span>:
+                confirmalo con el link que te mandamos a esa casilla.
+              </p>
             )}
           </div>
 

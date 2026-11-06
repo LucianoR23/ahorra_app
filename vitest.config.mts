@@ -10,6 +10,10 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    // Component tests drive dialogs and menus with userEvent; under the full
+    // `pnpm check` (coverage, plus Docker running for the API) they can pass
+    // the 5 s default without anything being wrong.
+    testTimeout: 15_000,
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
     restoreMocks: true,
