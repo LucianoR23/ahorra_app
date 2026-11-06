@@ -1,5 +1,6 @@
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
+import { securityHeaders } from "./src/lib/security-headers";
 
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
@@ -20,6 +21,18 @@ const nextConfig: NextConfig = {
   turbopack: {},
   // React <ViewTransition> (used in app/layout.tsx) needs no flag since
   // Next 16.4: the App Router supports it out of the box.
+  // Security headers on every route (plan 0.16).
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders({
+          apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
+          dev: process.env.NODE_ENV === "development",
+        }),
+      },
+    ];
+  },
 };
 
 export default withSerwist(nextConfig);

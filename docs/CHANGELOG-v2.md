@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.16 (app part): security headers
+- Every route sends a Content-Security-Policy (`src/lib/security-headers.ts`, wired in `next.config.ts`): scripts from the app and Google Sign-In only, with `'unsafe-inline'` (a nonce would make every page render per request; decided with the user); `connect-src` limited to the app, the API origin from `NEXT_PUBLIC_API_URL` and Google; no framing (`frame-ancestors 'none'`), no plugins, no `<base>`, forms post to the app only. Images and video allow any https host (support attachments).
+- Also HSTS (outside dev), `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, COOP `same-origin-allow-popups` (Google popup) and a Permissions-Policy that turns off camera, microphone, geolocation, payment and USB.
+- Pages stay statically rendered. The values are fixed at build time, like `NEXT_PUBLIC_API_URL`.
+
 ### 0.17: "Actividad reciente"
 - `/seguridad` shows the account's latest security events (`GET /me/activity`): sign-ins, failed attempts and new devices highlighted, logout, password and email changes, household membership; each with the device, the IP while it is kept (7 days) and the date in Buenos Aires time (24 h).
 - Needs `api_go_ahorro` 0.17.
