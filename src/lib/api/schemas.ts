@@ -6,6 +6,8 @@ export const userSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   emailVerifiedAt: z.string().optional(),
+  /** An email change waiting for the link sent to the new address (plan 0.5). */
+  pendingEmail: z.string().optional(),
   isSuperadmin: z.boolean().optional().default(false),
 });
 export type User = z.infer<typeof userSchema>;

@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { ChangePasswordCard } from "@/components/change-password-card";
 import { DevicesCard } from "@/components/devices-card";
 import { DeleteAccountCard } from "@/components/delete-account-card";
+import { SignOutEverywhereCard } from "@/components/sign-out-everywhere-card";
 
 export default function Page() {
   return (
@@ -15,6 +16,7 @@ export default function Page() {
       <div className="flex flex-col gap-4">
         <ChangePasswordCard />
         <DevicesCard />
+        <SignOutEverywhereCard />
         <DeleteAccountCard />
       </div>
     </AppShell>
