@@ -28,10 +28,20 @@ function renderInbox() {
   );
 }
 
+const page = (items: unknown[], totalCount = items.length) => ({ items, totalCount, limit: 25, offset: 0 });
+
+// Types the inbox asked the API for, in order.
+let requestedTypes: (string | null)[] = [];
+
 beforeEach(() => {
   signIn();
+  requestedTypes = [];
   server.use(
-    http.get(`${API}/insights`, () => HttpResponse.json([goalAlert])),
+    http.get(`${API}/insights`, ({ request }) => {
+      const type = new URL(request.url).searchParams.get("type");
+      requestedTypes.push(type);
+      return HttpResponse.json(page(type === null || type === "alert" ? [goalAlert] : []));
+    }),
     http.get(`${API}/insights/unread-count`, () => HttpResponse.json({ unread: 1 })),
   );
 });
@@ -42,12 +52,20 @@ describe("InsightsInbox", () => {
     expect(await screen.findByText("Objetivo al 105%")).toBeInTheDocument();
   });
 
-  // Audit section 10, bug 3: the "Alertas" filter looks for
-  // alert_goal_warning / alert_goal_exceeded, but the API emits "alert".
-  it.fails("the Alertas filter keeps the API's goal alerts", async () => {
+  // Audit section 10, bug 3 (fixed in 0.1): the filter used to look for types
+  // the API never emits; it now asks the API for type=alert.
+  it("the Alertas filter asks the API for its goal alerts", async () => {
     renderInbox();
     await screen.findByText("Objetivo al 105%");
     await userEvent.click(screen.getByRole("tab", { name: "Alertas" }));
     expect(await screen.findByText("Objetivo al 105%", {}, { timeout: 1000 })).toBeInTheDocument();
+    expect(requestedTypes).toContain("alert");
+  });
+
+  it("offers a next page only when totalCount says there is one", async () => {
+    server.use(http.get(`${API}/insights`, () => HttpResponse.json(page([goalAlert], 30))));
+    renderInbox();
+    await screen.findByText("Objetivo al 105%");
+    expect(screen.getByRole("button", { name: /siguiente/i })).toBeEnabled();
   });
 });

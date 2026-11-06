@@ -30,8 +30,8 @@ const TYPE_LABELS: Record<string, string> = {
   alert_goal_exceeded: "Meta excedida",
 };
 
-function severityVisual(sev: "info" | "warning" | "danger") {
-  if (sev === "danger") {
+function severityVisual(sev: "info" | "warning" | "critical") {
+  if (sev === "critical") {
     return {
       Icon: AlertTriangle,
       iconBg: "bg-destructive/10 text-destructive",

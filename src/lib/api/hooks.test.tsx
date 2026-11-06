@@ -33,6 +33,7 @@ const rows: Row[] = [
   ["useExpenses", () => h.useExpenses({ categoryId: "c1", q: "super", from: "2026-01-01" }), "/expenses",
     { categoryId: "c1", q: "super", from: "2026-01-01", limit: "50", offset: "0" }, true],
   ["useRecentExpenses", () => h.useRecentExpenses(3), "/expenses", { limit: "3", offset: "0" }, true],
+  ["useExpenses (fixed only)", () => h.useExpenses({ kind: "fixed" }), "/expenses", { kind: "fixed", limit: "50", offset: "0" }, true],
   ["useExpense", () => h.useExpense("e1"), "/expenses/e1", {}, true],
   ["useIncomes", () => h.useIncomes({ source: "salary" }), "/incomes", { source: "salary", limit: "50", offset: "0" }, true],
   ["useIncome", () => h.useIncome("i1"), "/incomes/i1", {}, true],

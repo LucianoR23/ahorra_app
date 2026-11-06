@@ -328,12 +328,20 @@ export const insightSchema = z.object({
   insightType: z.string(),
   title: z.string(),
   body: z.string(),
-  severity: z.enum(["info", "warning", "danger"]),
+  severity: z.enum(["info", "warning", "critical"]),
   isRead: z.boolean(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   createdAt: z.string(),
 });
 export type Insight = z.infer<typeof insightSchema>;
+
+export const insightListResponseSchema = z.object({
+  items: z.array(insightSchema),
+  totalCount: z.number(),
+  limit: z.number(),
+  offset: z.number(),
+});
+export type InsightListResponse = z.infer<typeof insightListResponseSchema>;
 
 export const categorySchema = z.object({
   id: z.string(),

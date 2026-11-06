@@ -133,10 +133,9 @@ describe("patchMe", () => {
 });
 
 describe("contract with the API (audit section 10)", () => {
-  // Bug 8: typed as returning the member, but the API answers 204 with no body.
-  it.fails("transferHouseholdOwnership resolves to the HouseholdMember its type promises", async () => {
+  // Bug 8 (fixed in 0.1): typed as returning the member; the API answers 204.
+  it("transferHouseholdOwnership resolves with no body, as the API's 204", async () => {
     server.use(http.patch(`${API}/households/h9/members/u2/role`, () => new HttpResponse(null, { status: 204 })));
-    const member = await m.transferHouseholdOwnership("h9", "u2");
-    expect(member).toHaveProperty("role", "owner");
+    await expect(m.transferHouseholdOwnership("h9", "u2")).resolves.toBeUndefined();
   });
 });

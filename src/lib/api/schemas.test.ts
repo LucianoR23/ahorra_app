@@ -25,9 +25,10 @@ describe("schemas", () => {
     }
   });
 
-  // Audit section 10, bug 2: the API emits "critical"; the front end expects
-  // "danger", so critical alerts render as plain info.
-  it.fails("insight accepts the API's critical severity", () => {
+  // Audit section 10, bug 2 (fixed in 0.1): the API emits "critical" and the
+  // front end used to expect "danger".
+  it("insight accepts the API's critical severity and not the old danger", () => {
     expect(insightSchema.parse({ ...insight, severity: "critical" }).severity).toBe("critical");
+    expect(() => insightSchema.parse({ ...insight, severity: "danger" })).toThrow();
   });
 });
