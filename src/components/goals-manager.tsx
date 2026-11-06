@@ -61,10 +61,9 @@ const STATUS_META: Record<
   GoalProgress["status"],
   { label: string; className: string; bar: string }
 > = {
-  on_track: { label: "En camino", className: "bg-emerald-500/15 text-emerald-500", bar: "bg-emerald-500" },
+  ok: { label: "En camino", className: "bg-emerald-500/15 text-emerald-500", bar: "bg-emerald-500" },
   warning: { label: "Atención", className: "bg-amber-500/15 text-amber-500", bar: "bg-amber-500" },
   exceeded: { label: "Excedido", className: "bg-destructive/15 text-destructive", bar: "bg-destructive" },
-  achieved: { label: "Logrado", className: "bg-primary/15 text-primary", bar: "bg-primary" },
 };
 
 export function GoalsManager() {
@@ -146,7 +145,7 @@ export function GoalsManager() {
                       )}
                     </div>
                     <div className="mt-0.5 text-[11px] text-muted-foreground">
-                      {memberName(p.goal.userId)} · {p.goal.period === "monthly" ? "Mensual" : "Anual"}
+                      {memberName(p.goal.userId)} · {p.goal.period === "monthly" ? "Mensual" : "Semanal"}
                     </div>
                   </div>
                   <button
@@ -160,12 +159,14 @@ export function GoalsManager() {
 
                 <div className="mt-3 flex items-baseline justify-between text-sm">
                   <span className="font-mono font-bold">
-                    {fmtMoney(p.currentAmount, p.goal.currency)}
+                    {fmtMoney(p.currentAmount, p.baseCurrency)}
                   </span>
                   <span className="text-muted-foreground">
-                    de <span className="font-semibold text-foreground">{fmtMoney(p.targetAmount, p.goal.currency)}</span>
+                    de <span className="font-semibold text-foreground">{fmtMoney(p.targetAmountBase, p.baseCurrency)}</span>
+                    {p.fxRate !== null && <> ({fmtMoney(p.targetAmount, p.goal.currency)})</>}
                   </span>
                 </div>
+                <FxNote progress={p} />
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className={cn("h-full rounded-full transition-all", s.bar)}
@@ -225,6 +226,19 @@ export function GoalsManager() {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * A goal in another currency is measured against its target converted with
+ * today's rate, so the percentage moves with the rate. Says so.
+ */
+function FxNote({ progress }: { progress: GoalProgress }) {
+  if (progress.fxRate === null) return null;
+  return (
+    <p className="mt-1 text-[10px] text-muted-foreground">
+      Calculado con la cotización de hoy (1 {progress.goal.currency} = {fmtMoney(progress.fxRate, progress.baseCurrency)})
+    </p>
   );
 }
 
@@ -294,14 +308,17 @@ function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: st
                 <div>
                   <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Actual</div>
                   <div className="mt-0.5 font-mono text-sm font-bold">
-                    {fmtMoney(data.currentAmount, data.goal.currency)}
+                    {fmtMoney(data.currentAmount, data.baseCurrency)}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Objetivo</div>
                   <div className="mt-0.5 font-mono text-sm font-bold">
-                    {fmtMoney(data.targetAmount, data.goal.currency)}
+                    {fmtMoney(data.targetAmountBase, data.baseCurrency)}
                   </div>
+                  {data.fxRate !== null && (
+                    <div className="text-[10px] text-muted-foreground">{fmtMoney(data.targetAmount, data.goal.currency)}</div>
+                  )}
                 </div>
                 <div className="col-span-2 border-t border-border pt-2">
                   <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Período</div>
@@ -382,7 +399,7 @@ function GoalFormDialog({
   const [categoryId, setCategoryId] = useState<string>(goal?.categoryId ?? "");
   const [targetAmount, setTargetAmount] = useState<string>(goal?.targetAmount.toString() ?? "");
   const [currency, setCurrency] = useState<Currency>((goal?.currency as Currency) ?? baseCurrency);
-  const [period, setPeriod] = useState<"monthly" | "yearly">(goal?.period ?? "monthly");
+  const [period, setPeriod] = useState<"monthly" | "weekly">(goal?.period ?? "monthly");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -547,7 +564,7 @@ function GoalFormDialog({
           <div>
             <Label>Período</Label>
             <div className="flex gap-1.5">
-              {(["monthly", "yearly"] as const).map((p) => (
+              {(["monthly", "weekly"] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
@@ -559,7 +576,7 @@ function GoalFormDialog({
                       : "bg-muted text-muted-foreground hover:bg-muted/70",
                   )}
                 >
-                  {p === "monthly" ? "Mensual" : "Anual"}
+                  {p === "monthly" ? "Mensual" : "Semanal"}
                 </button>
               ))}
             </div>

@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.1 (part 4): goals screen matches the API
+- A goal in USD or EUR shows its target converted to the base currency, the original amount next to it, and "Calculado con la cotización de hoy (1 USD = $1.500)". Current spending is shown in the base currency (it was labeled with the goal's currency).
+- Goal status follows the API (`ok`, `warning`, `exceeded`); the app expected `on_track`/`achieved`, so a goal on track had no badge style and broke its card.
+- Goal periods are monthly and weekly, as the API computes them; the form offered "Anual", which the API always rejected, and weekly goals were labeled "Anual".
+- New `goals-manager.test.tsx`. Needs `api_go_ahorro` 0.1 part 4 (`targetAmountBase`, `baseCurrency`, `fxRate`).
+
 ### 0.1 (part 3): contract alignment with the API
 - Insight `severity` is `critical` (what the API emits) instead of `danger`, so critical alerts no longer fail validation or render as plain info.
 - Insight type labels match the API: `alert`, `tip`, `credit_period_reminder` and `recurring_spike` have labels; the never-emitted `alert_goal_*` are gone. The "Alertas" filter asks the API for `type=alert` (it filtered client-side for types that do not exist, so it was always empty).

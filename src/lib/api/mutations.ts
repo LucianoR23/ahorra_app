@@ -286,7 +286,7 @@ export type GoalCreateInput = {
   goalType: "category_limit" | "total_limit" | "savings";
   targetAmount: number;
   currency: Currency;
-  period: "monthly" | "yearly";
+  period: "monthly" | "weekly";
 };
 
 export function createGoal(input: GoalCreateInput) {
@@ -297,7 +297,7 @@ export type GoalPatchInput = {
   categoryId?: string | null;
   targetAmount?: number;
   currency?: Currency;
-  period?: "monthly" | "yearly";
+  period?: "monthly" | "weekly";
 };
 
 export function patchGoal(id: string, input: GoalPatchInput) {
