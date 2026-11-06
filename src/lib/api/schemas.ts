@@ -402,7 +402,8 @@ export type SplitRulesResponse = z.infer<typeof splitRulesResponseSchema>;
 
 export const goalScopeSchema = z.enum(["household", "user"]);
 export const goalTypeSchema = z.enum(["category_limit", "total_limit", "savings"]);
-export const goalPeriodSchema = z.enum(["monthly", "yearly"]);
+// The API computes monthly and weekly (Monday to Sunday) periods only.
+export const goalPeriodSchema = z.enum(["monthly", "weekly"]);
 
 export const goalSchema = z.object({
   id: z.string(),
@@ -423,10 +424,17 @@ export const goalProgressSchema = z.object({
   goal: goalSchema,
   periodStart: z.string(),
   periodEnd: z.string(),
+  /** In baseCurrency. */
   currentAmount: z.number(),
+  /** In the goal's own currency. */
   targetAmount: z.number(),
+  /** The target in baseCurrency; percent and status are measured against it. */
+  targetAmountBase: z.number(),
+  baseCurrency: z.string(),
+  /** Today's rate used to convert the target; null when no conversion was needed. */
+  fxRate: z.number().nullable(),
   percent: z.number(),
-  status: z.enum(["on_track", "warning", "exceeded", "achieved"]),
+  status: z.enum(["ok", "warning", "exceeded"]),
 });
 export type GoalProgress = z.infer<typeof goalProgressSchema>;
 
