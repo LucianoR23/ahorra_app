@@ -408,6 +408,22 @@ export function useAdminDeletedHouseholds(enabled = true) {
   );
 }
 
+/** One security event of the account (plan 0.17, GET /me/activity). */
+export type ActivityItem = {
+  action: string;
+  device: string;
+  /** Only while it is kept: 7 days. */
+  ip?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+/** The account's latest security events, newest first. */
+export function useActivity() {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<{ items: ActivityItem[] }>(token ? (["/me/activity", { householdScoped: false }] as const) : null);
+}
+
 export function usePushSubscriptions() {
   const token = useAuthStore((s) => s.accessToken);
   return useSWR<
