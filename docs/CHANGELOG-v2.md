@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.17: "Actividad reciente"
+- `/seguridad` shows the account's latest security events (`GET /me/activity`): sign-ins, failed attempts and new devices highlighted, logout, password and email changes, household membership; each with the device, the IP while it is kept (7 days) and the date in Buenos Aires time (24 h).
+- Needs `api_go_ahorro` 0.17.
+
 ### 0.5: sessions and email change (app side)
 - `/seguridad` has a "Sesiones" card: "Cerrar sesión en todos los dispositivos" ends every session of the account on the server (`POST /auth/logout-all`) and signs out here.
 - Changing the email in the profile no longer changes it at once: the toast says a link went to the new address, and the profile shows the pending change until it is confirmed (`pendingEmail`).
