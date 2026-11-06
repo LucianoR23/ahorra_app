@@ -608,6 +608,11 @@ export function markAllInsightsRead(userId?: string | null) {
   });
 }
 
+/** A single-use ticket to open the insights stream (valid 60 s, plan 0.9). */
+export function requestStreamTicket() {
+  return apiMutate<{ ticket: string; expiresIn: number }>({ method: "POST", path: "/insights/stream-ticket" });
+}
+
 export function deleteInsight(id: string) {
   return apiMutate<void>({ method: "DELETE", path: `/insights/${id}` });
 }
