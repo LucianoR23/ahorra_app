@@ -1,0 +1,32 @@
+{
+  "source": "a47975a8ab65820169657925ba495b0f63597e9e",
+  "files": {
+    "brand/BRAND.md": "537065708051379f43caf1220fcc09c9bcf88ac68e65ce98ed2f5d10d46ffeb5",
+    "brand/README.md": "4c4254b136e1b243426f7393f369590926c1fec33a837bdeaa03dc2e21ac0808",
+    "brand/tokens.css": "b0ad27bf20eb27ceca16790a084d312affd0d5cea45f67ef534994afd0dbca38",
+    "brand/tokens.json": "76292753095a91a5a5752f65bccd4a75a6fc8ffe2f8e60ed565daff8bfc635fd",
+    "public/brand/icons/app-icon-amber.svg": "f1f856a2713e4d55584debb39b7cbcf615b201a3a8cd7ffd2775a373901c464a",
+    "public/brand/icons/app-icon-maskable.svg": "b4e6dd62541a539d83a4de048f1e999b6d8491e1f51acb0c8f76daa4041656f2",
+    "public/brand/icons/app-icon-square.svg": "f549932a8125221e7d473ab6d41ac0af5bb0af35e2b300e72d1d09b8058c9e58",
+    "public/brand/icons/app-icon.svg": "e65ac83b7c014852b1d9f0755e0cba3d1b32736a8140f843ce5d57a54ce2182d",
+    "public/brand/icons/favicon.svg": "e65ac83b7c014852b1d9f0755e0cba3d1b32736a8140f843ce5d57a54ce2182d",
+    "public/brand/logo/valuo-mark-dark.svg": "ffc1d4c741e2e65eac5277846ee8293780b754bffe069940f8606486d0fc77e1",
+    "public/brand/logo/valuo-mark-light.svg": "8f3fe3744674151206d8a03ea765225460d7ccf36e4d47598b18ab106a7dbbf5",
+    "public/brand/logo/valuo-wordmark-dark.svg": "a0ecc19d5bc6f43217c3e90daf42ec7bf972e405e190527b83bc0b09481c744e",
+    "public/brand/logo/valuo-wordmark-light.svg": "037bb6ad14999be30f45e0d6dd38bde704bf94334edf70b7479a9f0183ad31a1",
+    "public/brand/logo/valuo-wordmark-mono-black.svg": "35397156029fedc2af5cb7b34cc76eaa45555a1d214335abc11368a370271185",
+    "public/brand/logo/valuo-wordmark-mono-white.svg": "cf96a34faaa3aeeaf85cb6212ae31270719d98d7e56debb4ca1dea8680f9374c",
+    "public/brand/png/app-icon-1024.png": "febd7a3651c4f8f64273ffddc41598124fce161d15fa78f64ff8b09986d8603c",
+    "public/brand/png/apple-touch-icon.png": "02517a40621b436be8cbb8ee2cb06cf7d0825a3ca1af7ab13c3140f75e4e0c09",
+    "public/brand/png/favicon.ico": "7a1460221af96ad038204d686824d8980e787e974ac6baaac5e12917485b6673",
+    "public/brand/png/icon-192.png": "821b4c9d537f2fdc0b50ffd26080ee4dbbb774c8aa002d0f829c740d0d9aa7e2",
+    "public/brand/png/icon-512.png": "4be71b11e97a1e604c8f21a591e69a14b078d4eb85335e1f7e6a098f7a426f94",
+    "public/brand/png/icon-maskable-192.png": "728a9121e2675b03fc7284a2058a99a64051ed0b37f75146cb0cb91af41536e8",
+    "public/brand/png/icon-maskable-512.png": "a8093734d313e558513f6a97d43e204ab8eb7b850a05c48bfb28ba66fe1c9691",
+    "public/brand/png/valuo-wordmark-dark.png": "a4f817265c8049d2eb6a15531f0a88b67e0403511126f58db6b4650a9a6add7f",
+    "public/brand/png/valuo-wordmark-light.png": "4062fbef9397442abe314504d078dfbd42c5880704dcfaaf3f718afd8e78fab6",
+    "src/app/apple-icon.png": "02517a40621b436be8cbb8ee2cb06cf7d0825a3ca1af7ab13c3140f75e4e0c09",
+    "src/app/favicon.ico": "7a1460221af96ad038204d686824d8980e787e974ac6baaac5e12917485b6673",
+    "src/app/icon.svg": "e65ac83b7c014852b1d9f0755e0cba3d1b32736a8140f843ce5d57a54ce2182d"
+  }
+}
