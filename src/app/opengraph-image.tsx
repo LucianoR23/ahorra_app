@@ -1,11 +1,18 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { brand } from "@/config/brand";
+import { brandColor } from "@/config/brand-tokens";
 
 export const alt = brand.title;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpengraphImage() {
+// Social preview: the wordmark from the brand kit on the dark background.
+// Generated at build time, so reading the file from disk is fine.
+export default async function OpengraphImage() {
+  const svg = await readFile(join(process.cwd(), "public/brand/logo/valuo-wordmark-dark.svg"));
+  const wordmark = `data:image/svg+xml;base64,${svg.toString("base64")}`;
   return new ImageResponse(
     (
       <div
@@ -16,55 +23,15 @@ export default function OpengraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0a0e17 0%, #1a1f2e 60%, #2a2650 100%)",
-          color: "#f8fafc",
+          background: brandColor("bg", "dark"),
           fontFamily: "system-ui, sans-serif",
           padding: 80,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 24,
-          }}
-        >
-          <div
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: 28,
-              background: "linear-gradient(135deg, #5b6cff 0%, #8b5cf6 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 72,
-              fontWeight: 900,
-              letterSpacing: -4,
-            }}
-          >
-            A
-          </div>
-          <div
-            style={{
-              fontSize: 108,
-              fontWeight: 800,
-              letterSpacing: -4,
-            }}
-          >
-            {brand.name}
-          </div>
-        </div>
-        <div
-          style={{
-            marginTop: 40,
-            fontSize: 36,
-            color: "#94a3b8",
-            textAlign: "center",
-            maxWidth: 900,
-          }}
-        >
-          Gestión de gastos compartidos, multi-moneda.
+        {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain <img> only */}
+        <img src={wordmark} alt="" width={564} height={158} />
+        <div style={{ marginTop: 48, fontSize: 40, color: brandColor("ink-muted", "dark"), textAlign: "center" }}>
+          {brand.tagline}
         </div>
       </div>
     ),

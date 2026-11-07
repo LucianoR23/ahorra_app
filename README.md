@@ -1,4 +1,4 @@
-# Ahorra — Personal Finance PWA
+# Valuo (formerly Ahorra): personal finance PWA
 
 A full-stack personal finance app for individuals and shared households. Track expenses, incomes, goals, and debts with real-time multi-currency support, AI-generated insights, and Web Push notifications.
 
@@ -141,6 +141,15 @@ corepack pnpm dev   # http://localhost:3005
 - **E2E (Playwright):** `corepack pnpm test:e2e` starts the API (`go run ./cmd/api` in `../api_go_ahorro`, migrating on start) and the app, against the database in `E2E_DATABASE_URL` (default `postgres://postgres:postgres@localhost:5433/ahorra_e2e`, which must exist and be disposable; never your dev data). Ports 8080 and 3005 must be free, or the running servers are reused. First time: `corepack pnpm exec playwright install chromium`.
   - Flows covered (plan 0.21h): sign up → household → session kept on reload → log in again; an expense in installments shared with the household reaching the balances; a variable monthly bill confirmed from its draft.
   - In CI the API (branch `next`) is checked out with a read-only deploy key (secret `API_DEPLOY_KEY`).
+
+---
+
+## Brand
+
+The product name, tagline and description live in `src/config/brand.ts` (defaults to Valuo; `NEXT_PUBLIC_BRAND_*` override them at build time). Logos, icons and design tokens are a vendored copy of the workspace brand kit (`valuo_workspace/brand`), never edited here:
+
+- `pnpm brand:sync` copies the kit from `../brand`: tokens and docs into `brand/`, logos/icons/PNGs into `public/brand/` (served as `/brand/...`), favicon and apple icon into `src/app/`. It records the workspace commit in `brand/VERSION` and the file hashes in `brand/manifest.json`, and refuses to run with uncommitted brand changes in the workspace.
+- `pnpm brand:check` (part of `pnpm check`) fails if a vendored file differs from the manifest.
 
 ---
 

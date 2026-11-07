@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.1 (app part): brand switch to Valuo
+- Default brand values are now Valuo: name "Valuo", tagline "Sabé cuánto vale tu mes", description "Gastos, tarjetas y cuotas, solo o en hogar." The title reads "Valuo · Sabé cuánto vale tu mes". `NEXT_PUBLIC_BRAND_*` still override them.
+- The brand kit is vendored from the workspace by `pnpm brand:sync` (`scripts/sync-brand.mjs`): tokens and docs in `brand/`, logos, icons and PNGs in `public/brand/`, favicon and apple icon in `src/app/`. `pnpm brand:check` runs first in `pnpm check`.
+- Logo (`BrandLogo`), favicon, apple icon, manifest icons and push notification icons come from the kit. The old Ahorra assets (`public/pwa`, `public/favicon`, the logo SVGs in `public/svg`) are gone. The layout no longer lists icons by hand: the Next.js file conventions generate the links.
+- The social preview image shows the Valuo wordmark and tagline on the brand's dark background (colors read from `brand/tokens.json` through `src/config/brand-tokens.ts`).
+- `BrandLogo` no longer sets `width: auto`: the kit SVGs only carry a viewBox, so the logo collapsed to 0 px.
+- Not here: theme colors, screens and the manifest background color (1.10).
+
 ### 0.14 (app part): lazy charts
 - recharts loads with `next/dynamic` (`src/components/report-charts-lazy.tsx`) instead of with `/reportes`: initial JavaScript of that page went from 475 KB to 348 KB gzip. Only the charts are lazy; the report cards fetch their data and show the figures at once, with a placeholder of the chart's size until it loads. No visual change.
 
