@@ -105,4 +105,9 @@ export async function loginUI(page: Page, email: string) {
   await page.waitForURL((u) => !u.pathname.startsWith("/login"));
   if (new URL(page.url()).pathname.startsWith("/verify-email")) await page.goto("/");
   await expect(page).toHaveURL(/\/$/);
+  // The URL changes before the session is restored. Wait for the app shell
+  // (rendered only once the refresh finished): navigating away earlier
+  // aborts the refresh after the API rotated the cookie, the next page sends
+  // the old one and the API ends the session as a reused token.
+  await expect(page.getByRole("link", { name: "Movimientos" }).first()).toBeVisible();
 }
