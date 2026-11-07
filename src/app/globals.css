@@ -55,6 +55,7 @@
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-negative-soft: var(--negative-soft);
@@ -157,10 +158,16 @@
   --brand: var(--color-accent);
   --brand-ink: var(--color-accent-ink);
   --brand-soft: var(--color-accent-soft);
+  /* Text on the brand amber is near-black in both themes (design previews). */
+  --on-brand: var(--color-ink);
   --positive: var(--color-positive);
   --negative: var(--color-negative);
   --negative-soft: color-mix(in oklab, var(--color-negative) 12%, transparent);
   --focus: var(--color-focus);
+}
+
+.dark {
+  --on-brand: var(--color-on-primary);
 }
 
 @layer base {
