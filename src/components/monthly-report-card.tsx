@@ -1,18 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
-} from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
+import { CategoryBarChart, DonutChart } from "@/components/report-charts-lazy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMonthlyReport } from "@/lib/api/hooks";
 import { fmtMoney } from "@/lib/format";
@@ -44,12 +34,6 @@ function nextMonth(ym: string) {
   const [y, m] = ym.split("-").map(Number);
   const d = new Date(y, m, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function fmtK(n: number) {
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
-  return n.toFixed(0);
 }
 
 export function MonthlyReportCard() {
@@ -131,38 +115,7 @@ export function MonthlyReportCard() {
             <Card className="rounded-2xl border-0 shadow-card">
               <CardContent className="p-4">
                 <h3 className="mb-3 text-xs font-bold">Por categoría</h3>
-                <ResponsiveContainer width="100%" height={Math.max(120, catData.length * 36)}>
-                  <BarChart
-                    data={catData}
-                    layout="vertical"
-                    margin={{ top: 0, right: 40, bottom: 0, left: 0 }}
-                  >
-                    <XAxis
-                      type="number"
-                      tickFormatter={fmtK}
-                      tick={{ fontSize: 10 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      tick={{ fontSize: 10 }}
-                      width={90}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      formatter={(v) => [fmtMoney(Number(v ?? 0), cur), "Total"]}
-                      contentStyle={{ fontSize: 11, borderRadius: 8 }}
-                    />
-                    <Bar dataKey="total" radius={[0, 4, 4, 0]}>
-                      {catData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <CategoryBarChart data={catData} currency={cur} />
                 <div className="mt-2 flex flex-col gap-1">
                   {catData.map((c, i) => (
                     <div key={i} className="flex items-center justify-between text-[11px]">
@@ -188,19 +141,7 @@ export function MonthlyReportCard() {
                   </p>
                 ) : (
                   <div className="flex items-center gap-4">
-                    <ResponsiveContainer width={120} height={120}>
-                      <PieChart>
-                        <Pie
-                          data={fvData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={30}
-                          outerRadius={55}
-                          dataKey="value"
-                          strokeWidth={0}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                    <DonutChart data={fvData} />
                     <div className="flex flex-col gap-2">
                       {fvData.map((d) => (
                         <div key={d.name}>
