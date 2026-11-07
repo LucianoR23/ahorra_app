@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,13 +118,8 @@ export default function LoginPage() {
           {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="cursor-pointer rounded"
-          />
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-caption text-ink">
+          <Checkbox checked={rememberMe} onCheckedChange={setRememberMe} />
           Recordar mi email
         </label>
 

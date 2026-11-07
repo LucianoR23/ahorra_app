@@ -5,6 +5,7 @@ import { mutate as swrMutate } from "swr";
 import {
   Plus, Pencil, Loader2, Power, PowerOff, CreditCard, ChevronDown, ChevronUp, Trash2,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -619,13 +620,8 @@ function PMFormDialog({
             </Select>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={allowsInstallments}
-              onChange={(e) => setAllowsInstallments(e.target.checked)}
-              className="cursor-pointer rounded"
-            />
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-caption">
+            <Checkbox checked={allowsInstallments} onCheckedChange={setAllowsInstallments} />
             Permite cuotas
           </label>
 
