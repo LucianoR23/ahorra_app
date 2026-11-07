@@ -4,6 +4,9 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.14 (app part): lazy charts
+- recharts loads with `next/dynamic` (`src/components/report-charts-lazy.tsx`) instead of with `/reportes`: initial JavaScript of that page went from 475 KB to 348 KB gzip. Only the charts are lazy; the report cards fetch their data and show the figures at once, with a placeholder of the chart's size until it loads. No visual change.
+
 ### 0.13: FE robustness
 - The service worker no longer caches cross-origin requests. Serwist's defaults kept cross-origin GETs for an hour (NetworkFirst), so API responses such as balances and expenses were stored in Cache Storage on the device. A NetworkOnly rule for every other origin now runs first (`src/lib/sw-caching.ts`).
 - Offline fallback: a page navigation that fails without network shows `/offline`, precached at build time.

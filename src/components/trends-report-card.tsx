@@ -1,17 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
-} from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
+import { TrendsLineChart } from "@/components/report-charts-lazy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrendsReport } from "@/lib/api/hooks";
 import { fmtMoney } from "@/lib/format";
@@ -23,12 +14,6 @@ function shortMonth(ym: string) {
   const [y, m] = ym.split("-");
   const names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   return `${names[Number(m) - 1]} ${y.slice(2)}`;
-}
-
-function fmtK(n: number) {
-  if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
-  return n.toFixed(0);
 }
 
 const LINES = [
@@ -84,48 +69,7 @@ export function TrendsReportCard() {
           <Card className="rounded-2xl border-0 shadow-card">
             <CardContent className="p-4">
               <h3 className="mb-3 text-xs font-bold">Evolución mensual</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={fmtK}
-                    tick={{ fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={48}
-                  />
-                  <Tooltip
-                    formatter={(v, name) => {
-                      const line = LINES.find((l) => l.key === name);
-                      return [fmtMoney(Number(v ?? 0), cur), line?.label ?? String(name)];
-                    }}
-                    contentStyle={{ fontSize: 11, borderRadius: 8 }}
-                  />
-                  <Legend
-                    formatter={(value) => LINES.find((l) => l.key === value)?.label ?? value}
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: 10 }}
-                  />
-                  {LINES.map((l) => (
-                    <Line
-                      key={l.key}
-                      type="monotone"
-                      dataKey={l.key}
-                      stroke={l.color}
-                      strokeWidth={2}
-                      dot={{ r: 3, strokeWidth: 0 }}
-                      activeDot={{ r: 5 }}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
+              <TrendsLineChart data={chartData} lines={LINES} currency={cur} />
             </CardContent>
           </Card>
 
