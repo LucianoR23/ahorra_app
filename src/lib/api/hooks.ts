@@ -239,9 +239,16 @@ export function useInsightsUnreadCount(userId?: string | null) {
   });
 }
 
-export function useCategories() {
-  const { token, householdId } = useReady();
-  const key = token && householdId ? (["/categories"] as const) : null;
+/** Categories of `householdId`, or of the current space when omitted. */
+export function useCategories(householdId?: string | null) {
+  const { token, householdId: current } = useReady();
+  const key = !token
+    ? null
+    : householdId
+      ? (["/categories", { householdId }] as const)
+      : current
+        ? (["/categories"] as const)
+        : null;
   return useSWR<Category[]>(key);
 }
 
@@ -316,9 +323,16 @@ export function useSettlements(filters: SettlementsFilters = {}) {
   return useSWR<{ items: Settlement[]; totalCount: number; limit: number; offset: number }>(key);
 }
 
-export function useSplitRules() {
-  const { token, householdId } = useReady();
-  const key = token && householdId ? (["/split"] as const) : null;
+/** Split rules of `householdId`, or of the current space when omitted. */
+export function useSplitRules(householdId?: string | null) {
+  const { token, householdId: current } = useReady();
+  const key = !token
+    ? null
+    : householdId
+      ? (["/split", { householdId }] as const)
+      : current
+        ? (["/split"] as const)
+        : null;
   return useSWR<SplitRulesResponse>(key);
 }
 

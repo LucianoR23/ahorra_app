@@ -10,19 +10,18 @@ import { Input } from "@/components/ui/input";
 import { useSplitRules, useHouseholdMembers, useHouseholds } from "@/lib/api/hooks";
 import { patchSplitRules } from "@/lib/api/mutations";
 import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
 import { ApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 
-export function SplitRulesCard() {
+/** Split rules of the hogar (plan 1.2: settings show the hogar from either tab). */
+export function SplitRulesCard({ householdId }: { householdId: string }) {
   const me = useAuthStore((s) => s.user);
-  const currentHhId = useHouseholdStore((s) => s.currentId);
   const { data: households } = useHouseholds();
-  const household = households?.find((h) => h.id === currentHhId);
+  const household = households?.find((h) => h.id === householdId);
   const isOwner = !!(me && household && household.createdBy === me.id);
 
-  const { data: rules, isLoading } = useSplitRules();
-  const { data: members } = useHouseholdMembers();
+  const { data: rules, isLoading } = useSplitRules(householdId);
+  const { data: members } = useHouseholdMembers(householdId);
 
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [editingKey, setEditingKey] = useState<unknown>(null);
@@ -84,6 +83,7 @@ export function SplitRulesCard() {
     try {
       await patchSplitRules(
         rules.rules.map((r) => ({ userId: r.userId, weight: Number(weights[r.userId]) })),
+        householdId,
       );
       swrMutate(
         (k) =>

@@ -99,7 +99,15 @@ describe("mutation wrappers", () => {
     expect(lastRequest().path).toBe("/invites/a%2Fb%20c");
   });
 
-  it("adminSendTestPush posts to the admin endpoint", async () => {
+  it("createExpense and patchSplitRules can target another space (plan 1.2)", async () => {
+    await m.createExpense({ amount: 1 } as never, "p1");
+    expect(lastRequest().headers.get("x-household-id")).toBe("p1");
+    await m.patchSplitRules([{ userId: "u1", weight: 1 }], "h2");
+    expect(lastRequest()).toMatchObject({ method: "PATCH", path: "/split" });
+    expect(lastRequest().headers.get("x-household-id")).toBe("h2");
+  });
+
+    it("adminSendTestPush posts to the admin endpoint", async () => {
     await m.adminSendTestPush();
     expect(lastRequest()).toMatchObject({ method: "POST", path: "/admin/push/test" });
   });

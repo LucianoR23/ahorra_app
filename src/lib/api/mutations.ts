@@ -36,13 +36,15 @@ type MutateOpts = {
   query?: ApiRequest["query"];
   /** Default true — sends X-Household-ID. */
   householdScoped?: boolean;
+  /** Sends this household instead of the current one. */
+  householdId?: string;
 };
 
 /** Centralized mutation runner with 401-refresh-retry. */
 export async function apiMutate<T = unknown>(opts: MutateOpts): Promise<T> {
   const householdScoped = opts.householdScoped ?? true;
   const token = useAuthStore.getState().accessToken;
-  const householdId = householdScoped ? useHouseholdStore.getState().currentId : null;
+  const householdId = opts.householdId ?? (householdScoped ? useHouseholdStore.getState().currentId : null);
 
   const run = (tk: string | null) =>
     apiFetch<T>({
@@ -80,8 +82,9 @@ export type ExpenseCreateInput = {
   sharesOverride?: { userId: string; amount: number }[];
 };
 
-export function createExpense(input: ExpenseCreateInput) {
-  return apiMutate<ExpenseDetail>({ method: "POST", path: "/expenses", body: input });
+/** Creates the expense in `householdId` ("Mi plata" or the hogar), or in the current space. */
+export function createExpense(input: ExpenseCreateInput, householdId?: string) {
+  return apiMutate<ExpenseDetail>({ method: "POST", path: "/expenses", body: input, householdId });
 }
 
 export type ExpensePatchInput = {
@@ -269,11 +272,12 @@ export function deleteSettlement(id: string) {
 
 // --- Split rules ----------------------------------------------------------
 
-export function patchSplitRules(items: { userId: string; weight: number }[]) {
+export function patchSplitRules(items: { userId: string; weight: number }[], householdId?: string) {
   return apiMutate<SplitRulesResponse>({
     method: "PATCH",
     path: "/split",
     body: { items },
+    householdId,
   });
 }
 

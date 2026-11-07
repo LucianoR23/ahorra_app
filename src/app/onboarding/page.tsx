@@ -15,6 +15,7 @@ import { toast } from "@/lib/toast";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore, useHouseholdsResolved } from "@/stores/household";
 import { AuthSplash } from "@/components/auth-gate";
+import { useSpaces } from "@/lib/spaces";
 import type { Currency } from "@/lib/api/schemas";
 
 const EMAIL_RE = /^[^\s@]+@[a-zA-Z0-9-]+(\.[a-zA-Z]+)+$/;
@@ -23,7 +24,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const hydrated = useAuthStore((s) => s.hydrated);
   const user = useAuthStore((s) => s.user);
-  const currentHouseholdId = useHouseholdStore((s) => s.currentId);
+  const { hogar, isLoading: spacesLoading } = useSpaces();
   const setCurrentId = useHouseholdStore((s) => s.setCurrentId);
   const householdsResolved = useHouseholdsResolved(user?.id);
 
@@ -45,14 +46,15 @@ export default function OnboardingPage() {
     if (hydrated && !user) router.replace("/login");
   }, [hydrated, user, router]);
 
-  // Users who already have a household don't belong here. Decide only once
-  // their households are known, so nobody sees onboarding for a split second.
-  const hasHousehold = householdsResolved && !!currentHouseholdId && step === 1 && !createdId;
+  // Creating a hogar is optional (plan 1.2: everyone starts in "Mi plata").
+  // Users who already have one don't belong here. Decide only once their
+  // households are known, so nobody sees this page for a split second.
+  const hasHogar = householdsResolved && !spacesLoading && !!hogar && step === 1 && !createdId;
   useEffect(() => {
-    if (hasHousehold) router.replace("/");
-  }, [hasHousehold, router]);
+    if (hasHogar) router.replace("/");
+  }, [hasHogar, router]);
 
-  if (!hydrated || !user || !householdsResolved || hasHousehold) {
+  if (!hydrated || !user || !householdsResolved || spacesLoading || hasHogar) {
     return <AuthSplash />;
   }
 
@@ -198,6 +200,9 @@ export default function OnboardingPage() {
                     Continuar <ArrowRight className="ml-2 size-4" />
                   </>
                 )}
+              </Button>
+              <Button type="button" variant="ghost" size="lg" className="w-full" onClick={() => router.replace("/")} disabled={busy}>
+                Ahora no
               </Button>
             </form>
           </Card>

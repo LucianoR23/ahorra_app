@@ -33,10 +33,15 @@ export type RefreshResponse = z.infer<typeof refreshResponseSchema>;
 export const currencySchema = z.enum(["ARS", "USD", "EUR"]);
 export type Currency = z.infer<typeof currencySchema>;
 
+/** "personal" = "Mi plata" (only the user); "shared" = the "Hogar" (plan 1.2). */
+export const householdKindSchema = z.enum(["personal", "shared"]);
+export type HouseholdKind = z.infer<typeof householdKindSchema>;
+
 export const householdSchema = z.object({
   id: z.string(),
   name: z.string(),
   baseCurrency: currencySchema,
+  kind: householdKindSchema,
   createdBy: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),

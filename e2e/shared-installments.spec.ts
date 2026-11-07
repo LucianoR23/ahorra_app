@@ -15,7 +15,7 @@ test("an expense in 3 installments, shared, reaches the balances", async ({ page
   await page.getByRole("option", { name: /Visa E2E/ }).click();
   await page.getByLabel("Cuotas").fill("3");
   await expect(page.getByText("Cuota 3/3")).toBeVisible(); // billing preview
-  await page.getByRole("switch", { name: "Compartir con el hogar" }).click();
+  await page.getByRole("switch", { name: "Compartido" }).click(); // to the hogar (plan 1.2)
   await page.getByRole("button", { name: "Crear gasto" }).click();
   await expect(page).not.toHaveURL(/\/agregar/);
 

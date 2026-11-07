@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Crown,
@@ -11,7 +10,6 @@ import {
   Loader2,
   LogOut,
   Mail,
-  Plus,
   RefreshCw,
   Save,
   Trash2,
@@ -65,9 +63,10 @@ function invalidateHouseholds() {
   );
 }
 
-export function HouseholdConfig() {
+/** The hogar's settings (plan 1.2: shown from either tab, so the id comes in). */
+export function HouseholdConfig({ householdId }: { householdId: string }) {
   const me = useAuthStore((s) => s.user);
-  const currentHhId = useHouseholdStore((s) => s.currentId);
+  const currentHhId = householdId;
   const setCurrentId = useHouseholdStore((s) => s.setCurrentId);
   const router = useRouter();
 
@@ -116,12 +115,13 @@ export function HouseholdConfig() {
     if (!household) return;
     try {
       await deleteHousehold(household.id);
-      const next = households?.find((h) => h.id !== household.id) ?? null;
-      setCurrentId(next?.id ?? null);
+      // Back to "Mi plata", the only space left.
+      const personal = households?.find((h) => h.kind === "personal") ?? null;
+      setCurrentId(personal?.id ?? null);
       invalidateHouseholds();
       swrMutate(() => true, undefined, { revalidate: true });
       toast.success("Hogar eliminado");
-      router.replace(next ? "/ajustes" : "/");
+      router.replace("/ajustes");
     } catch (e) {
       toastError(e, "No se pudo eliminar el hogar");
     }
@@ -131,12 +131,13 @@ export function HouseholdConfig() {
     if (!household || !me) return;
     try {
       await removeHouseholdMember(household.id, me.id);
-      const next = households?.find((h) => h.id !== household.id) ?? null;
-      setCurrentId(next?.id ?? null);
+      // Back to "Mi plata", the only space left.
+      const personal = households?.find((h) => h.kind === "personal") ?? null;
+      setCurrentId(personal?.id ?? null);
       invalidateHouseholds();
       swrMutate(() => true, undefined, { revalidate: true });
       toast.success("Saliste del hogar");
-      router.replace(next ? "/ajustes" : "/");
+      router.replace("/ajustes");
     } catch (e) {
       toastError(e, "No se pudo salir del hogar");
     }
@@ -170,11 +171,6 @@ export function HouseholdConfig() {
                 <Info className="size-3" /> Solo lectura
               </span>
             )}
-            <Link href="/ajustes/hogares/nuevo">
-              <Button variant="outline" size="xs" className="gap-1">
-                <Plus className="size-3" /> Nuevo hogar
-              </Button>
-            </Link>
           </div>
         </div>
 
