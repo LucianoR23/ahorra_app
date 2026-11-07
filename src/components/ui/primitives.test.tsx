@@ -129,11 +129,15 @@ describe("ListRow and InstallmentBar", () => {
     expect(row).toHaveTextContent("Heladera3 de 12$ 89.990");
   });
 
-  it("caps the bar at six pills and fills them by share", () => {
-    const { container } = render(<InstallmentBar current={3} total={12} />);
-    const pills = container.querySelectorAll("[aria-hidden] > span");
-    expect(pills).toHaveLength(6);
-    expect([...pills].filter((p) => p.classList.contains("bg-brand"))).toHaveLength(2);
+  it("draws one pill per installment, capped at 12", () => {
+    const filledOf = (c: HTMLElement) => [...c.querySelectorAll("[aria-hidden] > span")];
+    const { container, rerender } = render(<InstallmentBar current={3} total={12} />);
+    expect(filledOf(container)).toHaveLength(12);
+    expect(filledOf(container).filter((p) => p.classList.contains("bg-brand"))).toHaveLength(3);
+
+    rerender(<InstallmentBar current={12} total={24} />);
+    expect(filledOf(container)).toHaveLength(12);
+    expect(filledOf(container).filter((p) => p.classList.contains("bg-brand"))).toHaveLength(6);
   });
 });
 

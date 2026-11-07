@@ -64,17 +64,17 @@ function ListRowSkeleton({ className }: { className?: string }) {
 }
 
 /**
- * Installment progress, "3 de 12" with the pill bar. Shows at most six
- * pills; with more installments each pill stands for a share of them.
+ * Installment progress, "3 de 12" with the pill bar: one pill per
+ * installment up to 12; with more, each pill stands for a share of them.
  */
 function InstallmentBar({ current, total, className }: { current: number; total: number; className?: string }) {
-  const pills = Math.min(total, 6)
+  const pills = Math.min(total, 12)
   const filled = total > 0 ? Math.round((Math.min(current, total) / total) * pills) : 0
   return (
     <span data-slot="installment-bar" className={cn("inline-flex items-center gap-2", className)}>
       <span aria-hidden className="inline-flex gap-0.5">
         {Array.from({ length: pills }, (_, i) => (
-          <span key={i} className={cn("h-1.5 w-2 rounded-full", i < filled ? "bg-brand" : "bg-border")} />
+          <span key={i} className={cn("h-1.5 w-1.5 rounded-full", i < filled ? "bg-brand" : "bg-border")} />
         ))}
       </span>
       <span>
