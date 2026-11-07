@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { AppearanceCard } from "@/components/appearance-card";
 import { BanksConfig } from "@/components/banks-config";
 import { PaymentMethodsConfig } from "@/components/payment-methods-config";
 import { HogarSettings } from "@/components/hogar-settings";
@@ -13,6 +14,7 @@ const AJUSTES_HELP: InfoHelpContent = {
     "Ajustá las reglas de división (porcentaje por miembro) para los gastos compartidos.",
     "Administrá bancos y medios de pago, incluyendo cierres y vencimientos de tarjetas de crédito.",
     "Si todavía no compartís gastos, creá un hogar; desde la zona de peligro podés eliminarlo o salir de él.",
+    "Elegí el tema: por defecto sigue el de tu dispositivo.",
   ],
   consideraciones: [
     "El nombre y la moneda base del hogar, las reglas de división y la gestión de miembros solo los edita el dueño; el resto los ve como solo lectura.",
@@ -43,6 +45,7 @@ export default function Page() {
         <HogarSettings />
         <BanksConfig />
         <PaymentMethodsConfig />
+        <AppearanceCard />
       </div>
     </AppShell>
   );

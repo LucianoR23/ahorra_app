@@ -70,7 +70,7 @@ export function PaymentMethodsConfig() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold">Medios de pago</h2>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Tarjetas, efectivo y cuentas bancarias.
             </p>
           </div>
@@ -96,16 +96,16 @@ export function PaymentMethodsConfig() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-semibold">{pm.name}</span>
-                        <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
+                        <Badge variant="outline" className="h-4 px-1.5 text-xs">
                           {KIND_LABELS[pm.kind]}
                         </Badge>
                         {!pm.isActive && (
-                          <Badge variant="outline" className="h-4 px-1.5 text-[10px] text-muted-foreground">
+                          <Badge variant="outline" className="h-4 px-1.5 text-xs text-muted-foreground">
                             Inactivo
                           </Badge>
                         )}
                       </div>
-                      <p className="text-[12px] text-muted-foreground">{bankName(pm.bankId)}</p>
+                      <p className="text-xs text-muted-foreground">{bankName(pm.bankId)}</p>
                     </div>
                     <button
                       type="button"
@@ -168,7 +168,7 @@ function TogglePMButton({ pm }: { pm: PaymentMethod }) {
         onClick={handle}
         disabled={busy}
         title="Revivir este medio de pago"
-        className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex cursor-pointer items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {busy ? <Loader2 className="size-3 animate-spin" /> : <Power className="size-3" />}
         Revivir
@@ -200,17 +200,17 @@ function CreditCardDetail({ paymentMethodId }: { paymentMethodId: string }) {
             <div className="flex items-center gap-2">
               <CreditCard className="size-4 text-muted-foreground" />
               <span className="text-xs font-semibold">{card.alias}</span>
-              {card.lastFour && <span className="text-[12px] text-muted-foreground">···· {card.lastFour}</span>}
+              {card.lastFour && <span className="text-xs text-muted-foreground">···· {card.lastFour}</span>}
             </div>
             <button
               type="button"
               onClick={() => setEditingCard(true)}
-              className="cursor-pointer text-[12px] font-semibold text-primary hover:underline"
+              className="cursor-pointer text-xs font-semibold text-primary hover:underline"
             >
               Editar
             </button>
           </div>
-          <div className="mt-1.5 text-[12px] text-muted-foreground">
+          <div className="mt-1.5 text-xs text-muted-foreground">
             Cierre: día {card.defaultClosingDay} · Vencimiento: día {card.defaultDueDay}
           </div>
         </div>
@@ -218,23 +218,23 @@ function CreditCardDetail({ paymentMethodId }: { paymentMethodId: string }) {
 
       <div>
         <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-[12px] font-semibold text-muted-foreground">Períodos cargados</span>
+          <span className="text-xs font-semibold text-muted-foreground">Períodos cargados</span>
           <button
             type="button"
             onClick={() => setAddingPeriod(true)}
-            className="flex cursor-pointer items-center gap-1 text-[12px] font-semibold text-primary hover:underline"
+            className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
             <Plus className="size-3" /> Agregar
           </button>
         </div>
         {!periods?.length ? (
-          <p className="text-[12px] text-muted-foreground">Sin períodos guardados.</p>
+          <p className="text-xs text-muted-foreground">Sin períodos guardados.</p>
         ) : (
           <div className="flex flex-col gap-1">
             {periods.map((p) => (
               <div key={p.periodYm} className="flex items-center justify-between rounded bg-background px-2 py-1">
-                <span className="text-[12px] font-mono font-semibold">{p.periodYm}</span>
-                <span className="text-[12px] text-muted-foreground">
+                <span className="text-xs font-mono font-semibold">{p.periodYm}</span>
+                <span className="text-xs text-muted-foreground">
                   Cierra {p.closingDate} · Vence {p.dueDate}
                 </span>
                 <DeletePeriodButton paymentMethodId={paymentMethodId} ym={p.periodYm} />
@@ -363,7 +363,7 @@ function PeriodFormDialog({
             <DatePicker value={dueDate} onChange={setDueDate} aria-invalid={dueBeforeClosing} />
           </div>
           {dueBeforeClosing && (
-            <p className="text-[11px] font-medium text-destructive">
+            <p className="text-xs font-medium text-destructive">
               El vencimiento no puede ser anterior al cierre.
             </p>
           )}
@@ -631,7 +631,7 @@ function PMFormDialog({
 
           {mode === "create" && kind === "credit" && (
             <div className="rounded-lg bg-muted/50 p-3">
-              <p className="mb-2 text-[12px] font-semibold">Datos de la tarjeta de crédito</p>
+              <p className="mb-2 text-xs font-semibold">Datos de la tarjeta de crédito</p>
               <div className="flex flex-col gap-2">
                 <div>
                   <Label htmlFor="cc-alias-new">Alias *</Label>
@@ -652,11 +652,11 @@ function PMFormDialog({
                   </div>
                 </div>
                 {dueBeforeClosing && (
-                  <p className="text-[11px] font-medium text-destructive">
+                  <p className="text-xs font-medium text-destructive">
                     El vencimiento no puede ser anterior al cierre.
                   </p>
                 )}
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Si el cierre cae en un mes y el vencimiento en otro (ej. 30/04 y 20/05), cargá las fechas exactas del próximo ciclo.
                 </p>
               </div>

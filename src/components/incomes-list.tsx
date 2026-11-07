@@ -64,7 +64,7 @@ export function IncomesList() {
               <TrendingUp className="size-5" />
             </div>
             <div className="flex-1">
-              <div className="text-[10px] font-semibold uppercase tracking-[1px] text-muted-foreground">
+              <div className="text-xs font-semibold uppercase tracking-[1px] text-muted-foreground">
                 Ingresos del mes
               </div>
               <div className="font-mono text-xl font-bold">
@@ -103,7 +103,7 @@ export function IncomesList() {
                 <div className="truncate text-sm font-semibold">
                   {inc.description || inc.source}
                 </div>
-                <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                <div className="mt-0.5 truncate text-xs text-muted-foreground">
                   {incomeSourceLabel(inc.source)} · {memberName.get(inc.receivedBy) ?? "—"} · {fmtDateShort(inc.receivedAt)}
                 </div>
               </div>
@@ -112,7 +112,7 @@ export function IncomesList() {
                   +{fmtMoney(inc.amountBase, inc.baseCurrency, { decimals: 0 })}
                 </div>
                 {inc.currency !== inc.baseCurrency && (
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {fmtMoney(inc.amount, inc.currency, { decimals: 0 })}
                   </div>
                 )}

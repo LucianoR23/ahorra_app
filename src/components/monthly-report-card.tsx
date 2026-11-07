@@ -104,7 +104,7 @@ export function MonthlyReportCard() {
             ].map((s) => (
               <Card key={s.label} className="rounded-2xl border-0 shadow-card">
                 <CardContent className="p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
                   <p className="mt-0.5 font-mono text-sm font-bold">{fmtMoney(s.value, cur)}</p>
                 </CardContent>
               </Card>
@@ -118,7 +118,7 @@ export function MonthlyReportCard() {
                 <CategoryBarChart data={catData} currency={cur} />
                 <div className="mt-2 flex flex-col gap-1">
                   {catData.map((c, i) => (
-                    <div key={i} className="flex items-center justify-between text-[11px]">
+                    <div key={i} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5">
                         <span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: c.color }} />
                         <span className="text-muted-foreground">{c.name}</span>
@@ -150,7 +150,7 @@ export function MonthlyReportCard() {
                             <span className="text-xs font-semibold">{d.name}</span>
                           </div>
                           <p className="ml-4 font-mono text-xs">{fmtMoney(d.value, cur)}</p>
-                          <p className="ml-4 text-[11px] text-muted-foreground">{d.pct.toFixed(1)}%</p>
+                          <p className="ml-4 text-xs text-muted-foreground">{d.pct.toFixed(1)}%</p>
                         </div>
                       ))}
                     </div>

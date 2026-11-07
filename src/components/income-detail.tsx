@@ -115,7 +115,7 @@ export function IncomeDetailView({ id }: { id: string }) {
                 +{fmtMoney(income.amountBase, income.baseCurrency, { decimals: 0 })}
               </div>
               {income.currency !== income.baseCurrency && (
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   {fmtMoney(income.amount, income.currency, { decimals: 0 })}
                   {income.rateUsed && ` @ ${income.rateUsed.toFixed(2)}`}
                 </div>

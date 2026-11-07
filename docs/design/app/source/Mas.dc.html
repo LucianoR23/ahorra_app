@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Más</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 920px; display: flex; flex-direction: column; background: {{c.bg}}; color: {{c.ink}}; font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 450; overflow: hidden">
+<main style="flex: 1; min-height: 0; overflow: hidden; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">Más</h1>
+
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; color: {{c.ink}}; text-decoration: none">
+<span aria-hidden="true" style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: {{c.ink}}; color: {{c.onp}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700">LR</span>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Luciano Rodriguez</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Perfil y cuenta</span></span>
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+</a>
+
+<nav aria-labelledby="g1" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="g1" style="margin: 0; padding: 0 4px; font-size: 13px; font-weight: 700; color: {{c.muted}}">Tu plata</h2>
+<ul style="list-style: none; margin: 0; padding: 0 14px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px">
+<li><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.5 8.5-5-5L2 17"></path><path d="M16 7h6v6"></path></svg><span style="flex: 1">Ingresos</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="m7 22-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg><span style="flex: 1">Recurrentes</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle></svg><span style="flex: 1">Presupuestos y objetivos</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42z"></path><circle cx="7" cy="7" r="1.5"></circle></svg><span style="flex: 1">Categorías</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M8 17v-5M13 17V8M18 17v-3"></path></svg><span style="flex: 1">Reportes</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+</ul>
+</nav>
+
+<nav aria-labelledby="g2" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="g2" style="margin: 0; padding: 0 4px; font-size: 13px; font-weight: 700; color: {{c.muted}}">Hogar</h2>
+<ul style="list-style: none; margin: 0; padding: 0 14px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px">
+<li><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span style="flex: 1">Hogar y miembros</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">2 personas</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"></path><path d="M4 7h16"></path><path d="m16 21 4-4-4-4"></path><path d="M20 17H4"></path></svg><span style="flex: 1">Cuentas entre ustedes</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500; font-variant-numeric: tabular-nums">Ana te debe $ 14.880</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+</ul>
+</nav>
+
+<nav aria-labelledby="g3" style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="g3" style="margin: 0; padding: 0 4px; font-size: 13px; font-weight: 700; color: {{c.muted}}">Cuenta</h2>
+<ul style="list-style: none; margin: 0; padding: 0 14px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px">
+<li><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 6.9L12 17.6 5.8 21l1.4-6.9L2 9.3l7-.8z"></path></svg><span style="flex: 1">Tu plan</span><span style="font-size: 12px; font-weight: 700; background: {{c.accent}}; color: #111214; border-radius: 999px; padding: 4px 10px">Pro Hogar · 12 días</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg><span style="flex: 1">Seguridad y privacidad</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span style="flex: 1">Ajustes</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 48px; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg><span style="flex: 1">Ayuda y soporte</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></a></li>
+</ul>
+</nav>
+<p style="margin: 4px 0 0; text-align: center; font-size: 13px; color: {{c.muted}}; font-weight: 500">Desarrollado por <a href="https://portfolio.lemydev.com" style="color: {{c.ink}}; font-weight: 650; text-decoration: underline; text-underline-offset: 3px">luciano.rodriguez</a></p>
+</main>
+<dc-import name="TabBar" active="mas" theme="{{theme}}" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":920}}'>
+class Component extends DCLogic {
+renderVals() {
+const theme = this.props.theme ?? 'light';
+const L = {bg:'#FAFAF9',surface:'#FFFFFF',s2:'#F1F1EE',border:'#E3E3DF',bs:'#868991',ink:'#111214',muted:'#5B5E66',onp:'#FFFFFF',accent:'#F2A900',ai:'#8A5A00',soft:'#FDF1D6',pos:'#0A5C44',neg:'#CC3333',track:'#E3E3DF',card:'transparent',shadow:'0 1px 2px rgba(17,18,20,0.06), 0 4px 16px rgba(17,18,20,0.04)'};
+const D = {bg:'#0B0C0E',surface:'#141518',s2:'#1C1E22',border:'#2C2F35',bs:'#6A6E76',ink:'#F4F4F2',muted:'#A3A6AD',onp:'#111214',accent:'#F5B53F',ai:'#F5B53F',soft:'#33270D',pos:'#7CEBC0',neg:'#E55A5A',track:'#2C2F35',card:'#2C2F35',shadow:'none'};
+return { theme: theme, c: theme === 'dark' ? D : L };
+}
+}
+</script>
+</body>
+</html>

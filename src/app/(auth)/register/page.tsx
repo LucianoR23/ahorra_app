@@ -155,7 +155,7 @@ function RegisterInner() {
             className={invitedEmail ? "md:h-11 md:text-base bg-muted text-muted-foreground" : "md:h-11 md:text-base"}
           />
           {invitedEmail && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Este email viene de la invitación y no se puede cambiar.
             </p>
           )}

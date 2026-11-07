@@ -133,7 +133,7 @@ function TicketRow({ ticket }: { ticket: TicketSummary }) {
         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
           {ticket.description_preview}
         </p>
-        <div className="mt-1.5 flex items-center gap-3 text-[11px] text-ink-faint">
+        <div className="mt-1.5 flex items-center gap-3 text-xs text-ink-faint">
           <span>{new Date(ticket.created_at).toLocaleDateString("es-AR")}</span>
           {ticket.attachments_count > 0 && (
             <span className="inline-flex items-center gap-1">

@@ -233,27 +233,27 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="truncate text-sm font-bold">{rec.description}</span>
-              <Badge variant="secondary" className="gap-0.5 text-[9px]">
+              <Badge variant="secondary" className="gap-0.5 text-xs">
                 <Repeat className="size-2.5" />
               </Badge>
               {rec.amountIsVariable && (
-                <Badge variant="outline" className="text-[9px]">Variable</Badge>
+                <Badge variant="outline" className="text-xs">Variable</Badge>
               )}
-              {!rec.isActive && <Badge variant="outline" className="text-[9px]">Pausado</Badge>}
+              {!rec.isActive && <Badge variant="outline" className="text-xs">Pausado</Badge>}
             </div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">
+            <div className="mt-0.5 text-xs text-muted-foreground">
               {cat?.name ?? "Sin categoría"} · {pm?.name ?? "—"} · {frequencyLabel(rec)}
             </div>
           </div>
           <div className="shrink-0 text-right font-mono text-sm font-bold">
             {fmtMoney(displayAmount, rec.currency, { decimals: 0 })}
             {rec.amountIsVariable && (
-              <div className="text-[10px] text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 {rec.lastAmount != null ? "último" : "estimado"}
               </div>
             )}
             {!rec.amountIsVariable && rec.installments > 1 && (
-              <div className="text-[10px] text-muted-foreground">en {rec.installments}c</div>
+              <div className="text-xs text-muted-foreground">en {rec.installments}c</div>
             )}
           </div>
         </div>
@@ -333,9 +333,9 @@ function RecurringIncomeCard({ rec, onChanged }: { rec: RecurringIncome; onChang
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="truncate text-sm font-bold">{rec.description || rec.source}</span>
-              {!rec.isActive && <Badge variant="outline" className="text-[9px]">Pausado</Badge>}
+              {!rec.isActive && <Badge variant="outline" className="text-xs">Pausado</Badge>}
             </div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">
+            <div className="mt-0.5 text-xs text-muted-foreground">
               {incomeSourceLabel(rec.source)} · {frequencyLabel(rec)}
             </div>
           </div>
@@ -401,7 +401,7 @@ function FrequencyFields({
 
       {frequency === "weekly" && (
         <div className="space-y-1.5">
-          <Label className="text-[11px] font-normal text-muted-foreground">Día de la semana</Label>
+          <Label className="text-xs font-normal text-muted-foreground">Día de la semana</Label>
           <Select value={String(dayOfWeek ?? 1)} onValueChange={(v) => setDayOfWeek(Number(v))}>
             <SelectTrigger>
               <SelectValue>
@@ -418,7 +418,7 @@ function FrequencyFields({
       )}
 
       {frequency === "monthly" && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Se cobrará el día{" "}
           <span className="font-semibold text-foreground">{dayOfMonth ?? 1}</span>{" "}
           de cada mes, según la fecha de inicio que elijas abajo.
@@ -428,7 +428,7 @@ function FrequencyFields({
       {frequency === "yearly" && (
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-normal text-muted-foreground">Mes</Label>
+            <Label className="text-xs font-normal text-muted-foreground">Mes</Label>
             <Select value={String(monthOfYear ?? 1)} onValueChange={(v) => setMonthOfYear(Number(v))}>
               <SelectTrigger>
                 <SelectValue>
@@ -443,7 +443,7 @@ function FrequencyFields({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-normal text-muted-foreground">Día</Label>
+            <Label className="text-xs font-normal text-muted-foreground">Día</Label>
             <Input
               type="number"
               min={1}
@@ -645,7 +645,7 @@ function RecurringExpenseForm({
             <Label htmlFor="amountIsVariable" className="text-[13px] font-medium">
               Importe variable
             </Label>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Activá esto si el monto cambia mes a mes (luz, expensas, wifi).
               Cada mes vas a confirmar la factura real.
             </p>
@@ -699,7 +699,7 @@ function RecurringExpenseForm({
               onChange={(e) => setInstallments(Math.max(1, Number(e.target.value) || 1))}
               className="h-9 w-24"
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Cada vez que se genere el gasto se divide en N cuotas (solo crédito).
             </p>
           </div>
@@ -726,7 +726,7 @@ function RecurringExpenseForm({
               disabled={!!initial}
             />
             {initial && (
-              <p className="text-[10px] text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
+              <p className="text-xs text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
             )}
           </div>
           <div className="space-y-1.5">
@@ -908,7 +908,7 @@ function RecurringIncomeForm({
               disabled={!!initial}
             />
             {initial && (
-              <p className="text-[10px] text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
+              <p className="text-xs text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
             )}
           </div>
           <div className="space-y-1.5">

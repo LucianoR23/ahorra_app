@@ -82,7 +82,7 @@ export function ChangePasswordCard() {
           </div>
           <div>
             <h2 className="text-sm font-bold">Cambiar contraseña</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Usá una contraseña única y fuerte.
             </p>
           </div>

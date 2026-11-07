@@ -117,7 +117,7 @@ export function PushProvider() {
             <Bell className="mt-0.5 size-4 shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold">Activá las notificaciones</p>
-              <p className="mt-0.5 text-[11px] text-primary/80">
+              <p className="mt-0.5 text-xs text-primary/80">
                 Recibí alertas cuando alguien cargue un gasto compartido o registre un pago.
               </p>
               <div className="mt-2 flex gap-2">
@@ -125,7 +125,7 @@ export function PushProvider() {
                   size="sm"
                   onClick={handleAllow}
                   disabled={subscribing}
-                  className="h-7 text-[11px]"
+                  className="h-7 text-xs"
                 >
                   {subscribing ? "Activando…" : "Activar"}
                 </Button>
@@ -133,7 +133,7 @@ export function PushProvider() {
                   size="sm"
                   variant="ghost"
                   onClick={dismissPush}
-                  className="h-7 text-[11px] text-primary/70"
+                  className="h-7 text-xs text-primary/70"
                 >
                   Ahora no
                 </Button>

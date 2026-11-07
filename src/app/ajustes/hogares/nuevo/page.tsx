@@ -128,7 +128,7 @@ function NewHouseholdInner() {
                 <SelectItem value="EUR">EUR — Euro</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Todos los montos se convierten a esta moneda para reportes.
             </p>
           </div>

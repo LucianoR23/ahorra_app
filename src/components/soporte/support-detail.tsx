@@ -103,7 +103,7 @@ export function SupportDetail({ id }: { id: string }) {
       {/* Encabezado */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
         <div className="flex items-start justify-between gap-3">
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
             <TypeIcon className="size-3" />
             {TICKET_TYPE_LABELS[ticket.type]}
           </span>
@@ -113,7 +113,7 @@ export function SupportDetail({ id }: { id: string }) {
           <h2 className="mt-2 text-lg font-bold tracking-tight">{ticket.subject}</h2>
         )}
         <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">{ticket.description}</p>
-        <p className="mt-2 text-[11px] text-ink-faint">
+        <p className="mt-2 text-xs text-ink-faint">
           Creado el {new Date(ticket.created_at).toLocaleString("es-AR")}
         </p>
       </div>
@@ -158,7 +158,7 @@ export function SupportDetail({ id }: { id: string }) {
           className="min-h-20"
         />
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-ink-faint">
+          <span className="text-xs text-ink-faint">
             {reply.length}/{MESSAGE_MAX}
           </span>
           <Button type="submit" size="sm" disabled={sending || !reply.trim()}>
@@ -192,7 +192,7 @@ function AttachmentTile({ attachment: a }: { attachment: Attachment }) {
     return (
       <div className="grid aspect-square place-items-center gap-1 rounded-xl border border-border bg-secondary text-muted-foreground">
         <ImageOff className="size-5" />
-        <span className="text-[10px]">No disponible</span>
+        <span className="text-xs">No disponible</span>
       </div>
     );
   }
@@ -237,7 +237,7 @@ function MessageBubble({ message: m }: { message: TicketMessage }) {
       >
         <div
           className={cn(
-            "mb-0.5 text-[10px] font-medium",
+            "mb-0.5 text-xs font-medium",
             isAdmin ? "text-muted-foreground" : "text-primary-foreground/70",
           )}
         >

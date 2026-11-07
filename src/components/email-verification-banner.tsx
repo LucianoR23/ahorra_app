@@ -57,7 +57,7 @@ export function EmailVerificationBanner() {
       <MailWarning className="mt-0.5 size-4 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">Verificá tu email</p>
-        <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
+        <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
           Te mandamos un link a <span className="font-medium">{user.email}</span>. Si no te llegó,
           podés reenviarlo.
         </p>
@@ -65,7 +65,7 @@ export function EmailVerificationBanner() {
           type="button"
           onClick={handleResend}
           disabled={busy}
-          className="mt-1.5 inline-flex cursor-pointer items-center gap-1 rounded-md bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:text-amber-200"
+          className="mt-1.5 inline-flex cursor-pointer items-center gap-1 rounded-md bg-amber-500/20 px-2 py-1 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:text-amber-200"
         >
           {busy && <Loader2 className="size-3 animate-spin" />}
           Reenviar email

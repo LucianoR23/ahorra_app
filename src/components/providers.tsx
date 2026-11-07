@@ -2,6 +2,7 @@
 
 import { SWRConfig } from "swr";
 import { Toaster } from "sonner";
+import { useTheme } from "next-themes";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { swrFetcher } from "@/lib/api/swr-fetcher";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -22,9 +23,24 @@ function InsightsRealtimeBridge() {
   return null;
 }
 
+// The toaster follows the app theme (OS or the Ajustes override), not only
+// the OS.
+function ThemedToaster() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <Toaster
+      position="top-center"
+      richColors
+      closeButton
+      theme={resolvedTheme === "dark" ? "dark" : "light"}
+      toastOptions={{ className: "font-sans" }}
+    />
+  );
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <SWRConfig
           value={{
@@ -37,13 +53,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <InsightsRealtimeBridge />
           {children}
           <ConfirmDialogHost />
-          <Toaster
-            position="top-center"
-            richColors
-            closeButton
-            theme="system"
-            toastOptions={{ className: "font-sans" }}
-          />
+          <ThemedToaster />
         </SWRConfig>
       </GoogleOAuthProvider>
     </ThemeProvider>

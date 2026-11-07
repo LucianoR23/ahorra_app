@@ -87,7 +87,7 @@ export function DebtsManager() {
       {/* Mi balance neto */}
       <Card className="rounded-2xl border-0 shadow-card">
         <CardContent className="p-4">
-          <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Mi balance neto
           </div>
           {meLoading ? (
@@ -122,7 +122,7 @@ export function DebtsManager() {
         <div className="mb-2 flex items-center justify-between px-1">
           <h2 className="text-sm font-bold">Deudas actuales</h2>
           {balances && (
-            <span className="text-[12px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {balances.balances.length} pendiente{balances.balances.length === 1 ? "" : "s"}
             </span>
           )}
@@ -195,7 +195,7 @@ export function DebtsManager() {
                 setCustomTo("");
                 setSingleDay("");
               }}
-              className="cursor-pointer text-[11px] font-semibold text-primary hover:underline"
+              className="cursor-pointer text-xs font-semibold text-primary hover:underline"
             >
               Limpiar filtros
             </button>
@@ -277,7 +277,7 @@ export function DebtsManager() {
                       <ArrowRight className="size-3 text-muted-foreground" />
                       <span className="truncate font-semibold">{memberName(s.toUser)}</span>
                     </div>
-                    <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
                       {fmtDateShort(s.paidAt)}
                       {s.note ? ` · ${s.note}` : ""}
                     </div>
@@ -378,7 +378,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex shrink-0 cursor-pointer items-center rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors",
+        "inline-flex shrink-0 cursor-pointer items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
         active
           ? "border-primary/60 bg-primary/10 text-primary"
           : "border-border bg-card text-muted-foreground hover:bg-muted",
@@ -574,22 +574,22 @@ function SettlementDetailButton({
             </div>
 
             <div className="text-center">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Monto</div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Monto</div>
               <div className="mt-0.5 font-mono text-2xl font-bold tracking-tight">
                 {fmtMoney(data.amount, data.baseCurrency)}
               </div>
-              <div className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
+              <div className="mt-0.5 text-xs font-semibold text-muted-foreground">
                 {data.baseCurrency}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Pagado</div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">Pagado</div>
                 <div className="mt-0.5">{fmtDateShort(data.paidAt)}</div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Registrado</div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">Registrado</div>
                 <div className="mt-0.5">
                   {new Date(data.createdAt).toLocaleDateString("es-AR", {
                     day: "2-digit",
@@ -602,14 +602,14 @@ function SettlementDetailButton({
 
             {data.note && (
               <div className="border-t border-border pt-3">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Nota</div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">Nota</div>
                 <p className="mt-1 whitespace-pre-wrap text-xs">{data.note}</p>
               </div>
             )}
 
             <div className="border-t border-border pt-3">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</div>
-              <code className="mt-0.5 block truncate font-mono text-[10px] text-muted-foreground">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">ID</div>
+              <code className="mt-0.5 block truncate font-mono text-xs text-muted-foreground">
                 {data.id}
               </code>
             </div>

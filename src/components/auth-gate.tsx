@@ -53,7 +53,7 @@ export function AuthSplash() {
         <span className="vt-brand-hero flex items-center">
           <BrandLogo variant="wordmark" size={40} priority />
         </span>
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[2px] text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
           <Loader2 className="size-3 animate-spin text-primary" />
           Cargando
         </div>

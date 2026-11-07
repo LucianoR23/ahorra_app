@@ -229,7 +229,7 @@ function InviteAcceptInner() {
               Ya tengo cuenta
             </Button>
           </Link>
-          <p className="text-center text-[11px] text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground">
             La cuenta tiene que usar el mismo email de la invitación.
           </p>
         </div>

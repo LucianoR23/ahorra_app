@@ -4,7 +4,6 @@ import { Bell, Sparkles, AlertTriangle, Info, TrendingUp, PiggyBank } from "luci
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { CategoryIcon } from "@/components/category-icon";
 import { PushProvider } from "@/components/push-provider";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -109,7 +108,6 @@ function Header() {
         </h1>
       </div>
       <div className="hidden md:flex items-center gap-2">
-        <ThemeToggle className="size-10.5 rounded-2xl bg-card shadow-card border border-border" />
         <Link
           href="/notificaciones"
           aria-label="Notificaciones"
@@ -147,7 +145,7 @@ function StatCard({
   return (
     <Card className="shadow-card rounded-2xl border-0 py-0">
       <CardContent className="p-3.5">
-        <div className="text-[11px] font-semibold uppercase tracking-[1px] text-muted-foreground">
+        <div className="text-xs font-semibold uppercase tracking-[1px] text-muted-foreground">
           {label}
         </div>
         {value === null ? (
@@ -162,7 +160,7 @@ function StatCard({
             {value}
           </div>
         )}
-        <div className={cn("mt-1 text-[12px] font-semibold truncate", toneClass)}>{sub}</div>
+        <div className={cn("mt-1 text-xs font-semibold truncate", toneClass)}>{sub}</div>
       </CardContent>
     </Card>
   );
@@ -196,7 +194,7 @@ function CoachBubble({ insight, loading }: { insight: Insight | undefined; loadi
         <Icon className="size-4.5" />
       </div>
       <div className="flex-1 rounded-[18px] rounded-tl-lg bg-card p-4 shadow-card border border-border/40">
-        <div className={cn("text-[12px] font-bold uppercase tracking-[1.2px]", tone)}>
+        <div className={cn("text-xs font-bold uppercase tracking-[1.2px]", tone)}>
           Tu coach de hoy
         </div>
         <div className="mt-1 text-[16px] font-bold tracking-tight">{insight.title}</div>
@@ -247,28 +245,28 @@ function ForecastCard({ report, loading }: { report: MonthlyReport | undefined; 
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-[10px] font-semibold uppercase tracking-[1px] text-muted-foreground">
+            <div className="text-xs font-semibold uppercase tracking-[1px] text-muted-foreground">
               Gastado
             </div>
             <div className="mt-0.5 font-mono text-base font-bold tracking-tight">
               {fmtARS(spent, { compact: true })}
             </div>
-            <div className="mt-0.5 font-mono text-[11px] font-bold text-muted-foreground">
+            <div className="mt-0.5 font-mono text-xs font-bold text-muted-foreground">
               de {fmtARS(total, { compact: true })}
             </div>
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="mb-2.5 inline-flex items-center gap-1 rounded-[8px] bg-positive/15 px-2.5 py-1 text-[12px] font-bold text-positive">
+          <div className="mb-2.5 inline-flex items-center gap-1 rounded-[8px] bg-positive/15 px-2.5 py-1 text-xs font-bold text-positive">
             {report.month}
           </div>
-          <div className="text-[12px] font-semibold uppercase tracking-[0.8px] text-muted-foreground">
+          <div className="text-xs font-semibold uppercase tracking-[0.8px] text-muted-foreground">
             Facturado
           </div>
           <div className="mt-0.5 font-mono text-[24px] font-bold tracking-tight">
             {fmtARS(report.billedThisMonth, { compact: true })}
           </div>
-          <div className="mt-1 text-[12px] text-muted-foreground">
+          <div className="mt-1 text-xs text-muted-foreground">
             A pagar {fmtARS(due, { compact: true })} · {report.baseCurrency}
           </div>
         </div>
@@ -302,7 +300,7 @@ function IncomeCard({ spent, loadingReport }: { spent: number; loadingReport: bo
             <TrendingUp className="size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold uppercase tracking-[1px] text-muted-foreground">
+            <div className="text-xs font-semibold uppercase tracking-[1px] text-muted-foreground">
               Ingresos de este mes
             </div>
             {isLoading ? (
@@ -310,12 +308,12 @@ function IncomeCard({ spent, loadingReport }: { spent: number; loadingReport: bo
             ) : (
               <div className="mt-0.5 font-mono text-[24px] font-bold tracking-tight">
                 {fmtARS(income, { compact: true })}
-                <span className="ml-1 text-[11px] font-semibold text-muted-foreground">{currency}</span>
+                <span className="ml-1 text-xs font-semibold text-muted-foreground">{currency}</span>
               </div>
             )}
           </div>
           <div className="shrink-0 text-right">
-            <div className="text-[11px] font-semibold uppercase tracking-[1px] text-muted-foreground">
+            <div className="text-xs font-semibold uppercase tracking-[1px] text-muted-foreground">
               Neto
             </div>
             {isLoading || loadingReport ? (
@@ -335,7 +333,7 @@ function IncomeCard({ spent, loadingReport }: { spent: number; loadingReport: bo
         </div>
 
         <div className="mt-3">
-          <div className="flex items-center justify-between text-[12px] text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <PiggyBank className="size-3" />
               Tasa de ahorro

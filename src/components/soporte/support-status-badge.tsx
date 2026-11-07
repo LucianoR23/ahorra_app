@@ -22,7 +22,7 @@ export function SupportStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-5 w-fit shrink-0 items-center rounded-full px-2 text-[0.625rem] font-medium whitespace-nowrap",
+        "inline-flex h-6 w-fit shrink-0 items-center rounded-full px-2 text-xs font-medium whitespace-nowrap",
         STATUS_CLASSES[status],
         className,
       )}

@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Plus, LayoutGrid, Bell, Settings2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/nav";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthGate } from "@/components/auth-gate";
 import { SpaceTabs } from "@/components/space-tabs";
 import { useSpaces } from "@/lib/spaces";
@@ -258,10 +257,9 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs font-semibold">{displayName}</div>
-                <div className="truncate text-[10px] text-muted-foreground">{user?.email}</div>
+                <div className="truncate text-xs text-muted-foreground">{user?.email}</div>
               </div>
             </Link>
-            <ThemeToggle />
             <button
               type="button"
               onClick={handleLogout}
@@ -342,7 +340,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                     }
                   >
                     <LayoutGrid className="size-5" />
-                    <span className="text-[10px] font-semibold">Más</span>
+                    <span className="text-xs font-semibold">Más</span>
                   </SheetTrigger>
                   <SheetContent
                     side="bottom"
@@ -381,7 +379,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                             }
                           >
                             <Icon className={cn("size-5", active ? "text-primary" : "text-muted-foreground")} />
-                            <span className="text-[11px] font-semibold">{n.label}</span>
+                            <span className="text-xs font-semibold">{n.label}</span>
                           </SheetClose>
                         );
                       })}
@@ -393,11 +391,10 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className="min-w-0">
                           <div className="truncate text-xs font-semibold">{displayName}</div>
-                          <div className="truncate text-[10px] text-muted-foreground">{user?.email}</div>
+                          <div className="truncate text-xs text-muted-foreground">{user?.email}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <ThemeToggle />
                         <SheetClose
                           render={
                             <button
@@ -431,7 +428,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <Icon className="size-5" />
-                <span className="text-[10px] font-semibold">{item.label}</span>
+                <span className="text-xs font-semibold">{item.label}</span>
               </Link>
             );
           })}

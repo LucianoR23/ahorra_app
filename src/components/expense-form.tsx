@@ -224,7 +224,7 @@ export function ExpenseForm() {
                 {" · "}
                 Total: {fmtMoney(ratePreview.amountBase, baseCurrency, { decimals: 0 })}
               </div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">La tasa exacta se congela al crear.</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">La tasa exacta se congela al crear.</div>
             </div>
           )}
         </CardContent>
@@ -327,7 +327,7 @@ export function ExpenseForm() {
               <div className="text-xs font-semibold mb-1.5">Facturación estimada</div>
               <div className="flex flex-col gap-1">
                 {billingPreview.map((b) => (
-                  <div key={b.n} className="flex items-center justify-between gap-2 text-[11px]">
+                  <div key={b.n} className="flex items-center justify-between gap-2 text-xs">
                     <span className="font-mono text-muted-foreground">
                       {installments > 1 ? `Cuota ${b.n}/${installments}` : "Gasto"}
                     </span>
@@ -399,7 +399,7 @@ export function ExpenseForm() {
                           onChange={(e) => setShareAmounts({ ...shareAmounts, [s.userId]: e.target.value })}
                           className="h-8 w-28 text-right font-mono"
                         />
-                        <span className="text-[10px] text-muted-foreground w-8">{currency}</span>
+                        <span className="text-xs text-muted-foreground w-8">{currency}</span>
                       </div>
                     ))}
                     <div className={cn("text-xs", sharesMatch ? "text-positive" : "text-destructive")}>

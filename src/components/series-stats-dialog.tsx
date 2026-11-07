@@ -82,13 +82,13 @@ function SummaryRow({
   return (
     <div className="grid grid-cols-2 gap-2">
       <div className="rounded-xl bg-muted p-3">
-        <div className="text-[11px] text-muted-foreground">Promedio</div>
+        <div className="text-xs text-muted-foreground">Promedio</div>
         <div className="mt-0.5 font-mono text-sm font-bold">
           {fmtMoney(average, currency, { decimals: 0 })}
         </div>
       </div>
       <div className="rounded-xl bg-muted p-3">
-        <div className="text-[11px] text-muted-foreground">Último cambio</div>
+        <div className="text-xs text-muted-foreground">Último cambio</div>
         <div className="mt-0.5 flex items-center gap-1 font-mono text-sm font-bold">
           {lastVariation === null ? (
             <span className="text-muted-foreground">—</span>
@@ -115,7 +115,7 @@ function HistoryRow({ point }: { point: SeriesPoint }) {
         <div className="text-[13px] font-medium">{fmtDateShort(point.spentAt)}</div>
         {v !== null ? (
           <div
-            className={`mt-0.5 flex items-center gap-1 text-[11px] ${variationColor(v)}`}
+            className={`mt-0.5 flex items-center gap-1 text-xs ${variationColor(v)}`}
           >
             <VariationGlyph pct={v} />
             <span>
@@ -124,7 +124,7 @@ function HistoryRow({ point }: { point: SeriesPoint }) {
             </span>
           </div>
         ) : (
-          <div className="mt-0.5 text-[11px] text-muted-foreground">primer registro</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">primer registro</div>
         )}
       </div>
       <div className="font-mono text-sm font-bold">
@@ -152,7 +152,7 @@ function EmptyState() {
     <div className="flex flex-col items-center gap-2 rounded-xl bg-muted px-4 py-8 text-center">
       <TrendingUp className="size-6 text-muted-foreground" />
       <div className="text-sm font-medium">Sin histórico todavía</div>
-      <p className="max-w-[260px] text-[12px] text-muted-foreground">
+      <p className="max-w-[260px] text-xs text-muted-foreground">
         Cuando el worker genere el primer gasto de esta serie y lo confirmes,
         vas a verlo acá con su variación.
       </p>

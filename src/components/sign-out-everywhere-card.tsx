@@ -51,7 +51,7 @@ export function SignOutEverywhereCard() {
           </div>
           <div>
             <h2 className="text-sm font-bold">Sesiones</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Si perdiste un dispositivo o iniciaste sesión en uno que no es tuyo, cerrá todas las
               sesiones de tu cuenta.
             </p>

@@ -28,7 +28,7 @@ function CreateHogarCard() {
         <Home className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-bold">Hogar</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             ¿Compartís gastos con alguien? Creá un hogar, invitalo y llevá las cuentas entre ustedes.
           </p>
         </div>

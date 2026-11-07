@@ -163,7 +163,7 @@ export function ExpensesList() {
                   setOffset(0);
                 }}
                 className={cn(
-                  "flex-1 cursor-pointer rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors",
+                  "flex-1 cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
                   fixedFilter === f
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-muted/70",
@@ -206,17 +206,17 @@ export function ExpensesList() {
                   <div className="flex items-center gap-1.5">
                     <span className="truncate text-sm font-semibold">{e.description}</span>
                     {e.recurringExpenseId && (
-                      <Badge variant="secondary" className="h-4 gap-0.5 px-1 text-[9px]">
+                      <Badge variant="secondary" className="h-4 gap-0.5 px-1 text-xs">
                         <Repeat className="size-2.5" /> Fijo
                       </Badge>
                     )}
                     {e.installments > 1 && (
-                      <Badge variant="outline" className="h-4 px-1 text-[9px]">
+                      <Badge variant="outline" className="h-4 px-1 text-xs">
                         {e.installments}c
                       </Badge>
                     )}
                   </div>
-                  <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
                     {cat} · {pm} · {fmtDateShort(e.spentAt)}
                   </div>
                 </div>
@@ -225,7 +225,7 @@ export function ExpensesList() {
                     −{fmtMoney(e.amountBase, e.baseCurrency, { compact: e.amountBase > 99999 })}
                   </div>
                   {e.currency !== e.baseCurrency && (
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {fmtMoney(e.amount, e.currency, { decimals: 0 })}
                     </div>
                   )}

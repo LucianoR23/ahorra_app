@@ -179,7 +179,7 @@ export default function OnboardingPage() {
                     <SelectItem value="EUR">EUR — Euro</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Todos los montos se convierten a esta moneda para reportes.
                 </p>
               </div>
@@ -237,7 +237,7 @@ export default function OnboardingPage() {
                   aria-invalid={!!inviteErr}
                   disabled={inviteBusy}
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Le mandamos un mail con el link para unirse al hogar.
                 </p>
               </div>
@@ -260,14 +260,14 @@ export default function OnboardingPage() {
                       <Input
                         readOnly
                         value={lastInviteUrl}
-                        className="h-7 flex-1 bg-background text-[11px]"
+                        className="h-7 flex-1 bg-background text-xs"
                         onFocus={(e) => e.currentTarget.select()}
                       />
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="h-7 gap-1 px-2 text-[11px]"
+                        className="h-7 gap-1 px-2 text-xs"
                         onClick={copyInviteUrl}
                       >
                         <Copy className="size-3" /> Copiar
@@ -309,7 +309,7 @@ function StepDot({ active, done, label }: { active: boolean; done: boolean; labe
   return (
     <div
       className={
-        "grid size-7 place-items-center rounded-full border text-[11px] font-semibold transition-colors " +
+        "grid size-7 place-items-center rounded-full border text-xs font-semibold transition-colors " +
         (active
           ? "border-primary bg-primary text-primary-foreground"
           : done

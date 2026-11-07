@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Movimientos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: {{c.bg}}; color: {{c.ink}}; font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 450; overflow: hidden">
+<main style="flex: 1; min-height: 0; overflow: hidden; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px">
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">Movimientos</h1>
+<button aria-label="Buscar" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></button>
+</div>
+
+<!-- Month navigator -->
+<div style="display: flex; align-items: center; justify-content: space-between; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; padding: 8px">
+<button aria-label="Mes anterior" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+<span style="font-size: 16px; font-weight: 700">Noviembre 2026</span>
+<span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Gastaste <span style="font-variant-numeric: tabular-nums; color: {{c.ink}}; font-weight: 650">$ 486.320</span> · 38 gastos</span>
+</div>
+<button aria-label="Mes siguiente" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></button>
+</div>
+
+<!-- Filters -->
+<div role="group" aria-label="Filtros" style="display: flex; gap: 8px; overflow: hidden; margin-right: -16px">
+<button aria-pressed="true" style="flex: none; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: {{c.ink}}; color: {{c.onp}}; font: inherit; font-size: 14px; font-weight: 700">Todos</button>
+<button aria-pressed="false" style="flex: none; height: 40px; padding: 0 16px; border: 1px solid {{c.border}}; border-radius: 999px; background: {{c.surface}}; color: {{c.ink}}; font: inherit; font-size: 14px; font-weight: 600">Fijos</button>
+<button aria-pressed="false" style="flex: none; height: 40px; padding: 0 16px; border: 1px solid {{c.border}}; border-radius: 999px; background: {{c.surface}}; color: {{c.ink}}; font: inherit; font-size: 14px; font-weight: 600">Variables</button>
+<button aria-haspopup="listbox" style="flex: none; height: 40px; padding: 0 12px 0 16px; border: 1px solid {{c.border}}; border-radius: 999px; background: {{c.surface}}; color: {{c.ink}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px">Categoría<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+<button aria-haspopup="listbox" style="flex: none; height: 40px; padding: 0 12px 0 16px; border: 1px solid {{c.border}}; border-radius: 999px; background: {{c.surface}}; color: {{c.ink}}; font: inherit; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px">Pago<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></button>
+</div>
+
+<!-- Day groups -->
+<section aria-labelledby="d1" style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; padding: 4px 4px 0"><h2 id="d1" style="margin: 0; font-size: 13px; font-weight: 700; color: {{c.muted}}">Hoy</h2><span style="font-size: 13px; font-weight: 650; color: {{c.muted}}; font-variant-numeric: tabular-nums">$ 23.658</span></div>
+<ul style="list-style: none; margin: 0; padding: 0 16px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px">
+<li><a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; color: {{c.ink}}; text-decoration: none">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2M14 2v2M6 2v2"></path><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650">Café</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Comida · Visa</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 2.500</span></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; color: {{c.ink}}; text-decoration: none">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650; display: flex; align-items: center; gap: 8px">Súper <span style="font-size: 11px; font-weight: 700; background: {{c.s2}}; border-radius: 6px; padding: 2px 7px">Hogar</span></span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Mercado Pago · tu parte de $ 42.315</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 21.158</span></a></li>
+</ul>
+</section>
+
+<section aria-labelledby="d2" style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; padding: 4px 4px 0"><h2 id="d2" style="margin: 0; font-size: 13px; font-weight: 700; color: {{c.muted}}">Ayer</h2><span style="font-size: 13px; font-weight: 650; color: {{c.muted}}; font-variant-numeric: tabular-nums">$ 127.990</span></div>
+<ul style="list-style: none; margin: 0; padding: 0 16px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px">
+<li><a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; color: {{c.ink}}; text-decoration: none">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2Z"></path><path d="M5 10h14M15 6v2M15 13v3"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 15px; font-weight: 650">Heladera</span><span style="display: flex; align-items: center; gap: 8px"><span aria-hidden="true" style="display: flex; gap: 2px"><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.accent}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.accent}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.accent}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span><span style="width: 8px; height: 5px; border-radius: 999px; background: {{c.track}}"></span></span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">3 de 12 · Visa</span></span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 89.990</span></a></li>
+<li style="border-top: 1px solid {{c.border}}"><a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; color: {{c.ink}}; text-decoration: none">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"></path><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.83a2 2 0 0 0-.59-1.42L18 5"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650">Nafta</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Auto · Visa</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 38.000</span></a></li>
+</ul>
+</section>
+
+<section aria-labelledby="d3" style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; padding: 4px 4px 0"><h2 id="d3" style="margin: 0; font-size: 13px; font-weight: 700; color: {{c.muted}}">Lun 2</h2><span style="font-size: 13px; font-weight: 650; color: {{c.muted}}; font-variant-numeric: tabular-nums">$ 15.110</span></div>
+<ul style="list-style: none; margin: 0; padding: 0 16px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px">
+<li><a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 0; color: {{c.ink}}; text-decoration: none">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"></rect><path d="m17 2-5 5-5-5"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650">Netflix</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Entretenimiento · Visa · ≈ $ 15.110</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">US$ 9,99</span></a></li>
+</ul>
+</section>
+</main>
+<dc-import name="TabBar" active="movimientos" theme="{{theme}}" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const theme = this.props.theme ?? 'light';
+const L = {bg:'#FAFAF9',surface:'#FFFFFF',s2:'#F1F1EE',border:'#E3E3DF',bs:'#868991',ink:'#111214',muted:'#5B5E66',onp:'#FFFFFF',accent:'#F2A900',ai:'#8A5A00',soft:'#FDF1D6',pos:'#0A5C44',neg:'#CC3333',track:'#E3E3DF',card:'transparent',shadow:'0 1px 2px rgba(17,18,20,0.06), 0 4px 16px rgba(17,18,20,0.04)'};
+const D = {bg:'#0B0C0E',surface:'#141518',s2:'#1C1E22',border:'#2C2F35',bs:'#6A6E76',ink:'#F4F4F2',muted:'#A3A6AD',onp:'#111214',accent:'#F5B53F',ai:'#F5B53F',soft:'#33270D',pos:'#7CEBC0',neg:'#E55A5A',track:'#2C2F35',card:'#2C2F35',shadow:'none'};
+return { theme: theme, c: theme === 'dark' ? D : L };
+}
+}
+</script>
+</body>
+</html>

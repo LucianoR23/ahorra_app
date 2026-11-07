@@ -158,7 +158,7 @@ export function ExpenseDetailView({ id }: { id: string }) {
                 {fmtMoney(expense.amountBase, expense.baseCurrency, { decimals: 0 })}
               </div>
               {expense.currency !== expense.baseCurrency && (
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   {fmtMoney(expense.amount, expense.currency, { decimals: 0 })}
                   {expense.rateUsed && ` @ ${expense.rateUsed.toFixed(2)}`}
                 </div>
@@ -354,9 +354,9 @@ function InstallmentRow({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold">Cuota {installment.installmentNumber}</span>
-              {installment.isPaid && <Badge variant="secondary" className="text-[9px]">Pagada</Badge>}
+              {installment.isPaid && <Badge variant="secondary" className="text-xs">Pagada</Badge>}
             </div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground truncate">
+            <div className="mt-0.5 text-xs text-muted-foreground truncate">
               {installment.billingDate ? (
                 <>Factura {fmtDateShort(installment.billingDate)}{installment.dueDate ? ` · vence ${fmtDateShort(installment.dueDate)}` : ""}</>
               ) : (
@@ -375,7 +375,7 @@ function InstallmentRow({
           {/* Shares */}
           {installment.shares && installment.shares.length > 0 && (
             <div className="space-y-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">División</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">División</div>
               {installment.shares.map((s) => (
                 <div key={s.userId} className="flex items-center justify-between text-xs">
                   <span className="truncate">{getName(s.userId)}</span>
@@ -392,11 +392,11 @@ function InstallmentRow({
             <div className="space-y-2 rounded-md bg-background p-2 border border-border">
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <Label className="text-[10px]">Factura</Label>
+                  <Label className="text-xs">Factura</Label>
                   <DatePicker value={billingDate} onChange={setBillingDate} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[10px]">Vencimiento</Label>
+                  <Label className="text-xs">Vencimiento</Label>
                   <DatePicker value={dueDate} onChange={setDueDate} />
                 </div>
               </div>

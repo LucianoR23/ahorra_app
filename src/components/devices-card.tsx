@@ -104,7 +104,7 @@ export function DevicesCard() {
       <CardContent className="p-4">
         <div className="mb-4">
           <h2 className="text-sm font-bold">Mis dispositivos</h2>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Dispositivos con notificaciones push activas.
           </p>
         </div>
@@ -139,13 +139,13 @@ export function DevicesCard() {
                       {isCurrent && (
                         <Badge
                           variant="outline"
-                          className="h-4 border-primary/30 bg-primary/10 px-1.5 text-[9px] text-primary"
+                          className="h-4 border-primary/30 bg-primary/10 px-1.5 text-xs text-primary"
                         >
                           Este dispositivo
                         </Badge>
                       )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Último uso: {formatRelative(s.lastSeenAt)}
                     </p>
                   </div>

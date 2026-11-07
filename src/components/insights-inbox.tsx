@@ -354,7 +354,7 @@ export function InsightsInbox() {
         <div className="flex flex-col gap-4">
           {grouped.map(([key, items]) => (
             <section key={key} className="flex flex-col gap-1.5">
-              <h2 className="px-1 text-[11px] font-bold uppercase tracking-[1px] text-muted-foreground">
+              <h2 className="px-1 text-xs font-bold uppercase tracking-[1px] text-muted-foreground">
                 {humanDay(key)}
               </h2>
               <div className="flex flex-col gap-2">
@@ -377,7 +377,7 @@ export function InsightsInbox() {
           >
             <ChevronLeft className="size-3.5" /> Anterior
           </Button>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {offset + 1}–{offset + filtered.length}
           </span>
           <Button
@@ -543,13 +543,13 @@ function InsightRow({ insight }: { insight: Insight }) {
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              "inline-block rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide",
+              "inline-block rounded-full px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide",
               visual.badge,
             )}
           >
             {typeLabel}
           </span>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {relativeDate(insight.createdAt || insight.insightDate)}
           </span>
         </div>
@@ -561,7 +561,7 @@ function InsightRow({ insight }: { insight: Insight }) {
         >
           {insight.title}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
           {insight.body}
         </p>
       </div>
@@ -626,7 +626,7 @@ export function InsightsUnreadBadge({
     <span
       aria-label={`${count} notificaciones sin leer`}
       className={cn(
-        "grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground leading-none h-4",
+        "grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground leading-none h-4",
         className,
       )}
     >
