@@ -128,7 +128,7 @@ export function InstallPrompt() {
                 <Sparkles className="size-3" />
                 Instalá {brand.name} como app
               </p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-primary-foreground/80">
+              <p className="mt-0.5 text-xs leading-relaxed text-primary-foreground/80">
                 {platform === "ios"
                   ? "Abrí en pantalla completa desde tu inicio y recibí notificaciones."
                   : "Acceso directo desde tu dispositivo, más rápido y sin navegador."}
@@ -138,7 +138,7 @@ export function InstallPrompt() {
                   size="sm"
                   onClick={handleInstall}
                   disabled={installing}
-                  className="h-7 bg-primary-foreground px-3 text-[11px] font-bold text-primary hover:bg-primary-foreground/90"
+                  className="h-7 bg-primary-foreground px-3 text-xs font-bold text-primary hover:bg-primary-foreground/90"
                 >
                   <Download className="size-3" />
                   {installing ? "Instalando…" : "Instalar app"}
@@ -206,18 +206,18 @@ function IosInstallDialog({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                  <span className="inline-flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  <span className="inline-flex size-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                     {s.n}
                   </span>
                   {s.title}
                 </p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{s.desc}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{s.desc}</p>
               </div>
             </li>
           ))}
         </ol>
 
-        <div className="rounded-xl bg-primary/5 px-3 py-2.5 text-[11px] text-muted-foreground ring-1 ring-primary/15">
+        <div className="rounded-xl bg-primary/5 px-3 py-2.5 text-xs text-muted-foreground ring-1 ring-primary/15">
           <strong className="text-foreground">Tip:</strong> en iOS 16.4 o superior, una vez instalada
           vas a poder recibir notificaciones push.
         </div>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Barra de navegación</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Principal" style="width: 390px; height: 84px; box-sizing: border-box; padding: 6px 8px 14px; background: {{c.surface}}; border-top: 1px solid {{c.border}}; display: flex; align-items: center; justify-content: space-between; font-family: Manrope, system-ui, sans-serif; color: {{c.ink}}">
+<a href="Main.dc.html" aria-current="{{t.inicio.current}}" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: {{t.inicio.color}}"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{t.inicio.color}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg><span style="font-size: 12px; font-weight: {{t.inicio.weight}}">Inicio</span></a>
+<a href="Movimientos.dc.html" aria-current="{{t.movimientos.current}}" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: {{t.movimientos.color}}"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{t.movimientos.color}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg><span style="font-size: 12px; font-weight: {{t.movimientos.weight}}">Movimientos</span></a>
+<a href="CargarGasto.dc.html" aria-label="Cargar gasto" style="flex: none; width: 56px; height: 56px; margin: 0 6px; border-radius: 999px; background: {{c.accent}}; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#111214" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="Tarjetas.dc.html" aria-current="{{t.tarjetas.current}}" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: {{t.tarjetas.color}}"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{t.tarjetas.color}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg><span style="font-size: 12px; font-weight: {{t.tarjetas.weight}}">Tarjetas</span></a>
+<a href="Mas.dc.html" aria-current="{{t.mas.current}}" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: {{t.mas.color}}"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="{{t.mas.color}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg><span style="font-size: 12px; font-weight: {{t.mas.weight}}">Más</span></a>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["inicio","movimientos","tarjetas","mas"],"default":"inicio"},"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":84}}'>
+class Component extends DCLogic {
+renderVals() {
+const theme = this.props.theme ?? 'light';
+const active = this.props.active ?? 'inicio';
+const L = {surface:'#FFFFFF',border:'#E3E3DF',ink:'#111214',muted:'#5B5E66',accent:'#F2A900'};
+const D = {surface:'#141518',border:'#2C2F35',ink:'#F4F4F2',muted:'#A3A6AD',accent:'#F5B53F'};
+const c = theme === 'dark' ? D : L;
+const item = (k) => ({ color: active === k ? c.ink : c.muted, weight: active === k ? 700 : 600, current: active === k ? 'page' : 'false' });
+return { c: c, t: { inicio: item('inicio'), movimientos: item('movimientos'), tarjetas: item('tarjetas'), mas: item('mas') } };
+}
+}
+</script>
+</body>
+</html>

@@ -83,7 +83,7 @@ export function TrendsReportCard() {
                     <CardContent className="p-3">
                       <div className="flex items-center gap-1.5">
                         <span className="inline-block size-2 rounded-full" style={{ backgroundColor: l.color }} />
-                        <p className="text-[10px] text-muted-foreground">{l.label} (último mes)</p>
+                        <p className="text-xs text-muted-foreground">{l.label} (último mes)</p>
                       </div>
                       <p className="mt-0.5 font-mono text-sm font-bold">
                         {fmtMoney(last[l.key], cur)}

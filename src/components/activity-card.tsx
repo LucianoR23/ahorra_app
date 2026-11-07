@@ -51,7 +51,7 @@ export function ActivityCard() {
           </div>
           <div>
             <h2 className="text-sm font-bold">Actividad reciente</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Inicios de sesión y cambios de seguridad de tu cuenta. Si ves algo que no fuiste vos,
               cambiá tu contraseña y cerrá todas las sesiones.
             </p>
@@ -73,12 +73,12 @@ export function ActivityCard() {
                   <p className={cn("text-xs font-semibold", ALERT.has(item.action) && "text-warn")}>
                     {activityLabel(item)}
                   </p>
-                  <p className="truncate text-[11px] text-muted-foreground">
+                  <p className="truncate text-xs text-muted-foreground">
                     {item.device}
                     {item.ip ? ` · ${item.ip}` : ""}
                   </p>
                 </div>
-                <time dateTime={item.createdAt} className="shrink-0 text-[11px] text-muted-foreground">
+                <time dateTime={item.createdAt} className="shrink-0 text-xs text-muted-foreground">
                   {fmt.format(new Date(item.createdAt))}
                 </time>
               </li>

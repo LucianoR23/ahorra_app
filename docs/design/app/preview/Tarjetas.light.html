@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es-AR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarjetas.dc.html · light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#FAFAF9}</style></head><body>
+<div style="width: 390px; height: 1020px; display: flex; flex-direction: column; background: #FAFAF9; color: #111214; font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 450; overflow: hidden">
+<main style="flex: 1; min-height: 0; overflow: hidden; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">Tarjetas</h1>
+<button aria-label="Agregar tarjeta" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: #F1F1EE; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111214" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+
+<!-- Card selector -->
+<div role="tablist" aria-label="Tarjeta" style="display: flex; gap: 10px; margin-right: -16px; overflow: hidden">
+<button role="tab" aria-selected="true" style="flex: none; width: 236px; height: 132px; box-sizing: border-box; border: 1px solid transparent; border-radius: 20px; background: #111214; color: #F4F4F2; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font: inherit">
+<span style="display: flex; justify-content: space-between; align-items: center; width: 100%"><span style="font-size: 15px; font-weight: 700">Visa</span><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 999px; background: #F5B53F"></span></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 700; letter-spacing: 0.08em; font-variant-numeric: tabular-nums">···· 4417</span><span style="font-size: 12px; font-weight: 500; color: #A3A6AD">Cierra el 24 · vence el 3</span></span>
+</button>
+<button role="tab" aria-selected="false" style="flex: none; width: 236px; height: 132px; box-sizing: border-box; border: 1px solid #E3E3DF; border-radius: 20px; background: #FFFFFF; color: #111214; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font: inherit">
+<span style="font-size: 15px; font-weight: 700">Mastercard</span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 700; letter-spacing: 0.08em; font-variant-numeric: tabular-nums">···· 0921</span><span style="font-size: 12px; font-weight: 500; color: #5B5E66">Cierra el 28 · vence el 8</span></span>
+</button>
+</div>
+
+<!-- Statements -->
+<section aria-labelledby="res-t" style="background: #FFFFFF; border: 1px solid transparent; box-shadow: 0 1px 2px rgba(17,18,20,0.06), 0 4px 16px rgba(17,18,20,0.04); border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="res-t" style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.04em">RESUMEN A PAGAR</h2>
+<p style="margin: 0; font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">$ 312.400</p>
+<p style="margin: 0; font-size: 13px; color: #5B5E66; font-weight: 500">Cerró el 24/11 · vence el miércoles 3/12</p>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="flex: 1; height: 48px; border: 1px solid #868991; border-radius: 999px; background: transparent; color: #111214; font: inherit; font-size: 15px; font-weight: 700">Marcar como pagado</button>
+<button style="flex: none; height: 48px; padding: 0 18px; border: 0; border-radius: 999px; background: #F1F1EE; color: #111214; font: inherit; font-size: 15px; font-weight: 650">Ver detalle</button>
+</div>
+<div style="border-top: 1px solid #E3E3DF; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650">Próximo resumen</span><span style="font-size: 13px; color: #5B5E66; font-weight: 500">Cierra el 24/12 · lo que va hasta hoy</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 186.320</span>
+</div>
+</section>
+
+<!-- Committed -->
+<section aria-labelledby="cm-t" style="background: #FFFFFF; border: 1px solid transparent; box-shadow: 0 1px 2px rgba(17,18,20,0.06), 0 4px 16px rgba(17,18,20,0.04); border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="cm-t" style="margin: 0; font-size: 17px; font-weight: 650">Comprometido en esta tarjeta</h2>
+<div aria-hidden="true" style="display: flex; align-items: flex-end; gap: 10px; height: 96px">
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums">186k</span><span style="height: 70px; background: #F2A900; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: #5B5E66; text-align: center; font-variant-numeric: tabular-nums">235k</span><span style="height: 88px; background: #5B5E66; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: #5B5E66; text-align: center; font-variant-numeric: tabular-nums">235k</span><span style="height: 88px; background: #5B5E66; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: #5B5E66; text-align: center; font-variant-numeric: tabular-nums">90k</span><span style="height: 34px; background: #5B5E66; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: #5B5E66; text-align: center; font-variant-numeric: tabular-nums">90k</span><span style="height: 34px; background: #5B5E66; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: #5B5E66; text-align: center; font-variant-numeric: tabular-nums">90k</span><span style="height: 34px; background: #5B5E66; border-radius: 6px"></span></div>
+</div>
+<div aria-hidden="true" style="display: flex; gap: 10px; font-size: 12px; font-weight: 650; color: #5B5E66; margin-top: -4px"><span style="flex: 1; text-align: center; color: #111214">Dic</span><span style="flex: 1; text-align: center">Ene</span><span style="flex: 1; text-align: center">Feb</span><span style="flex: 1; text-align: center">Mar</span><span style="flex: 1; text-align: center">Abr</span><span style="flex: 1; text-align: center">May</span></div>
+</section>
+
+<!-- Installments in progress -->
+<section aria-labelledby="cu-t" style="display: flex; flex-direction: column; gap: 8px">
+<h2 id="cu-t" style="margin: 0; padding: 0 4px; font-size: 17px; font-weight: 650">Cuotas en curso</h2>
+<ul style="list-style: none; margin: 0; padding: 0 16px; background: #FFFFFF; border: 1px solid transparent; box-shadow: 0 1px 2px rgba(17,18,20,0.06), 0 4px 16px rgba(17,18,20,0.04); border-radius: 22px">
+<li style="display: flex; flex-direction: column; gap: 8px; padding: 14px 0">
+<span style="display: flex; justify-content: space-between; gap: 12px"><span style="font-size: 15px; font-weight: 650">Notebook</span><span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 145.000 <span style="font-size: 13px; font-weight: 500; color: #5B5E66">/ mes</span></span></span>
+<span aria-hidden="true" style="display: flex; gap: 4px"><span style="flex: 1; height: 8px; border-radius: 999px; background: #F2A900"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #F2A900"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #F2A900"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #F2A900"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span></span>
+<span style="font-size: 13px; color: #5B5E66; font-weight: 500">4 de 6 · termina en febrero</span>
+</li>
+<li style="display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid #E3E3DF">
+<span style="display: flex; justify-content: space-between; gap: 12px"><span style="font-size: 15px; font-weight: 650">Heladera</span><span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 89.990 <span style="font-size: 13px; font-weight: 500; color: #5B5E66">/ mes</span></span></span>
+<span aria-hidden="true" style="display: flex; gap: 3px"><span style="flex: 1; height: 8px; border-radius: 999px; background: #F2A900"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #F2A900"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #F2A900"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: #E3E3DF"></span></span>
+<span style="font-size: 13px; color: #5B5E66; font-weight: 500">3 de 12 · termina en agosto de 2027</span>
+</li>
+</ul>
+</section>
+</main>
+<nav aria-label="Principal" style="width: 390px; height: 84px; box-sizing: border-box; padding: 6px 8px 14px; background: #FFFFFF; border-top: 1px solid #E3E3DF; display: flex; align-items: center; justify-content: space-between; font-family: Manrope, system-ui, sans-serif; color: #111214">
+<a href="Main.light.html" aria-current="false" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #5B5E66"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg><span style="font-size: 12px; font-weight: 600">Inicio</span></a>
+<a href="Movimientos.light.html" aria-current="false" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #5B5E66"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg><span style="font-size: 12px; font-weight: 600">Movimientos</span></a>
+<a href="CargarGasto.light.html" aria-label="Cargar gasto" style="flex: none; width: 56px; height: 56px; margin: 0 6px; border-radius: 999px; background: #F2A900; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#111214" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="Tarjetas.light.html" aria-current="page" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #111214"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111214" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg><span style="font-size: 12px; font-weight: 700">Tarjetas</span></a>
+<a href="Mas.light.html" aria-current="false" style="flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; color: #5B5E66"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B5E66" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg><span style="font-size: 12px; font-weight: 600">Más</span></a>
+</nav>
+</div>
+</body></html>

@@ -182,9 +182,8 @@ function ColorPicker({ value, onChange }: ColorPickerProps) {
           maxLength={6}
           onChange={(e) => handleHexInput(e.target.value)}
           className={cn(
-            "h-8 w-full rounded-md border border-input bg-input/20 pl-6 pr-10 font-mono text-xs uppercase outline-none transition-colors",
+            "h-8 w-full rounded-md border border-input bg-card pl-6 pr-10 font-mono text-xs uppercase outline-none transition-colors",
             "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
-            "dark:bg-input/30"
           )}
           placeholder="RRGGBB"
         />

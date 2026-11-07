@@ -68,7 +68,7 @@ export function DeleteAccountCard() {
           </div>
           <div>
             <h2 className="text-sm font-bold text-destructive">Eliminar cuenta</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Acción permanente. Tu historial en los hogares se preserva, pero tu acceso se
               revoca.
             </p>

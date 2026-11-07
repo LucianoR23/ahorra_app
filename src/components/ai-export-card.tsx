@@ -100,7 +100,7 @@ export function AiExportCard() {
         <>
           <Card className="rounded-2xl border-0 shadow-card">
             <CardContent className="p-4">
-              <p className="mb-2 text-[11px] font-semibold text-muted-foreground">Resumen del mes</p>
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">Resumen del mes</p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Gastado</span>
@@ -121,10 +121,10 @@ export function AiExportCard() {
               </div>
               {data.topCategories.length > 0 && (
                 <div className="mt-3">
-                  <p className="mb-1 text-[10px] font-semibold text-muted-foreground">Top categorías</p>
+                  <p className="mb-1 text-xs font-semibold text-muted-foreground">Top categorías</p>
                   <div className="flex flex-col gap-0.5">
                     {data.topCategories.slice(0, 5).map((c, i) => (
-                      <div key={i} className="flex items-center justify-between text-[11px]">
+                      <div key={i} className="flex items-center justify-between text-xs">
                         <span>{c.name}</span>
                         <span className="font-mono font-semibold">{c.pct.toFixed(1)}%</span>
                       </div>
@@ -157,11 +157,11 @@ export function AiExportCard() {
                   )}
                 </Button>
               </div>
-              <p className="mb-2 text-[11px] text-muted-foreground">
+              <p className="mb-2 text-xs text-muted-foreground">
                 Copiá este prompt y pegalo en Claude o ChatGPT para obtener un análisis detallado de tus finanzas.
               </p>
               <div className="max-h-64 overflow-y-auto rounded-lg bg-muted/50 p-3">
-                <pre className="whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-foreground/80">
+                <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-foreground/80">
                   {fullPrompt}
                 </pre>
               </div>

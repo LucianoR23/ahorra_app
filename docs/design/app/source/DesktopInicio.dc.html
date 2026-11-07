@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Inicio · desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height: 1000px; display: flex; flex-wrap: wrap; background: {{c.bg}}; color: {{c.ink}}; font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 450">
+
+<!-- Sidebar -->
+<aside style="flex: 1 1 248px; max-width: 280px; box-sizing: border-box; padding: 24px 16px; border-right: 1px solid {{c.border}}; background: {{c.surface}}; display: flex; flex-direction: column; gap: 24px">
+<a href="#" aria-label="Valuo, inicio" style="display: flex; align-items: center; min-height: 44px; padding: 0 8px"><sc-if value="{{isLight}}" hint-placeholder-val="{{ true }}"><img src="/_blob/37830e2ae330b53d8429447d318d764b" alt="Valuo" style="height: 26px; width: auto; display: block"></sc-if><sc-if value="{{isDark}}" hint-placeholder-val="{{ false }}"><img src="/_blob/580886ffec95cdbad6866911470abb02" alt="Valuo" style="height: 26px; width: auto; display: block"></sc-if></a>
+<a href="CargarGasto.dc.html" style="height: 48px; border-radius: 999px; background: {{c.ink}}; color: {{c.onp}}; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 700"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.onp}}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>Cargar gasto</a>
+<nav aria-label="Principal" style="display: flex; flex-direction: column; gap: 2px">
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; background: {{c.s2}}; color: {{c.ink}}; text-decoration: none; font-size: 15px; font-weight: 700"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>Inicio</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: {{c.muted}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg>Movimientos</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: {{c.muted}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg>Tarjetas</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: {{c.muted}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle></svg>Presupuestos y objetivos</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: {{c.muted}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>Hogar</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: {{c.muted}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M8 17v-5M13 17V8M18 17v-3"></path></svg>Reportes</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: {{c.muted}}; text-decoration: none; font-size: 15px; font-weight: 600"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Más</a>
+</nav>
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 14px">
+<a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 16px; border: 1px solid {{c.border}}; color: {{c.ink}}; text-decoration: none">
+<span aria-hidden="true" style="width: 36px; height: 36px; flex: none; border-radius: 999px; background: {{c.ink}}; color: {{c.onp}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">LR</span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span style="font-size: 14px; font-weight: 700">Luciano Rodriguez</span><span style="font-size: 12px; font-weight: 650; color: {{c.ai}}">Pro Hogar · prueba, 12 días</span></span>
+</a>
+<p style="margin: 0; font-size: 12px; color: {{c.muted}}; font-weight: 500; padding: 0 8px">Desarrollado por <a href="https://portfolio.lemydev.com" style="color: {{c.ink}}; font-weight: 650">luciano.rodriguez</a></p>
+</div>
+</aside>
+
+<!-- Content -->
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px clamp(16px, 3vw, 40px) 40px">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">Buen día, Luciano</h1>
+<p style="margin: 0; font-size: 14px; color: {{c.muted}}; font-weight: 500">Miércoles 4 de noviembre</p>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<div role="tablist" aria-label="Espacio" style="display: flex; background: {{c.s2}}; border-radius: 999px; padding: 4px">
+<button role="tab" aria-selected="true" style="height: 36px; padding: 0 18px; border: 0; border-radius: 999px; background: {{c.surface}}; color: {{c.ink}}; font: inherit; font-size: 14px; font-weight: 700; box-shadow: {{c.shadow}}">Yo</button>
+<button role="tab" aria-selected="false" style="height: 36px; padding: 0 18px; border: 0; border-radius: 999px; background: transparent; color: {{c.muted}}; font: inherit; font-size: 14px; font-weight: 650">Hogar</button>
+</div>
+<button aria-label="Ocultar montos" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><path d="M2 2l20 20"></path></svg></button>
+<button aria-label="Notificaciones, 1 nueva" style="position: relative; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position: absolute; top: 10px; right: 11px; width: 9px; height: 9px; border-radius: 999px; background: {{c.accent}}; border: 2px solid {{c.bg}}"></span></button>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 20px">
+
+<section aria-label="Resumen del mes" style="background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+<p style="margin: 0; font-size: 12px; font-weight: 650; letter-spacing: 0.04em">GASTASTE EN NOVIEMBRE</p>
+<p style="margin: 0; font-size: 48px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">$ 486.320</p>
+<div style="display: flex; gap: 32px; margin-top: 8px">
+<p style="margin: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Entraron</span><span style="font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; color: {{c.pos}}">+ $ 1.151.143</span></p>
+<p style="margin: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Te quedan</span><span style="font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums">$ 664.823</span></p>
+</div>
+<div aria-hidden="true" style="margin-top: 14px; height: 10px; border-radius: 999px; background: {{c.track}}; overflow: hidden; display: flex"><span style="width: 42%; height: 100%; background: {{c.ink}}"></span></div>
+<p style="margin: 0; font-size: 13px; color: {{c.muted}}; font-weight: 500">Gastaste el 42% de lo que entró este mes.</p>
+</section>
+
+<section aria-labelledby="dcomp" style="background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between"><h2 id="dcomp" style="margin: 0; font-size: 17px; font-weight: 650">Comprometido</h2><a href="Tarjetas.dc.html" style="font-size: 14px; font-weight: 650; color: {{c.ai}}; text-decoration: none">Ver tarjetas</a></div>
+<p style="margin: 0; font-size: 15px">Diciembre ya tiene <strong style="font-weight: 700; font-variant-numeric: tabular-nums">$ 214.800</strong> en cuotas.</p>
+<div aria-hidden="true" style="display: flex; align-items: flex-end; gap: 14px; height: 130px">
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px"><span style="font-size: 12px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums">214,8k</span><span style="height: 100px; background: {{c.accent}}; border-radius: 8px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">168,4k</span><span style="height: 78px; background: {{c.muted}}; border-radius: 8px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">137,2k</span><span style="height: 64px; background: {{c.muted}}; border-radius: 8px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">86k</span><span style="height: 40px; background: {{c.muted}}; border-radius: 8px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">55,9k</span><span style="height: 26px; background: {{c.muted}}; border-radius: 8px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px"><span style="font-size: 12px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">26k</span><span style="height: 12px; background: {{c.muted}}; border-radius: 8px"></span></div>
+</div>
+<div aria-hidden="true" style="display: flex; gap: 14px; font-size: 12px; font-weight: 650; color: {{c.muted}}"><span style="flex: 1; text-align: center; color: {{c.ink}}">Dic</span><span style="flex: 1; text-align: center">Ene</span><span style="flex: 1; text-align: center">Feb</span><span style="flex: 1; text-align: center">Mar</span><span style="flex: 1; text-align: center">Abr</span><span style="flex: 1; text-align: center">May</span></div>
+</section>
+
+<section aria-labelledby="dtar" style="background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; padding: 10px 24px; display: flex; flex-direction: column">
+<h2 id="dtar" style="margin: 0; padding: 12px 0 6px; font-size: 17px; font-weight: 650">Tarjetas que vencen</h2>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 0">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650">Visa ···· 4417</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Vence el 3/12 · cerró el 24</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 312.400</span>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid {{c.border}}">
+<span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650">Mastercard ···· 0921</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Vence el 8/12 · cierra el 28</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 98.250</span>
+</div>
+</section>
+
+<section aria-labelledby="dins" style="background: {{c.soft}}; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 8px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{c.ai}}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path><path d="M19 17v4M17 19h4"></path></svg><h2 id="dins" style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.04em">TU SEMANA</h2></div>
+<p style="margin: 0; font-size: 16px; line-height: 1.5">Gastaste 18% más en delivery que en octubre. Vas por el 85% de tu presupuesto de Delivery y faltan 9 días.</p>
+<div aria-hidden="true" style="height: 8px; border-radius: 999px; background: {{c.track}}; overflow: hidden"><span style="display: block; width: 85%; height: 100%; background: {{c.accent}}; border-radius: 999px"></span></div>
+<a href="#" style="align-self: flex-start; font-size: 14px; font-weight: 700; color: {{c.ink}}; min-height: 32px; display: flex; align-items: center">Ver presupuestos</a>
+</section>
+</div>
+
+<section aria-labelledby="drec" style="background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; padding: 10px 24px 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0"><h2 id="drec" style="margin: 0; font-size: 17px; font-weight: 650">Últimos movimientos</h2><a href="#" style="font-size: 14px; font-weight: 650; color: {{c.ai}}; text-decoration: none">Ver todos</a></div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; font-size: 15px; min-width: 560px">
+<thead><tr style="text-align: left; color: {{c.muted}}; font-size: 13px"><th scope="col" style="font-weight: 600; padding: 8px 0">Descripción</th><th scope="col" style="font-weight: 600; padding: 8px 0">Categoría</th><th scope="col" style="font-weight: 600; padding: 8px 0">Pago</th><th scope="col" style="font-weight: 600; padding: 8px 0">Fecha</th><th scope="col" style="font-weight: 600; padding: 8px 0; text-align: right">Monto</th></tr></thead>
+<tbody>
+<tr style="border-top: 1px solid {{c.border}}"><td style="padding: 13px 0; font-weight: 650">Café</td><td style="color: {{c.muted}}">Comida</td><td style="color: {{c.muted}}">Visa</td><td style="color: {{c.muted}}">Hoy</td><td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums">$ 2.500</td></tr>
+<tr style="border-top: 1px solid {{c.border}}"><td style="padding: 13px 0; font-weight: 650">Súper <span style="font-size: 11px; font-weight: 700; background: {{c.s2}}; border-radius: 6px; padding: 2px 7px; margin-left: 6px">Hogar · tu parte</span></td><td style="color: {{c.muted}}">Súper</td><td style="color: {{c.muted}}">Mercado Pago</td><td style="color: {{c.muted}}">Hoy</td><td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums">$ 21.158</td></tr>
+<tr style="border-top: 1px solid {{c.border}}"><td style="padding: 13px 0; font-weight: 650">Heladera <span style="font-size: 13px; color: {{c.muted}}; font-weight: 500; margin-left: 6px">3 de 12</span></td><td style="color: {{c.muted}}">Hogar</td><td style="color: {{c.muted}}">Visa</td><td style="color: {{c.muted}}">Ayer</td><td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums">$ 89.990</td></tr>
+<tr style="border-top: 1px solid {{c.border}}"><td style="padding: 13px 0; font-weight: 650">Nafta</td><td style="color: {{c.muted}}">Auto</td><td style="color: {{c.muted}}">Visa</td><td style="color: {{c.muted}}">Ayer</td><td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums">$ 38.000</td></tr>
+<tr style="border-top: 1px solid {{c.border}}"><td style="padding: 13px 0; font-weight: 650">Netflix</td><td style="color: {{c.muted}}">Entretenimiento</td><td style="color: {{c.muted}}">Visa</td><td style="color: {{c.muted}}">Lun 2</td><td style="text-align: right; font-weight: 700; font-variant-numeric: tabular-nums">US$ 9,99</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+const theme = this.props.theme ?? 'light';
+const L = {bg:'#FAFAF9',surface:'#FFFFFF',s2:'#F1F1EE',border:'#E3E3DF',bs:'#868991',ink:'#111214',muted:'#5B5E66',onp:'#FFFFFF',accent:'#F2A900',ai:'#8A5A00',soft:'#FDF1D6',pos:'#0A5C44',neg:'#CC3333',track:'#E3E3DF',card:'transparent',shadow:'0 1px 2px rgba(17,18,20,0.06), 0 4px 16px rgba(17,18,20,0.04)',logo:'/_blob/37830e2ae330b53d8429447d318d764b'};
+const D = {bg:'#0B0C0E',surface:'#141518',s2:'#1C1E22',border:'#2C2F35',bs:'#6A6E76',ink:'#F4F4F2',muted:'#A3A6AD',onp:'#111214',accent:'#F5B53F',ai:'#F5B53F',soft:'#33270D',pos:'#7CEBC0',neg:'#E55A5A',track:'#2C2F35',card:'#2C2F35',shadow:'none',logo:'/_blob/580886ffec95cdbad6866911470abb02'};
+return { theme: theme, isDark: theme === 'dark', isLight: theme !== 'dark', c: theme === 'dark' ? D : L };
+}
+}
+</script>
+</body>
+</html>

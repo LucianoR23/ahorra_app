@@ -69,12 +69,12 @@ export function PasswordStrengthMeter({
           />
         </div>
         {password && (
-          <span className="shrink-0 text-[10px] font-semibold text-muted-foreground">
+          <span className="shrink-0 text-xs font-semibold text-muted-foreground">
             {label}
           </span>
         )}
       </div>
-      <ul className="flex flex-col gap-1 text-[11px]">
+      <ul className="flex flex-col gap-1 text-xs">
         {RULES.map((r) => {
           const ok = r.test(password);
           return (

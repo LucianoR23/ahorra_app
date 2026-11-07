@@ -134,7 +134,7 @@ export function SupportForm() {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="subject">Asunto</Label>
-          <span className="text-[11px] text-ink-faint">
+          <span className="text-xs text-ink-faint">
             {subject.length}/{SUBJECT_MAX}
           </span>
         </div>
@@ -153,7 +153,7 @@ export function SupportForm() {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="description">Descripción</Label>
-          <span className="text-[11px] text-ink-faint">
+          <span className="text-xs text-ink-faint">
             {description.length}/{DESCRIPTION_MAX}
           </span>
         </div>
@@ -191,7 +191,7 @@ export function SupportForm() {
                 >
                   <Icon className="size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate text-xs">{f.name}</span>
-                  <span className="shrink-0 text-[11px] text-ink-faint">{humanSize(f.size)}</span>
+                  <span className="shrink-0 text-xs text-ink-faint">{humanSize(f.size)}</span>
                   <button
                     type="button"
                     onClick={() => removeFile(i)}
@@ -216,7 +216,7 @@ export function SupportForm() {
             Agregar archivo
           </Button>
         )}
-        <p className="text-[11px] text-ink-faint">
+        <p className="text-xs text-ink-faint">
           Hasta 3 archivos · imágenes PNG/JPG/WebP (5 MB) o video MP4 (20 MB).
         </p>
       </div>

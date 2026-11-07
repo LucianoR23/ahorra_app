@@ -139,14 +139,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <Badge
                     variant="outline"
                     className={cn(
-                      "h-5 border-0 px-2 text-[10px]",
+                      "h-5 border-0 px-2 text-xs",
                       severityVisual(data.severity).badge,
                     )}
                   >
                     {TYPE_LABELS[data.insightType] ?? data.insightType}
                   </Badge>
                   {!data.isRead && (
-                    <Badge className="h-5 border-0 bg-primary/15 px-2 text-[10px] text-primary">
+                    <Badge className="h-5 border-0 bg-primary/15 px-2 text-xs text-primary">
                       Sin leer
                     </Badge>
                   )}
@@ -154,7 +154,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 <h1 className="mt-1 text-lg font-bold leading-tight">
                   {data.title}
                 </h1>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {new Date(data.createdAt).toLocaleString("es-AR", {
                     day: "2-digit",
                     month: "short",

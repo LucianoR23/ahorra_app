@@ -68,7 +68,7 @@ export function PendingDraftsCard() {
           </div>
           <div className="flex-1">
             <h2 className="text-sm font-bold">Pendientes de confirmar</h2>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Cargá el monto real de la factura para cerrar el mes.
             </p>
           </div>
@@ -113,13 +113,13 @@ function DraftRow({
     >
       <div className="min-w-0">
         <div className="truncate text-sm font-medium">{draft.description}</div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">
+        <div className="mt-0.5 text-xs text-muted-foreground">
           {fmtDateShort(draft.spentAt)} · estimado
         </div>
       </div>
       <div className="text-right">
         <div className="text-sm font-bold">{fmtMoney(draft.amount, draft.currency)}</div>
-        <div className="text-[11px] text-amber-700 dark:text-amber-300">Confirmar →</div>
+        <div className="text-xs text-amber-700 dark:text-amber-300">Confirmar →</div>
       </div>
     </button>
   );
@@ -201,7 +201,7 @@ function ConfirmDialog({
           </div>
 
           {previewDelta !== null ? (
-            <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-[12px] text-muted-foreground">
+            <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
               <TrendingUp className="size-3.5" />
               <span>
                 {previewDelta >= 0 ? "+" : ""}

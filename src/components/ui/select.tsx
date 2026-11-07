@@ -31,10 +31,9 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     data-slot="select-trigger"
     className={cn(
-      "flex h-9 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-input/20 px-3 text-sm outline-none transition-colors",
+      "flex h-9 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-card px-3 text-sm outline-none transition-colors",
       "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
       "disabled:cursor-not-allowed disabled:opacity-50",
-      "dark:bg-input/30",
       className
     )}
     {...props}

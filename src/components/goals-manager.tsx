@@ -134,24 +134,24 @@ export function GoalsManager() {
                       </span>
                       <Badge
                         variant="outline"
-                        className={cn("h-5 px-1.5 text-[10px]", s.className, "border-transparent")}
+                        className={cn("h-5 px-1.5 text-xs", s.className, "border-transparent")}
                       >
                         {s.label}
                       </Badge>
                       {!p.goal.isActive && (
-                        <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+                        <Badge variant="outline" className="h-5 px-1.5 text-xs">
                           Pausado
                         </Badge>
                       )}
                     </div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground">
+                    <div className="mt-0.5 text-xs text-muted-foreground">
                       {memberName(p.goal.userId)} · {p.goal.period === "monthly" ? "Mensual" : "Semanal"}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setEditing(p.goal)}
-                    className="cursor-pointer text-[11px] font-semibold text-primary hover:underline"
+                    className="cursor-pointer text-xs font-semibold text-primary hover:underline"
                   >
                     Editar
                   </button>
@@ -173,7 +173,7 @@ export function GoalsManager() {
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span>{pct.toFixed(0)}%</span>
                   <span>
                     {p.periodStart} → {p.periodEnd}
@@ -236,7 +236,7 @@ export function GoalsManager() {
 function FxNote({ progress }: { progress: GoalProgress }) {
   if (progress.fxRate === null) return null;
   return (
-    <p className="mt-1 text-[10px] text-muted-foreground">
+    <p className="mt-1 text-xs text-muted-foreground">
       Calculado con la cotización de hoy (1 {progress.goal.currency} = {fmtMoney(progress.fxRate, progress.baseCurrency)})
     </p>
   );
@@ -272,7 +272,7 @@ function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: st
               placeholder="Hoy"
               className="mt-1"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               Dejá vacío para ver progreso de hoy.
             </p>
           </div>
@@ -290,7 +290,7 @@ function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: st
               <div className="flex items-center justify-between">
                 <Badge
                   variant="outline"
-                  className={cn("h-5 px-1.5 text-[10px] border-transparent", s.className)}
+                  className={cn("h-5 px-1.5 text-xs border-transparent", s.className)}
                 >
                   {s.label}
                 </Badge>
@@ -306,22 +306,22 @@ function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: st
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Actual</div>
+                  <div className="text-xs uppercase text-muted-foreground tracking-wider">Actual</div>
                   <div className="mt-0.5 font-mono text-sm font-bold">
                     {fmtMoney(data.currentAmount, data.baseCurrency)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Objetivo</div>
+                  <div className="text-xs uppercase text-muted-foreground tracking-wider">Objetivo</div>
                   <div className="mt-0.5 font-mono text-sm font-bold">
                     {fmtMoney(data.targetAmountBase, data.baseCurrency)}
                   </div>
                   {data.fxRate !== null && (
-                    <div className="text-[10px] text-muted-foreground">{fmtMoney(data.targetAmount, data.goal.currency)}</div>
+                    <div className="text-xs text-muted-foreground">{fmtMoney(data.targetAmount, data.goal.currency)}</div>
                   )}
                 </div>
                 <div className="col-span-2 border-t border-border pt-2">
-                  <div className="text-[10px] uppercase text-muted-foreground tracking-wider">Período</div>
+                  <div className="text-xs uppercase text-muted-foreground tracking-wider">Período</div>
                   <div className="mt-0.5 font-mono text-xs">
                     {data.periodStart} → {data.periodEnd}
                   </div>

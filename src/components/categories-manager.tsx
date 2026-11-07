@@ -76,7 +76,7 @@ export function CategoriesManager() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{cat.name}</p>
                   {cat.icon && (
-                    <p className="text-[11px] text-muted-foreground">{cat.icon}</p>
+                    <p className="text-xs text-muted-foreground">{cat.icon}</p>
                   )}
                 </div>
                 <Button

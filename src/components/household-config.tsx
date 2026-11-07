@@ -161,13 +161,13 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold">Configuración del hogar</h2>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Nombre, moneda base y miembros.
             </p>
           </div>
           <div className="flex items-center gap-2">
             {!isOwner && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                 <Info className="size-3" /> Solo lectura
               </span>
             )}
@@ -204,7 +204,7 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
                 <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{saveErr}</div>
               )}
               <div className="flex items-center justify-between">
-                {saveOk && !dirty && <span className="text-[12px] text-emerald-500">Guardado</span>}
+                {saveOk && !dirty && <span className="text-xs text-emerald-500">Guardado</span>}
                 <div className="ml-auto">
                   <Button size="sm" onClick={handleSave} disabled={!dirty || saving}>
                     {saving ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Save className="mr-1 size-3.5" />}
@@ -224,16 +224,16 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
           <div className="flex flex-col gap-1.5">
             {members?.map((m) => (
               <div key={m.userId} className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2">
-                <div className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-[12px] font-bold uppercase">
+                <div className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-xs font-bold uppercase">
                   {m.firstName[0]}{m.lastName[0]}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold">
                     {m.userId === me?.id ? "Yo" : `${m.firstName} ${m.lastName}`}
                   </p>
-                  <p className="text-[12px] text-muted-foreground">{m.email}</p>
+                  <p className="text-xs text-muted-foreground">{m.email}</p>
                 </div>
-                <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
+                <Badge variant="outline" className="h-4 px-1.5 text-xs">
                   {m.role === "owner" ? "Dueño" : "Miembro"}
                 </Badge>
                 {isOwner && m.userId !== me?.id && (
@@ -261,7 +261,7 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
           <div className="mt-5">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold">Invitaciones pendientes</span>
-              <span className="text-[11px] text-muted-foreground">{invites.length}</span>
+              <span className="text-xs text-muted-foreground">{invites.length}</span>
             </div>
             <div className="flex flex-col gap-1.5">
               {invites.map((inv) => (
@@ -277,7 +277,7 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
 
         {isOwner ? (
           <div className="mt-5 border-t border-border/60 pt-4">
-            <p className="mb-2 text-[12px] font-semibold text-destructive">Zona de peligro</p>
+            <p className="mb-2 text-xs font-semibold text-destructive">Zona de peligro</p>
             <DeleteHouseholdDialog
               householdName={household.name}
               onConfirm={performDelete}
@@ -285,7 +285,7 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
           </div>
         ) : (
           <div className="mt-5 border-t border-border/60 pt-4">
-            <p className="mb-2 text-[12px] font-semibold text-destructive">Zona de peligro</p>
+            <p className="mb-2 text-xs font-semibold text-destructive">Zona de peligro</p>
             <LeaveHouseholdDialog
               householdName={household.name}
               onConfirm={performLeave}
@@ -377,7 +377,7 @@ function InviteDialog({ householdId, onDone }: { householdId: string; onDone: ()
                 placeholder="correo@ejemplo.com"
                 autoFocus
               />
-              <p className="mt-1 text-[12px] text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Le vamos a mandar un mail con un link para unirse. Si aún no tiene cuenta, podrá
                 registrarse con ese link.
               </p>
@@ -403,12 +403,12 @@ function InviteDialog({ householdId, onDone }: { householdId: string; onDone: ()
             <div>
               <Label>Link de invitación</Label>
               <div className="flex gap-2">
-                <Input value={result.acceptUrl} readOnly className="font-mono text-[11px]" />
+                <Input value={result.acceptUrl} readOnly className="font-mono text-xs" />
                 <Button type="button" size="sm" variant="outline" onClick={handleCopyLink}>
                   <Copy className="size-3.5" />
                 </Button>
               </div>
-              <p className="mt-1 text-[12px] text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Podés compartirlo manualmente si prefieren no esperar el mail. Expira en 7 días.
               </p>
             </div>
@@ -484,7 +484,7 @@ function InviteRow({
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-semibold">{invite.email}</p>
-        <p className="text-[11px] text-muted-foreground">Expira el {expiresLabel}</p>
+        <p className="text-xs text-muted-foreground">Expira el {expiresLabel}</p>
       </div>
       <button
         type="button"

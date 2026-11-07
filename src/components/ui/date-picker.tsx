@@ -54,11 +54,10 @@ function DatePicker({
         disabled={disabled}
         aria-invalid={ariaInvalid}
         className={cn(
-          "flex h-9 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-input/20 px-3 text-sm outline-none transition-colors",
-          "hover:bg-input/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
+          "flex h-9 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-card px-3 text-sm outline-none transition-colors",
+          "hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
           "disabled:cursor-not-allowed disabled:opacity-50",
           "aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20",
-          "dark:bg-input/30",
           !value && "text-muted-foreground",
           className
         )}

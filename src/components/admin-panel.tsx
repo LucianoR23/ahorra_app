@@ -64,7 +64,7 @@ export function AdminPanel() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-destructive">Acceso denegado</h2>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Esta sección es exclusiva para superadmins.
               </p>
             </div>
@@ -84,7 +84,7 @@ export function AdminPanel() {
             </div>
             <div>
               <h2 className="text-sm font-bold">Superadmin</h2>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Sesión iniciada como <span className="font-semibold">{user.email}</span>. Este
                 rol es independiente del rol por-hogar.
               </p>
@@ -128,7 +128,7 @@ function TestPushCard() {
           </div>
           <div>
             <h2 className="text-sm font-bold">Probar push notification</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Envía una notificación de prueba solo a tu usuario (a todos los dispositivos suscriptos).
             </p>
           </div>
@@ -179,7 +179,7 @@ function GenerateInsightsCard() {
           </div>
           <div>
             <h2 className="text-sm font-bold">Regenerar insights</h2>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Ejecuta el pipeline de generación para todos los hogares. Útil para probar cambios del motor.
             </p>
           </div>
@@ -196,7 +196,7 @@ function GenerateInsightsCard() {
               placeholder="Hoy"
               className="mt-1"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               Vacío = hoy.
             </p>
           </div>
@@ -235,7 +235,7 @@ function DeletedHouseholdsCard() {
       <CardContent className="p-4">
         <div className="mb-3">
           <h2 className="text-sm font-bold">Hogares soft-deleted</h2>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Hogares marcados como borrados por sus owners. Podés restaurarlos o purgarlos
             definitivamente (cascade).
           </p>
@@ -283,14 +283,14 @@ function DeletedHouseholdRow({ household }: { household: AdminDeletedHousehold }
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-semibold">{household.name}</p>
-          <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+          <Badge variant="outline" className="h-4 px-1.5 text-xs">
             {household.baseCurrency}
           </Badge>
         </div>
-        <p className="truncate text-[11px] text-muted-foreground">
+        <p className="truncate text-xs text-muted-foreground">
           Owner: {ownerName} · {ownerEmail}
         </p>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Borrado el {deletedAt} · ID <code className="font-mono">{household.id.slice(0, 8)}</code>
         </p>
       </div>

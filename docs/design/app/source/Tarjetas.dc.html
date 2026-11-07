@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Tarjetas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 1020px; display: flex; flex-direction: column; background: {{c.bg}}; color: {{c.ink}}; font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 450; overflow: hidden">
+<main style="flex: 1; min-height: 0; overflow: hidden; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">Tarjetas</h1>
+<button aria-label="Agregar tarjeta" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: {{c.s2}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ink}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+
+<!-- Card selector -->
+<div role="tablist" aria-label="Tarjeta" style="display: flex; gap: 10px; margin-right: -16px; overflow: hidden">
+<button role="tab" aria-selected="true" style="flex: none; width: 236px; height: 132px; box-sizing: border-box; border: 1px solid {{c.card}}; border-radius: 20px; background: #111214; color: #F4F4F2; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font: inherit">
+<span style="display: flex; justify-content: space-between; align-items: center; width: 100%"><span style="font-size: 15px; font-weight: 700">Visa</span><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 999px; background: #F5B53F"></span></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 700; letter-spacing: 0.08em; font-variant-numeric: tabular-nums">···· 4417</span><span style="font-size: 12px; font-weight: 500; color: #A3A6AD">Cierra el 24 · vence el 3</span></span>
+</button>
+<button role="tab" aria-selected="false" style="flex: none; width: 236px; height: 132px; box-sizing: border-box; border: 1px solid {{c.border}}; border-radius: 20px; background: {{c.surface}}; color: {{c.ink}}; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font: inherit">
+<span style="font-size: 15px; font-weight: 700">Mastercard</span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 700; letter-spacing: 0.08em; font-variant-numeric: tabular-nums">···· 0921</span><span style="font-size: 12px; font-weight: 500; color: {{c.muted}}">Cierra el 28 · vence el 8</span></span>
+</button>
+</div>
+
+<!-- Statements -->
+<section aria-labelledby="res-t" style="background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="res-t" style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.04em">RESUMEN A PAGAR</h2>
+<p style="margin: 0; font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums">$ 312.400</p>
+<p style="margin: 0; font-size: 13px; color: {{c.muted}}; font-weight: 500">Cerró el 24/11 · vence el miércoles 3/12</p>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="flex: 1; height: 48px; border: 1px solid {{c.bs}}; border-radius: 999px; background: transparent; color: {{c.ink}}; font: inherit; font-size: 15px; font-weight: 700">Marcar como pagado</button>
+<button style="flex: none; height: 48px; padding: 0 18px; border: 0; border-radius: 999px; background: {{c.s2}}; color: {{c.ink}}; font: inherit; font-size: 15px; font-weight: 650">Ver detalle</button>
+</div>
+<div style="border-top: 1px solid {{c.border}}; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 650">Próximo resumen</span><span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">Cierra el 24/12 · lo que va hasta hoy</span></span>
+<span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 186.320</span>
+</div>
+</section>
+
+<!-- Committed -->
+<section aria-labelledby="cm-t" style="background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="cm-t" style="margin: 0; font-size: 17px; font-weight: 650">Comprometido en esta tarjeta</h2>
+<div aria-hidden="true" style="display: flex; align-items: flex-end; gap: 10px; height: 96px">
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums">186k</span><span style="height: 70px; background: {{c.accent}}; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">235k</span><span style="height: 88px; background: {{c.muted}}; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">235k</span><span style="height: 88px; background: {{c.muted}}; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">90k</span><span style="height: 34px; background: {{c.muted}}; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">90k</span><span style="height: 34px; background: {{c.muted}}; border-radius: 6px"></span></div>
+<div style="flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px"><span style="font-size: 11px; font-weight: 600; color: {{c.muted}}; text-align: center; font-variant-numeric: tabular-nums">90k</span><span style="height: 34px; background: {{c.muted}}; border-radius: 6px"></span></div>
+</div>
+<div aria-hidden="true" style="display: flex; gap: 10px; font-size: 12px; font-weight: 650; color: {{c.muted}}; margin-top: -4px"><span style="flex: 1; text-align: center; color: {{c.ink}}">Dic</span><span style="flex: 1; text-align: center">Ene</span><span style="flex: 1; text-align: center">Feb</span><span style="flex: 1; text-align: center">Mar</span><span style="flex: 1; text-align: center">Abr</span><span style="flex: 1; text-align: center">May</span></div>
+</section>
+
+<!-- Installments in progress -->
+<section aria-labelledby="cu-t" style="display: flex; flex-direction: column; gap: 8px">
+<h2 id="cu-t" style="margin: 0; padding: 0 4px; font-size: 17px; font-weight: 650">Cuotas en curso</h2>
+<ul style="list-style: none; margin: 0; padding: 0 16px; background: {{c.surface}}; border: 1px solid {{c.card}}; box-shadow: {{c.shadow}}; border-radius: 22px">
+<li style="display: flex; flex-direction: column; gap: 8px; padding: 14px 0">
+<span style="display: flex; justify-content: space-between; gap: 12px"><span style="font-size: 15px; font-weight: 650">Notebook</span><span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 145.000 <span style="font-size: 13px; font-weight: 500; color: {{c.muted}}">/ mes</span></span></span>
+<span aria-hidden="true" style="display: flex; gap: 4px"><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.accent}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.accent}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.accent}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.accent}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span></span>
+<span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">4 de 6 · termina en febrero</span>
+</li>
+<li style="display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid {{c.border}}">
+<span style="display: flex; justify-content: space-between; gap: 12px"><span style="font-size: 15px; font-weight: 650">Heladera</span><span style="font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">$ 89.990 <span style="font-size: 13px; font-weight: 500; color: {{c.muted}}">/ mes</span></span></span>
+<span aria-hidden="true" style="display: flex; gap: 3px"><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.accent}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.accent}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.accent}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span><span style="flex: 1; height: 8px; border-radius: 999px; background: {{c.track}}"></span></span>
+<span style="font-size: 13px; color: {{c.muted}}; font-weight: 500">3 de 12 · termina en agosto de 2027</span>
+</li>
+</ul>
+</section>
+</main>
+<dc-import name="TabBar" active="tarjetas" theme="{{theme}}" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":1020}}'>
+class Component extends DCLogic {
+renderVals() {
+const theme = this.props.theme ?? 'light';
+const L = {bg:'#FAFAF9',surface:'#FFFFFF',s2:'#F1F1EE',border:'#E3E3DF',bs:'#868991',ink:'#111214',muted:'#5B5E66',onp:'#FFFFFF',accent:'#F2A900',ai:'#8A5A00',soft:'#FDF1D6',pos:'#0A5C44',neg:'#CC3333',track:'#E3E3DF',card:'transparent',shadow:'0 1px 2px rgba(17,18,20,0.06), 0 4px 16px rgba(17,18,20,0.04)'};
+const D = {bg:'#0B0C0E',surface:'#141518',s2:'#1C1E22',border:'#2C2F35',bs:'#6A6E76',ink:'#F4F4F2',muted:'#A3A6AD',onp:'#111214',accent:'#F5B53F',ai:'#F5B53F',soft:'#33270D',pos:'#7CEBC0',neg:'#E55A5A',track:'#2C2F35',card:'#2C2F35',shadow:'none'};
+return { theme: theme, c: theme === 'dark' ? D : L };
+}
+}
+</script>
+</body>
+</html>
