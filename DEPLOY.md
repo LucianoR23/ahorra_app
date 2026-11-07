@@ -1,4 +1,4 @@
-# Deploy — Ahorra Frontend
+# Deploy: frontend
 
 Stack: Next.js 16 · Coolify · Traefik (HTTPS automático)
 
@@ -8,9 +8,9 @@ Stack: Next.js 16 · Coolify · Traefik (HTTPS automático)
 
 | Servicio | Estado |
 |---|---|
-| Go API en Coolify | ✅ corriendo en `api-ahorra.lemydev.com` |
-| PostgreSQL en Coolify | ✅ DB `ahorra` creada, migraciones aplicadas |
-| Dominio frontend | `ahorra.lemydev.com` (o el que uses) |
+| Go API en Coolify | ✅ corriendo en `api.valuo.ar` |
+| PostgreSQL en Coolify | ✅ DB `valuo` creada, migraciones aplicadas |
+| Dominio frontend | `app.valuo.ar` (o el que uses) |
 
 ---
 
@@ -19,7 +19,7 @@ Stack: Next.js 16 · Coolify · Traefik (HTTPS automático)
 En el servicio Next.js, sección **Environment Variables**:
 
 ```
-NEXT_PUBLIC_API_URL=https://api-ahorra.lemydev.com
+NEXT_PUBLIC_API_URL=https://api.valuo.ar
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=<clave pública del backend>
 NEXT_PUBLIC_APP_VERSION=0.1.0+${SOURCE_COMMIT}
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=<OAuth web client ID, mismo que GOOGLE_OAUTH_CLIENT_ID del API>
@@ -50,7 +50,7 @@ NEXT_PUBLIC_GLITCHTIP_ENVIRONMENT=staging
    - `NEXT_PUBLIC_BRAND_NAME`, `NEXT_PUBLIC_BRAND_TAGLINE`, `NEXT_PUBLIC_BRAND_DESCRIPTION` (opcionales)
    - `NEXT_PUBLIC_GLITCHTIP_DSN`, `NEXT_PUBLIC_GLITCHTIP_ENVIRONMENT` (opcionales; la CSP habilita el origen del DSN)
 4. **Port**: `3000`
-5. **Domain**: `ahorra.lemydev.com` → Traefik genera HTTPS solo
+5. **Domain**: `app.valuo.ar` → Traefik genera HTTPS solo
 
 ---
 
@@ -59,7 +59,7 @@ NEXT_PUBLIC_GLITCHTIP_ENVIRONMENT=staging
 En las env vars del API de Coolify, asegurate de incluir el dominio del front:
 
 ```
-ALLOWED_ORIGINS=https://ahorra.lemydev.com,http://localhost:3000
+ALLOWED_ORIGINS=https://app.valuo.ar,http://localhost:3000
 ```
 
 ---
@@ -77,10 +77,10 @@ Para iOS: el usuario debe hacer **Compartir → Añadir a pantalla de inicio** d
 
 ```bash
 # API health
-curl https://api-ahorra.lemydev.com/health/live
+curl https://api.valuo.ar/health/live
 
 # Frontend
-curl -I https://ahorra.lemydev.com
+curl -I https://app.valuo.ar
 ```
 
 ---
@@ -102,5 +102,5 @@ curl -I https://ahorra.lemydev.com
 - [ ] `NEXT_PUBLIC_GOOGLE_CLIENT_ID` = mismo client que `GOOGLE_OAUTH_CLIENT_ID` del backend, con el dominio del front en *Authorized JavaScript origins*
 - [ ] `ALLOWED_ORIGINS` en el API incluye el dominio del front
 - [ ] Healthcheck `/` responde 200
-- [ ] Manifest PWA accesible en `https://ahorra.lemydev.com/manifest.webmanifest`
+- [ ] Manifest PWA accesible en `https://app.valuo.ar/manifest.webmanifest`
 - [ ] SW registrado en DevTools → Application → Service Workers

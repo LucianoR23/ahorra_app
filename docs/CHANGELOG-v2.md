@@ -11,6 +11,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 - The social preview image shows the Valuo wordmark and tagline on the brand's dark background (colors read from `brand/tokens.json` through `src/config/brand-tokens.ts`).
 - `BrandLogo` no longer sets `width: auto`: the kit SVGs only carry a viewBox, so the logo collapsed to 0 px.
 - Not here: theme colors, screens and the manifest background color (1.10).
+- Every other trace of the old brand is gone (every current account is a test account, so nothing is kept for compatibility): repo renamed to `valuo_app`, package name `valuo_app`, CI checks out `LucianoR23/valuo_api`, e2e runs against `../valuo_api` and the `valuo_e2e` database (create it locally), docs use the target domains `app.valuo.ar` / `api.valuo.ar`, comments cleaned. The one-time migration of the old `ahorra.*` / `ahorro.*` localStorage keys is removed.
 
 ### 0.14 (app part): lazy charts
 - recharts loads with `next/dynamic` (`src/components/report-charts-lazy.tsx`) instead of with `/reportes`: initial JavaScript of that page went from 475 KB to 348 KB gzip. Only the charts are lazy; the report cards fetch their data and show the figures at once, with a placeholder of the chart's size until it loads. No visual change.
