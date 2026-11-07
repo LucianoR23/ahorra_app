@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteMe } from "@/lib/api/mutations";
 import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
+import { clearLocalSession } from "@/lib/session";
 import { ApiError } from "@/lib/api/errors";
 import { toast, toastError } from "@/lib/toast";
 import { unsubscribePush } from "@/lib/push";
@@ -28,8 +28,6 @@ const CONFIRMATION_WORD = "ELIMINAR";
 export function DeleteAccountCard() {
   const router = useRouter();
   const token = useAuthStore((s) => s.accessToken);
-  const clearAuth = useAuthStore((s) => s.clear);
-  const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
 
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -44,8 +42,7 @@ export function DeleteAccountCard() {
       if (token) await unsubscribePush(token).catch(() => {});
       await deleteMe();
       toast.success("Cuenta eliminada");
-      clearAuth();
-      setHouseholdId(null);
+      await clearLocalSession();
       router.replace("/login");
     } catch (e) {
       if (e instanceof ApiError) {
