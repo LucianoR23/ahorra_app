@@ -38,7 +38,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Ahorro design extras */
+  /* Design extras */
   --color-surface-alt: var(--surface-alt);
   --color-ink-dim: var(--ink-dim);
   --color-ink-faint: var(--ink-faint);
@@ -98,7 +98,7 @@
   --sidebar-border: #e2e8f0;
   --sidebar-ring: #0f172a;
 
-  /* Ahorro extras */
+  /* Extras */
   --surface-alt: #f0f2f5;
   --ink-dim: #475569;
   --ink-faint: #94a3b8;

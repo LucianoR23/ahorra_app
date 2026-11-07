@@ -70,13 +70,13 @@ jobs:
       NEXT_PUBLIC_APP_URL: http://localhost:3005
       NEXT_PUBLIC_API_URL: http://localhost:8080
       E2E_API_DIR: api
-      E2E_DATABASE_URL: postgres://postgres:e2e_only_pw@localhost:5432/ahorra_e2e?sslmode=disable
+      E2E_DATABASE_URL: postgres://postgres:e2e_only_pw@localhost:5432/valuo_e2e?sslmode=disable
     services:
       postgres:
         image: postgres:18.6-alpine3.24
         env:
           POSTGRES_PASSWORD: e2e_only_pw
-          POSTGRES_DB: ahorra_e2e
+          POSTGRES_DB: valuo_e2e
         ports:
           - 5432:5432
         options: >-
@@ -92,7 +92,7 @@ jobs:
       - name: Checkout the API (branch next)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: LucianoR23/api_go_ahorro
+          repository: LucianoR23/valuo_api
           ref: next
           path: api
           ssh-key: ${{ secrets.API_DEPLOY_KEY }}

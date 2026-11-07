@@ -1,8 +1,6 @@
-# Valuo (formerly Ahorra): personal finance PWA
+# Valuo: personal finance PWA
 
 A full-stack personal finance app for individuals and shared households. Track expenses, incomes, goals, and debts with real-time multi-currency support, AI-generated insights, and Web Push notifications.
-
-**Live:** [ahorra.lemydev.com](https://ahorra.lemydev.com)
 
 ---
 
@@ -68,12 +66,12 @@ A full-stack personal finance app for individuals and shared households. Track e
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  Next.js PWA (ahorra.lemydev.com)                        │
+│  Next.js PWA (app.valuo.ar)                              │
 │  App Router · Zustand · SWR · Zod · Serwist SW           │
 └──────────────────┬───────────────────────────────────────┘
                    │ HTTPS · X-Household-ID header
 ┌──────────────────▼───────────────────────────────────────┐
-│  Go REST API (api-ahorra.lemydev.com)                    │
+│  Go REST API (api.valuo.ar)                              │
 │  chi · sqlc · JWT auth · VAPID push · Worker goroutines  │
 └──────────────────┬───────────────────────────────────────┘
                    │
@@ -116,18 +114,18 @@ src/
 ```bash
 # 1. Clone and install
 git clone <repo>
-cd ahorra_app
+cd valuo_app
 corepack pnpm install
 
 # 2. Environment
 cp .env.example .env.local
 # Set NEXT_PUBLIC_API_URL=http://localhost:8080
 
-# 3. Start database and backend (in ../api_go_ahorro; Postgres on port 5433)
-cd ../api_go_ahorro
+# 3. Start database and backend (in ../valuo_api; Postgres on port 5433)
+cd ../valuo_api
 docker compose up -d
 go run ./cmd/api
-cd ../ahorra_app
+cd ../valuo_app
 
 # 4. Run frontend
 corepack pnpm dev   # http://localhost:3005
@@ -138,7 +136,7 @@ corepack pnpm dev   # http://localhost:3005
 ### Tests
 
 - **Unit and component (Vitest):** `corepack pnpm test` (`test:watch`, `test:coverage`). The API is mocked with MSW (`src/test/msw.ts`); a request without a handler fails the test.
-- **E2E (Playwright):** `corepack pnpm test:e2e` starts the API (`go run ./cmd/api` in `../api_go_ahorro`, migrating on start) and the app, against the database in `E2E_DATABASE_URL` (default `postgres://postgres:postgres@localhost:5433/ahorra_e2e`, which must exist and be disposable; never your dev data). Ports 8080 and 3005 must be free, or the running servers are reused. First time: `corepack pnpm exec playwright install chromium`.
+- **E2E (Playwright):** `corepack pnpm test:e2e` starts the API (`go run ./cmd/api` in `../valuo_api`, migrating on start) and the app, against the database in `E2E_DATABASE_URL` (default `postgres://postgres:postgres@localhost:5433/valuo_e2e`, which must exist and be disposable; never your dev data). Ports 8080 and 3005 must be free, or the running servers are reused. First time: `corepack pnpm exec playwright install chromium`.
   - Flows covered (plan 0.21h): sign up → household → session kept on reload → log in again; an expense in installments shared with the household reaching the balances; a variable monthly bill confirmed from its draft.
   - In CI the API (branch `next`) is checked out with a read-only deploy key (secret `API_DEPLOY_KEY`).
 
@@ -186,14 +184,14 @@ Refresh tokens rotate on every use. Logout calls `POST /auth/logout` which clear
 ### Frontend (`.env.local`)
 
 ```env
-NEXT_PUBLIC_API_URL=https://api-ahorra.lemydev.com
+NEXT_PUBLIC_API_URL=https://api.valuo.ar
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=<from backend>
 ```
 
 ### Backend (`.env`)
 
 ```env
-DATABASE_URL=postgresql://ahorra:password@localhost:5433/ahorra
+DATABASE_URL=postgresql://valuo:password@localhost:5433/valuo
 JWT_SECRET=<32+ chars>
 JWT_REFRESH_SECRET=<32+ chars>
 ALLOWED_ORIGINS=http://localhost:3005
