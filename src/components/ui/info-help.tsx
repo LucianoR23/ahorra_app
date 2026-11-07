@@ -1,15 +1,8 @@
 "use client"
 
+import { ChevronRight, CircleCheck, Info, Link2, TriangleAlert, type LucideIcon } from "lucide-react"
 import * as React from "react"
 import Link from "next/link"
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
-import {
-  InformationCircleIcon,
-  CheckmarkCircle02Icon,
-  Alert02Icon,
-  Link01Icon,
-  ArrowRight01Icon,
-} from "@hugeicons/core-free-icons"
 
 import { cn } from "@/lib/utils"
 import { useMediaQuery } from "@/hooks/use-media-query"
@@ -73,12 +66,12 @@ const CONSIDERACIONES_LABEL = "Tené en cuenta"
 const RELACIONADO_LABEL = "Pantallas relacionadas"
 
 function HelpSection({
-  icon,
+  icon: Icon,
   iconClassName,
   title,
   items,
 }: {
-  icon: IconSvgElement
+  icon: LucideIcon
   iconClassName?: string
   title: string
   items: string[]
@@ -88,10 +81,9 @@ function HelpSection({
   return (
     <section className="flex flex-col gap-2">
       <h3 className="flex items-center gap-1.5 font-heading text-xs font-medium text-foreground">
-        <HugeiconsIcon
-          icon={icon}
+        <Icon
           className={cn("size-3.5", iconClassName)}
-          strokeWidth={2}
+          strokeWidth={1.75}
           aria-hidden
         />
         {title}
@@ -168,19 +160,19 @@ export function InfoHelp({
   )
 
   const triggerIcon = (
-    <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} aria-hidden />
+    <Info strokeWidth={1.75} aria-hidden />
   )
 
   const sections = (
     <div className="flex flex-col gap-4">
       <HelpSection
-        icon={CheckmarkCircle02Icon}
+        icon={CircleCheck}
         iconClassName="text-primary"
         title={ACCIONES_LABEL}
         items={content.acciones}
       />
       <HelpSection
-        icon={Alert02Icon}
+        icon={TriangleAlert}
         iconClassName="text-foreground/60"
         title={CONSIDERACIONES_LABEL}
         items={content.consideraciones}
@@ -188,10 +180,9 @@ export function InfoHelp({
       {content.relacionado && content.relacionado.length > 0 && (
         <section className="flex flex-col gap-2">
           <h3 className="flex items-center gap-1.5 font-heading text-xs font-medium text-foreground">
-            <HugeiconsIcon
-              icon={Link01Icon}
+            <Link2
               className="size-3.5 text-muted-foreground"
-              strokeWidth={2}
+              strokeWidth={1.75}
               aria-hidden
             />
             {RELACIONADO_LABEL}
@@ -204,10 +195,9 @@ export function InfoHelp({
                 className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs/relaxed font-medium text-foreground transition-colors hover:bg-muted"
               >
                 <span>{r.label}</span>
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
+                <ChevronRight
                   className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                  strokeWidth={2}
+                  strokeWidth={1.75}
                   aria-hidden
                 />
               </Link>
@@ -220,10 +210,9 @@ export function InfoHelp({
 
   const titleWithIcon = (
     <>
-      <HugeiconsIcon
-        icon={InformationCircleIcon}
+      <Info
         className="size-4 text-muted-foreground"
-        strokeWidth={2}
+        strokeWidth={1.75}
         aria-hidden
       />
       {content.titulo}

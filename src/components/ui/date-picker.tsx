@@ -1,10 +1,9 @@
 "use client"
 
+import { Calendar as CalendarIcon } from "lucide-react"
 import * as React from "react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { es } from "date-fns/locale"
-import { Calendar01Icon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 
 import { cn } from "@/lib/utils"
 import { fmtDateShort } from "@/lib/format"
@@ -62,7 +61,7 @@ function DatePicker({
           className
         )}
       >
-        <HugeiconsIcon icon={Calendar01Icon} size={14} className="shrink-0 text-muted-foreground" />
+        <CalendarIcon size={14} className="shrink-0 text-muted-foreground" />
         <span className="flex-1 text-left text-xs">
           {value ? fmtDateShort(value) : placeholder}
         </span>

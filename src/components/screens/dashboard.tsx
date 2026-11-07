@@ -391,7 +391,7 @@ function RecentList({
               key={e.id}
               className={cn("flex items-center gap-3 px-4 py-2.5", !isLast && "border-b border-border")}
             >
-              <CategoryIcon cat="default" size={38} />
+              <CategoryIcon icon={cat?.icon} size={38} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">{e.description}</div>
                 <div className="mt-0.5 text-xs text-muted-foreground">

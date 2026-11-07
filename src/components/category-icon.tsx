@@ -1,27 +1,27 @@
-import { CATEGORIES } from "@/lib/categories";
+import { categoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
-import type { CSSProperties } from "react";
 
-export function CategoryIcon({ cat, size = 40, className }: { cat: string; size?: number; className?: string }) {
-  const spec = CATEGORIES.find((c) => c.id === cat) ?? CATEGORIES[0];
-  const style = {
-    width: size,
-    height: size,
-    fontSize: size * 0.5,
-    "--cat-bg-light": `oklch(0.92 0.08 ${spec.hue})`,
-    "--cat-bg-dark": `oklch(0.35 0.09 ${spec.hue})`,
-  } as CSSProperties;
+/**
+ * A category's Lucide icon on a neutral tile. Category colors are not used
+ * in lists (design README §5); `icon` is the stored value (key or old emoji).
+ */
+export function CategoryIcon({
+  icon,
+  size = 40,
+  className,
+}: {
+  icon?: string | null;
+  size?: number;
+  className?: string;
+}) {
+  const { icon: Icon } = categoryIcon(icon);
   return (
     <div
-      style={style}
-      className={cn(
-        "grid shrink-0 place-items-center rounded-[12px]",
-        "bg-(--cat-bg-light) dark:bg-(--cat-bg-dark)",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
-        className,
-      )}
+      style={{ width: size, height: size }}
+      className={cn("grid shrink-0 place-items-center rounded-full bg-surface-2 text-ink", className)}
+      aria-hidden
     >
-      {spec.emoji}
+      <Icon style={{ width: size / 2, height: size / 2 }} strokeWidth={1.75} />
     </div>
   );
 }

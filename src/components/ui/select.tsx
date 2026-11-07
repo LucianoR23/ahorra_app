@@ -1,10 +1,9 @@
 "use client"
 
+import { Check, ChevronDown } from "lucide-react"
 import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowDown01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
 
 type SelectRootProps = React.ComponentProps<typeof SelectPrimitive.Root>
 
@@ -40,7 +39,7 @@ const SelectTrigger = React.forwardRef<
   >
     {children}
     <SelectPrimitive.Icon className="ml-2 shrink-0 text-muted-foreground">
-      <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
+      <ChevronDown size={14} />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ))
@@ -94,7 +93,7 @@ const SelectItem = React.forwardRef<
     {...props}
   >
     <SelectPrimitive.ItemIndicator className="absolute left-1.5 flex items-center justify-center">
-      <HugeiconsIcon icon={Tick02Icon} size={14} />
+      <Check size={14} />
     </SelectPrimitive.ItemIndicator>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>

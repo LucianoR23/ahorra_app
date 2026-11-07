@@ -22,8 +22,6 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
-    "@hugeicons/core-free-icons": "^4.1.1",
-    "@hugeicons/react": "^1.1.6",
     "@react-oauth/google": "^0.13.5",
     "@sentry/browser": "11.9.0",
     "@serwist/next": "^9.5.13",
