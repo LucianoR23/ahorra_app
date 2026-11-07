@@ -98,3 +98,52 @@ export function shiftMonth(ym: string, n: number): string {
   const nm = (total % 12) + 1;
   return `${ny}-${String(nm).padStart(2, "0")}`;
 }
+
+// ── Redesign formatting (plan 1.10a, design README §6) ──────────────────
+
+export type MoneyCents = "auto" | "always" | "never";
+
+const CURRENCY_PREFIX: Record<string, string> = { ARS: "$", USD: "US$", EUR: "€" };
+
+/**
+ * `$ 128.450,50`: es-AR digits, a space after the symbol, US$ for dollars.
+ * cents "auto" (lists) drops ",00"; "always" keeps two decimals. Incomes get
+ * "+ " in front; expenses carry no sign.
+ */
+export function formatAmount(
+  amount: number,
+  currency = "ARS",
+  opts: { cents?: MoneyCents; income?: boolean } = {},
+): string {
+  const { cents = "auto", income = false } = opts;
+  const value = Math.abs(amount);
+  const whole = Math.round(value * 100) % 100 === 0;
+  const decimals = cents === "always" || (cents === "auto" && !whole) ? 2 : 0;
+  const digits = value.toLocaleString("es-AR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  const prefix = CURRENCY_PREFIX[currency] ?? currency;
+  const sign = amount < 0 ? "-" : income ? "+ " : "";
+  return `${sign}${prefix} ${digits}`;
+}
+
+const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+function dayNumber(iso: string): number {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return Date.UTC(y, m - 1, d) / 86_400_000;
+}
+
+/**
+ * Short day for lists: "Hoy", "Ayer", "Lun 2" within the last week, "3/12"
+ * before that ("3/12/25" in another year). Dates are YYYY-MM-DD; `today` is
+ * the caller's today in the same form (inject it in tests).
+ */
+export function dayLabel(iso: string, today: string = isoToday()): string {
+  const diff = dayNumber(today) - dayNumber(iso);
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  if (diff === 0) return "Hoy";
+  if (diff === 1) return "Ayer";
+  if (diff > 1 && diff < 7) return `${WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]} ${d}`;
+  const sameYear = today.slice(0, 4) === iso.slice(0, 4);
+  return sameYear ? `${d}/${m}` : `${d}/${m}/${String(y).slice(2)}`;
+}

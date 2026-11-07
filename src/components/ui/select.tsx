@@ -4,6 +4,7 @@ import { Check, ChevronDown } from "lucide-react"
 import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
+import { fieldControl } from "@/components/ui/field-styles"
 
 type SelectRootProps = React.ComponentProps<typeof SelectPrimitive.Root>
 
@@ -30,16 +31,15 @@ const SelectTrigger = React.forwardRef<
     ref={ref}
     data-slot="select-trigger"
     className={cn(
-      "flex h-9 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-card px-3 text-sm outline-none transition-colors",
-      "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
-      "disabled:cursor-not-allowed disabled:opacity-50",
+      fieldControl,
+      "flex cursor-pointer items-center justify-between",
       className
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon className="ml-2 shrink-0 text-muted-foreground">
-      <ChevronDown size={14} />
+      <ChevronDown aria-hidden strokeWidth={1.75} className="size-5 text-ink-muted" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ))

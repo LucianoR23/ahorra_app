@@ -34,4 +34,8 @@ describe("design rules", () => {
     expect(emoji).toEqual([]);
     expect(offenders(/@hugeicons|react-icons|@heroicons|@tabler\/icons|phosphor-react/)).toEqual([]);
   });
+
+  it("uses components/ui instead of native controls", () => {
+    expect(offenders(/type="(checkbox|radio|date|month)"|<select\b|<dialog\b/)).toEqual([]);
+  });
 });

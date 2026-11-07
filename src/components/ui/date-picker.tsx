@@ -6,6 +6,7 @@ import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { es } from "date-fns/locale"
 
 import { cn } from "@/lib/utils"
+import { fieldControl } from "@/components/ui/field-styles"
 import { fmtDateShort } from "@/lib/format"
 import { Calendar } from "@/components/ui/calendar"
 
@@ -53,16 +54,14 @@ function DatePicker({
         disabled={disabled}
         aria-invalid={ariaInvalid}
         className={cn(
-          "flex h-9 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-card px-3 text-sm outline-none transition-colors",
-          "hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          "aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20",
-          !value && "text-muted-foreground",
+          fieldControl,
+          "flex cursor-pointer items-center gap-2",
+          !value && "text-ink-muted",
           className
         )}
       >
-        <CalendarIcon size={14} className="shrink-0 text-muted-foreground" />
-        <span className="flex-1 text-left text-xs">
+        <CalendarIcon aria-hidden strokeWidth={1.75} className="size-5 shrink-0 text-ink-muted" />
+        <span className="flex-1 text-left">
           {value ? fmtDateShort(value) : placeholder}
         </span>
       </PopoverPrimitive.Trigger>
