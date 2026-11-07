@@ -10,7 +10,7 @@ import { confirm } from "@/lib/confirm";
 import { unsubscribePush } from "@/lib/push";
 import { toast, toastError } from "@/lib/toast";
 import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
+import { clearLocalSession } from "@/lib/session";
 
 /**
  * Ends every session of the account on the server (plan 0.5): any device or
@@ -18,8 +18,6 @@ import { useHouseholdStore } from "@/stores/household";
  */
 export function SignOutEverywhereCard() {
   const router = useRouter();
-  const clearAuth = useAuthStore((s) => s.clear);
-  const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
   const [busy, setBusy] = useState(false);
 
   async function handleClick() {
@@ -36,8 +34,7 @@ export function SignOutEverywhereCard() {
       if (token) await unsubscribePush(token).catch(() => {});
       await logoutAll();
       toast.success("Cerraste sesión en todos los dispositivos");
-      clearAuth();
-      setHouseholdId(null);
+      await clearLocalSession();
       router.replace("/login");
     } catch (e) {
       toastError(e);

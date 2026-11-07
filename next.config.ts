@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 import { securityHeaders } from "./src/lib/security-headers";
@@ -9,6 +10,9 @@ const withSerwist = withSerwistInit({
   register: true,
   // Disable in dev — no precaching noise, SW always fresh
   disable: process.env.NODE_ENV === "development",
+  // Offline fallback page (plan 0.13). A new revision per build keeps it in
+  // step with the deployed CSS and chunks.
+  additionalPrecacheEntries: [{ url: "/offline", revision: randomUUID() }],
 });
 
 const nextConfig: NextConfig = {

@@ -13,9 +13,9 @@ import { BrandLogo } from "@/components/brand-logo";
 import { DevSignature } from "@/components/dev-signature";
 import { InsightsUnreadBadge } from "@/components/insights-inbox";
 import { useAuthStore } from "@/stores/auth";
+import { clearLocalSession } from "@/lib/session";
 import { logout as apiLogout } from "@/lib/api/auth";
 import { unsubscribePush } from "@/lib/push";
-import { useHouseholdStore } from "@/stores/household";
 import {
   Sheet,
   SheetContent,
@@ -46,8 +46,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const clearAuth = useAuthStore((s) => s.clear);
-  const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
 
   const [moreOpen, setMoreOpen] = useState(false);
   const configActive =
@@ -138,8 +136,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     try {
       await apiLogout();
     } finally {
-      clearAuth();
-      setHouseholdId(null);
+      await clearLocalSession();
       router.replace("/login");
     }
   }

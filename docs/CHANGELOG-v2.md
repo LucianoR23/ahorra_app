@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.13: FE robustness
+- The service worker no longer caches cross-origin requests. Serwist's defaults kept cross-origin GETs for an hour (NetworkFirst), so API responses such as balances and expenses were stored in Cache Storage on the device. A NetworkOnly rule for every other origin now runs first (`src/lib/sw-caching.ts`).
+- Offline fallback: a page navigation that fails without network shows `/offline`, precached at build time.
+- Logout, "Cerrar sesión en todos los dispositivos" and account deletion now clear everything the device knows about the user (`src/lib/session.ts`): session, current household (also its localStorage key), the whole SWR cache and the service worker's runtime caches. The precache stays, so the app still opens offline. Device preferences (theme, remembered e-mail, dismissed prompts) stay too.
+- `app/error.tsx`, `app/global-error.tsx` and `app/not-found.tsx` in Spanish, on a shared `StatusScreen`. `error.tsx` and `global-error.tsx` report the error to GlitchTip (scrubbed like every event): errors caught by a boundary never reach the global handlers. The message is not shown to the user.
+- No `loading.tsx`: no page loads data on the server (screens fetch with SWR and show their own skeletons), so a route-level fallback would never show.
+
 ### 0.12 (app part): error monitoring (GlitchTip)
 - New dependency `@sentry/browser` 11.9.0 (approved by the user; the browser SDK instead of `@sentry/nextjs`, since the app has no server code and the Next.js SDK brings OpenTelemetry and build plugins). With `NEXT_PUBLIC_GLITCHTIP_DSN` set at build time, uncaught errors and unhandled promise rejections are reported. The SDK loads in its own chunk from `src/instrumentation-client.ts`, and only when the DSN is set.
 - Events carry no user, breadcrumbs, console output, sessions, headers, cookies or query string; e-mails, IDs, tokens, double-quoted values and numbers are scrubbed from every string (`src/lib/monitoring.ts`). The release is `NEXT_PUBLIC_APP_VERSION`.

@@ -1,13 +1,14 @@
 import type { ErrorEvent } from "@sentry/browser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const sentry = vi.hoisted(() => ({ init: vi.fn() }));
+const sentry = vi.hoisted(() => ({ init: vi.fn(), captureException: vi.fn() }));
 vi.mock("@sentry/browser", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@sentry/browser")>()),
   init: sentry.init,
+  captureException: sentry.captureException,
 }));
 
-import { beforeSend, initMonitoring, scrub } from "./monitoring";
+import { beforeSend, captureError, initMonitoring, scrub } from "./monitoring";
 
 describe("scrub", () => {
   it.each([
@@ -111,5 +112,13 @@ describe("initMonitoring", () => {
     const names = opts.integrations.map((i: { name: string }) => i.name);
     expect(names).toContain("GlobalHandlers");
     expect(names).not.toContain("Breadcrumbs");
+  });
+});
+
+describe("captureError", () => {
+  it("hands the caught error to the SDK", () => {
+    const err = new Error("boom");
+    captureError(err);
+    expect(sentry.captureException).toHaveBeenCalledWith(err);
   });
 });

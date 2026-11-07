@@ -4,6 +4,7 @@
 // and every string goes through scrub() before it leaves the browser.
 import {
   browserApiErrorsIntegration,
+  captureException,
   dedupeIntegration,
   eventFiltersIntegration,
   functionToStringIntegration,
@@ -121,4 +122,12 @@ export function initMonitoring({ dsn, environment, release }: MonitoringConfig):
     beforeSend,
   });
   return true;
+}
+
+/**
+ * Reports an error a React boundary caught (error.tsx). Those never reach
+ * the global handlers. A no-op until initMonitoring ran; beforeSend scrubs it.
+ */
+export function captureError(error: unknown): void {
+  captureException(error);
 }
