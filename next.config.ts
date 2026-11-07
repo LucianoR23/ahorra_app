@@ -31,6 +31,7 @@ const nextConfig: NextConfig = {
         headers: securityHeaders({
           apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
           dev: process.env.NODE_ENV === "development",
+          glitchtipDsn: process.env.NEXT_PUBLIC_GLITCHTIP_DSN,
         }),
       },
     ];
