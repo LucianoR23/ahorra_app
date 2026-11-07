@@ -29,6 +29,13 @@ describe("security headers", () => {
     expect(d.get("frame-src")).toEqual(["https://accounts.google.com"]);
   });
 
+  it("lets error events reach the GlitchTip origin, without the DSN key", () => {
+    const d = directives(contentSecurityPolicy({ ...prod, glitchtipDsn: "https://publickey@errors.example.test/2" }));
+    expect(d.get("connect-src")).toContain("https://errors.example.test");
+    expect(d.get("connect-src")?.join(" ")).not.toContain("publickey");
+    expect(directives(contentSecurityPolicy({ ...prod, glitchtipDsn: "" })).get("connect-src")).toHaveLength(3);
+  });
+
   it("drops an unparseable API URL instead of allowing it", () => {
     const d = directives(contentSecurityPolicy({ apiUrl: "not a url", dev: false }));
     expect(d.get("connect-src")).toEqual(["'self'", "https://accounts.google.com/gsi/"]);

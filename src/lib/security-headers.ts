@@ -10,6 +10,8 @@ const GOOGLE = "https://accounts.google.com";
 export type SecurityHeadersOptions = {
   apiUrl: string;
   dev: boolean;
+  /** GlitchTip DSN (plan 0.12): its origin receives error events. */
+  glitchtipDsn?: string;
 };
 
 function origin(url: string): string {
@@ -20,8 +22,9 @@ function origin(url: string): string {
   }
 }
 
-export function contentSecurityPolicy({ apiUrl, dev }: SecurityHeadersOptions): string {
+export function contentSecurityPolicy({ apiUrl, dev, glitchtipDsn }: SecurityHeadersOptions): string {
   const api = origin(apiUrl);
+  const glitchtip = glitchtipDsn ? origin(glitchtipDsn) : "";
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     // 'unsafe-eval' only in dev: React's dev tooling needs it.
@@ -31,7 +34,7 @@ export function contentSecurityPolicy({ apiUrl, dev }: SecurityHeadersOptions): 
     "img-src": ["'self'", "data:", "blob:", "https:"],
     "media-src": ["'self'", "blob:", "https:"],
     "font-src": ["'self'", "data:"],
-    "connect-src": ["'self'", api, `${GOOGLE}/gsi/`].filter(Boolean),
+    "connect-src": ["'self'", api, `${GOOGLE}/gsi/`, glitchtip].filter(Boolean),
     "frame-src": [GOOGLE],
     "worker-src": ["'self'"],
     "manifest-src": ["'self'"],

@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.12 (app part): error monitoring (GlitchTip)
+- New dependency `@sentry/browser` 11.9.0 (approved by the user; the browser SDK instead of `@sentry/nextjs`, since the app has no server code and the Next.js SDK brings OpenTelemetry and build plugins). With `NEXT_PUBLIC_GLITCHTIP_DSN` set at build time, uncaught errors and unhandled promise rejections are reported. The SDK loads in its own chunk from `src/instrumentation-client.ts`, and only when the DSN is set.
+- Events carry no user, breadcrumbs, console output, sessions, headers, cookies or query string; e-mails, IDs, tokens, double-quoted values and numbers are scrubbed from every string (`src/lib/monitoring.ts`). The release is `NEXT_PUBLIC_APP_VERSION`.
+- The CSP allows `connect-src` to the DSN's origin.
+
 ### 0.16 (app part): security headers
 - Every route sends a Content-Security-Policy (`src/lib/security-headers.ts`, wired in `next.config.ts`): scripts from the app and Google Sign-In only, with `'unsafe-inline'` (a nonce would make every page render per request; decided with the user); `connect-src` limited to the app, the API origin from `NEXT_PUBLIC_API_URL` and Google; no framing (`frame-ancestors 'none'`), no plugins, no `<base>`, forms post to the app only. Images and video allow any https host (support attachments).
 - Also HSTS (outside dev), `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, COOP `same-origin-allow-popups` (Google popup) and a Permissions-Policy that turns off camera, microphone, geolocation, payment and USB.

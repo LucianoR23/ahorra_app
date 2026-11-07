@@ -27,6 +27,9 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=<OAuth web client ID, mismo que GOOGLE_OAUTH_CLIENT
 NEXT_PUBLIC_BRAND_NAME=
 NEXT_PUBLIC_BRAND_TAGLINE=
 NEXT_PUBLIC_BRAND_DESCRIPTION=
+# Monitoreo de errores (plan 0.12; vacías = apagado). Ver DEPLOY.md §8 del API.
+NEXT_PUBLIC_GLITCHTIP_DSN=<DSN del proyecto "app" en GlitchTip>
+NEXT_PUBLIC_GLITCHTIP_ENVIRONMENT=staging
 ```
 
 > La VAPID public key la obtenés del backend con `go run ./cmd/vapidgen` o desde las env vars de Coolify del API (`VAPID_PUBLIC_KEY`).
@@ -45,6 +48,7 @@ NEXT_PUBLIC_BRAND_DESCRIPTION=
    - `NEXT_PUBLIC_APP_VERSION`
    - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
    - `NEXT_PUBLIC_BRAND_NAME`, `NEXT_PUBLIC_BRAND_TAGLINE`, `NEXT_PUBLIC_BRAND_DESCRIPTION` (opcionales)
+   - `NEXT_PUBLIC_GLITCHTIP_DSN`, `NEXT_PUBLIC_GLITCHTIP_ENVIRONMENT` (opcionales; la CSP habilita el origen del DSN)
 4. **Port**: `3000`
 5. **Domain**: `ahorra.lemydev.com` → Traefik genera HTTPS solo
 
