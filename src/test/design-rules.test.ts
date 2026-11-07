@@ -18,7 +18,7 @@ function offenders(pattern: RegExp): string[] {
   return sourceFiles(SRC).flatMap((file) =>
     readFileSync(file, "utf8")
       .split("\n")
-      .flatMap((line, i) => (pattern.test(line) ? [`${relative(SRC, file)}:${i + 1}`] : [])),
+      .flatMap((line, i) => (pattern.test(line) ? [`${relative(SRC, file).replaceAll("\\", "/")}:${i + 1}`] : [])),
   );
 }
 
@@ -26,5 +26,12 @@ describe("design rules", () => {
   it("never sets type below 12 px", () => {
     expect(offenders(/text-\[(\d|1[01])(\.\d+)?px\]/)).toEqual([]);
     expect(offenders(/text-\[0?\.(?:[0-6]\d*|7(?:[0-4]\d*)?)rem\]/)).toEqual([]);
+  });
+
+  it("uses Lucide icons, not emojis or another icon library", () => {
+    // lib/category-icons.ts translates the emojis older categories store.
+    const emoji = offenders(/\p{Emoji_Presentation}|\p{Extended_Pictographic}\u{FE0F}/u).filter((f) => !f.startsWith("lib/category-icons.ts"));
+    expect(emoji).toEqual([]);
+    expect(offenders(/@hugeicons|react-icons|@heroicons|@tabler\/icons|phosphor-react/)).toEqual([]);
   });
 });

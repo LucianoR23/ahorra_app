@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate as swrMutate } from "swr";
@@ -402,8 +403,8 @@ export function ExpenseForm() {
                         <span className="text-xs text-muted-foreground w-8">{currency}</span>
                       </div>
                     ))}
-                    <div className={cn("text-xs", sharesMatch ? "text-positive" : "text-destructive")}>
-                      {sharesMatch ? "✓" : "⚠"} Suma {sharesSum.toFixed(2)} / {amount.toFixed(2)} {currency}
+                    <div className={cn("flex items-center gap-1 text-xs", sharesMatch ? "text-positive" : "text-destructive")}>
+                      {sharesMatch ? <Check aria-hidden className="size-3.5" /> : <TriangleAlert aria-hidden className="size-3.5" />} Suma {sharesSum.toFixed(2)} / {amount.toFixed(2)} {currency}
                     </div>
                     {errors.shares && <p className="text-xs text-destructive">{errors.shares}</p>}
                   </div>

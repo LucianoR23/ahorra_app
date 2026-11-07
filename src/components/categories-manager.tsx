@@ -26,6 +26,9 @@ import { toast } from "@/lib/toast";
 import { confirm } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
 import { ColorPicker } from "@/components/ui/color-picker";
+import { CategoryIcon } from "@/components/category-icon";
+import { CategoryIconPicker } from "@/components/category-icon-picker";
+import { categoryIconKey, type CategoryIconKey } from "@/lib/category-icons";
 
 const PRESET_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e",
@@ -69,19 +72,14 @@ export function CategoriesManager() {
           {categories.map((cat) => (
             <Card key={cat.id} className="rounded-2xl border-0 shadow-card">
               <CardContent className="flex items-center gap-3 p-4">
-                <div
-                  className="size-8 shrink-0 rounded-lg"
-                  style={{ backgroundColor: cat.color ?? "#64748b" }}
-                />
+                <CategoryIcon icon={cat.icon} size={40} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{cat.name}</p>
-                  {cat.icon && (
-                    <p className="text-xs text-muted-foreground">{cat.icon}</p>
-                  )}
                 </div>
                 <Button
                   size="icon-sm"
                   variant="ghost"
+                  aria-label={`Editar ${cat.name}`}
                   onClick={() => setEditing(cat)}
                 >
                   <Pencil className="size-3.5" />
@@ -151,14 +149,14 @@ function CategoryFormDialog({
   const setOpen = onOpenChange ?? setInternalOpen;
 
   const [name, setName] = useState(category?.name ?? "");
-  const [icon, setIcon] = useState(category?.icon ?? "");
+  const [icon, setIcon] = useState<CategoryIconKey>(categoryIconKey(category?.icon));
   const [color, setColor] = useState(category?.color ?? PRESET_COLORS[0]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   function resetForm() {
     setName(category?.name ?? "");
-    setIcon(category?.icon ?? "");
+    setIcon(categoryIconKey(category?.icon));
     setColor(category?.color ?? PRESET_COLORS[0]);
     setErr(null);
   }
@@ -170,7 +168,7 @@ function CategoryFormDialog({
     setSaving(true);
     const input: CategoryInput = {
       name: name.trim(),
-      icon: icon.trim() || null,
+      icon,
       color: color || null,
     };
     try {
@@ -217,12 +215,12 @@ function CategoryFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="cat-icon">Icono (texto o emoji)</Label>
-            <Input
-              id="cat-icon"
+            <Label id="cat-icon-label">Ícono</Label>
+            <CategoryIconPicker
+              aria-labelledby="cat-icon-label"
               value={icon}
-              onChange={(e) => setIcon(e.target.value)}
-              placeholder="Ej. 🍔 o utensils"
+              onValueChange={setIcon}
+              className="mt-1.5"
             />
           </div>
 
