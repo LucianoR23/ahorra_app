@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.2 (app part): "Mi plata" + Hogar
+- Everyone starts in "Mi plata" (the API creates it). The household dropdown is gone; with a hogar, a "Yo · Hogar" selector (new `components/ui/tabs.tsx`, on Base UI Tabs) switches the space every screen reads (`src/lib/spaces.ts`). Without a hogar there is no household UI: no tabs, no "Deudas" in the menu.
+- Add expense: a "Compartido" switch, only with a hogar, remembered per device (`app.expense_shared`). Off: the expense goes to "Mi plata". On: to the hogar with its split rules (custom split still available). Categories follow the chosen space. After saving, the app shows the space the expense went to.
+- Settings show the hogar's configuration and split rules from either tab, or a "Crear hogar" card. Leaving or deleting the hogar goes back to "Mi plata". "Deudas" from "Mi plata" offers "Ir al hogar" (or "Crear hogar").
+- New users land on the home screen, not on onboarding; creating a hogar is optional ("Ahora no" on that screen) and lives in settings. Onboarding redirects only users who already have a hogar.
+- Reads and writes can target a household other than the current one (`householdId` in SWR keys and `apiMutate`), used by the expense form and the hogar settings.
+- e2e: sign-up lands in "Mi plata" and creates a hogar from settings; the shared expense uses "Compartido"; the bill test switches to the hogar tab.
+
 ### 1.1 (app part): brand switch to Valuo
 - Default brand values are now Valuo: name "Valuo", tagline "Sabé cuánto vale tu mes", description "Gastos, tarjetas y cuotas, solo o en hogar." The title reads "Valuo · Sabé cuánto vale tu mes". `NEXT_PUBLIC_BRAND_*` still override them.
 - The brand kit is vendored from the workspace by `pnpm brand:sync` (`scripts/sync-brand.mjs`): tokens and docs in `brand/`, logos, icons and PNGs in `public/brand/`, favicon and apple icon in `src/app/`. `pnpm brand:check` runs first in `pnpm check`.

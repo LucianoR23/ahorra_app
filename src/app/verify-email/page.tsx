@@ -10,7 +10,6 @@ import { BrandLogo } from "@/components/brand-logo";
 import { verifyEmail } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
 import { brand } from "@/config/brand";
 
 export default function Page() {
@@ -42,7 +41,6 @@ function VerifyEmailInner() {
   const setUser = useAuthStore((s) => s.setUser);
   const user = useAuthStore((s) => s.user);
   const hydrated = useAuthStore((s) => s.hydrated);
-  const currentHouseholdId = useHouseholdStore((s) => s.currentId);
 
   const [state, setState] = useState<"loading" | "success" | "error" | "no-token">(
     token ? "loading" : "no-token",
@@ -123,9 +121,7 @@ function VerifyEmailInner() {
       ? { href: "#", label: "Cargando…" }
       : needsLogin
       ? { href: "/login", label: "Iniciar sesión" }
-      : currentHouseholdId
-      ? { href: "/", label: "Ir al inicio" }
-      : { href: "/onboarding", label: "Continuar" };
+      : { href: "/", label: "Ir al inicio" };
 
     return (
       <Card className="p-6">

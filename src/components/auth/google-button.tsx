@@ -46,23 +46,19 @@ export function GoogleSignInButton() {
             accessExpiresAt: res.accessExpiresAt,
           });
 
-          // Para usuarios existentes (isNewUser=false), pre-cargamos el
-          // household antes de redirigir. Sin esto AuthGate ve user sin
-          // household y empuja a /onboarding por un frame hasta que
-          // AuthBootstrap termina de fetchear → flash visual.
-          // Para usuarios nuevos no aplica: vamos directo a /onboarding.
-          if (!res.isNewUser) {
-            try {
-              const households = await apiFetch<Household[]>({
-                path: "/households",
-                token: res.accessToken,
-              });
-              setHouseholdId(households.length > 0 ? households[0].id : null);
-            } catch {
-              // Si falla, AuthBootstrap reintenta y AuthGate decide igual.
-            }
+          // Pre-load the spaces before redirecting, so AuthGate doesn't see a
+          // user without a household for a frame. New users too: everyone
+          // starts in "Mi plata" (plan 1.2), listed first.
+          try {
+            const households = await apiFetch<Household[]>({
+              path: "/households",
+              token: res.accessToken,
+            });
+            setHouseholdId(households.length > 0 ? households[0].id : null);
+          } catch {
+            // Si falla, AuthBootstrap reintenta y AuthGate decide igual.
           }
-          router.replace(res.isNewUser ? "/onboarding" : "/");
+          router.replace("/");
         } catch (err) {
           if (err instanceof ApiError) {
             toastError(err);

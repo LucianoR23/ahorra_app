@@ -15,9 +15,9 @@ import {
   useCreditCardPeriods,
   useExchangeRates,
   useHouseholdMembers,
-  useHouseholds,
 } from "@/lib/api/hooks";
-import { useHouseholdStore } from "@/stores/household";
+import { selectSpace, useSpaces } from "@/lib/spaces";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { createExpense, type ExpenseCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { fmtMoney, isoToday, projectBillingMonth, shiftMonth } from "@/lib/format";
@@ -29,17 +29,36 @@ import { DatePicker } from "@/components/ui/date-picker";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
+/** Last "Compartido" choice (plan 1.2). The form renders only on the client. */
+function readSharedPref(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.expenseShared) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeSharedPref(v: boolean) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.expenseShared, v ? "1" : "0");
+  } catch {
+    // Storage disabled: the choice just isn't remembered.
+  }
+}
+
 export function ExpenseForm() {
   const router = useRouter();
-  const currentHouseholdId = useHouseholdStore((s) => s.currentId);
-  const { data: households } = useHouseholds();
-  const household = households?.find((h) => h.id === currentHouseholdId) ?? households?.[0];
-  const baseCurrency = (household?.baseCurrency ?? "ARS") as Currency;
+  // "Compartido" off → Mi plata; on → the hogar with its split rules.
+  const { personal, hogar, current } = useSpaces();
+  const [compartido, setCompartido] = useState(readSharedPref);
+  const isShared = !!hogar && compartido;
+  const target = isShared ? hogar : personal;
+  const baseCurrency = (target?.baseCurrency ?? "ARS") as Currency;
 
-  const { data: categories } = useCategories();
+  const { data: categories } = useCategories(target?.id);
   const { data: paymentMethods } = usePaymentMethods();
   const { data: rates } = useExchangeRates();
-  const { data: members } = useHouseholdMembers();
+  const { data: members } = useHouseholdMembers(hogar?.id);
 
   const [description, setDescription] = useState("");
   const [amountStr, setAmountStr] = useState("");
@@ -48,7 +67,6 @@ export function ExpenseForm() {
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [spentAt, setSpentAt] = useState<string>(isoToday());
   const [installments, setInstallments] = useState<number>(1);
-  const [isShared, setIsShared] = useState(false);
   const [overrideShares, setOverrideShares] = useState(false);
   const [shareAmounts, setShareAmounts] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -141,9 +159,12 @@ export function ExpenseForm() {
       input.sharesOverride = sharesList.map((s) => ({ userId: s.userId, amount: s.amount }));
     }
 
+    if (!target) return;
     setSubmitting(true);
     try {
-      const detail = await createExpense(input);
+      const detail = await createExpense(input, target.id);
+      // The detail page reads the current space: show the one it went to.
+      if (target.id !== current?.id) selectSpace(target.id);
       // Invalidate expenses + reports
       swrMutate(
         (k) => Array.isArray(k) && typeof k[0] === "string" && (k[0].startsWith("/expenses") || k[0].startsWith("/reports") || k[0].startsWith("/balances")),
@@ -329,28 +350,33 @@ export function ExpenseForm() {
         </CardContent>
       </Card>
 
-      {/* Compartir */}
-      {members && members.length > 1 && (
+      {/* Compartido (plan 1.2): only with a hogar */}
+      {hogar && (
         <Card className="rounded-2xl border-0 shadow-card">
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="isShared" className="text-sm">Compartir con el hogar</Label>
+                <Label htmlFor="isShared" className="text-sm">Compartido</Label>
                 <p className="text-xs text-muted-foreground">
-                  Se divide según las reglas del hogar salvo que especifiques.
+                  {isShared
+                    ? `Va a ${hogar.name} y se divide según sus reglas, salvo que especifiques.`
+                    : "Va a Mi plata: solo lo ves vos."}
                 </p>
               </div>
               <Switch
                 id="isShared"
                 checked={isShared}
                 onCheckedChange={(v) => {
-                  setIsShared(v);
+                  setCompartido(v);
+                  writeSharedPref(v);
+                  // Each space has its own categories.
+                  setCategoryId("");
                   if (!v) setOverrideShares(false);
                 }}
               />
             </div>
 
-            {isShared && (
+            {isShared && members && members.length > 1 && (
               <>
                 <div className="flex items-center justify-between pt-2 border-t border-border">
                   <Label htmlFor="overrideShares" className="text-xs">División personalizada</Label>

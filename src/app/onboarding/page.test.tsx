@@ -1,6 +1,10 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import OnboardingPage from "@/app/onboarding/page";
+import { API, server } from "@/test/msw";
+import { hogarSpace, personalSpace, WithSWR } from "@/test/spaces";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type { User } from "@/lib/api/schemas";
@@ -28,20 +32,28 @@ describe("OnboardingPage", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  it("shows the form when the user has no household", () => {
-    render(<OnboardingPage />);
-    act(() => useHouseholdStore.getState().markResolved(user.id));
-    expect(screen.getByRole("heading", { name: "Creá tu hogar" })).toBeInTheDocument();
-    expect(replace).not.toHaveBeenCalled();
-  });
-
-  it("sends a user who already has a household home without showing the form", () => {
-    render(<OnboardingPage />);
+  it("shows the optional form when the user only has Mi plata", async () => {
+    server.use(http.get(`${API}/households`, () => HttpResponse.json([personalSpace])));
+    render(<OnboardingPage />, { wrapper: WithSWR });
     act(() => {
-      useHouseholdStore.getState().setCurrentId("h1");
+      useHouseholdStore.getState().setCurrentId(personalSpace.id);
       useHouseholdStore.getState().markResolved(user.id);
     });
+    expect(await screen.findByRole("heading", { name: "Creá tu hogar" })).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Ahora no" }));
     expect(replace).toHaveBeenCalledWith("/");
-    expect(screen.getByText("Cargando")).toBeInTheDocument();
+  });
+
+  it("sends a user who already has a hogar home without showing the form", async () => {
+    server.use(http.get(`${API}/households`, () => HttpResponse.json([personalSpace, hogarSpace])));
+    render(<OnboardingPage />, { wrapper: WithSWR });
+    act(() => {
+      useHouseholdStore.getState().setCurrentId(personalSpace.id);
+      useHouseholdStore.getState().markResolved(user.id);
+    });
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+    expect(screen.queryByRole("heading", { name: "Creá tu hogar" })).not.toBeInTheDocument();
   });
 });

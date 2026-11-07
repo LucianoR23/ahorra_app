@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthGate } from "@/components/auth-gate";
-import { HouseholdSwitcher } from "@/components/household-switcher";
+import { SpaceTabs } from "@/components/space-tabs";
+import { useSpaces } from "@/lib/spaces";
 import { BrandLogo } from "@/components/brand-logo";
 import { DevSignature } from "@/components/dev-signature";
 import { InsightsUnreadBadge } from "@/components/insights-inbox";
@@ -145,7 +146,10 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     ? `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase()
     : "··";
   const displayName = user?.firstName ?? "—";
-  const visibleNavItems = NAV_ITEMS.filter((n) => !n.adminOnly || user?.isSuperadmin);
+  const { inHogar } = useSpaces();
+  const visibleNavItems = NAV_ITEMS.filter(
+    (n) => (!n.adminOnly || user?.isSuperadmin) && (!n.hogarOnly || inHogar),
+  );
 
   return (
     <div className="flex min-h-svh">
@@ -159,9 +163,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
           <BrandLogo variant="wordmark" size={30} priority />
         </Link>
 
-        <div className="px-1 pb-2">
-          <HouseholdSwitcher />
-        </div>
+        <SpaceTabs className="px-1 pb-2" />
 
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto pr-0.5">
           {visibleNavItems.filter((n) => !CONFIG_IDS.has(n.id)).map((n) => {
@@ -281,7 +283,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
             <BrandLogo variant="icon" size={28} priority className="size-7" />
           </Link>
           <div className="min-w-0 flex-1">
-            <HouseholdSwitcher />
+            <SpaceTabs />
           </div>
           <Link
             href="/notificaciones"

@@ -6,6 +6,8 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   adminOnly?: boolean;
+  /** Only inside the hogar: "Mi plata" has nobody to owe (plan 1.2). */
+  hogarOnly?: boolean;
 };
 
 export const NAV_ITEMS: NavItem[] = [
@@ -13,7 +15,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "history", label: "Movimientos", href: "/movimientos", icon: ListOrdered },
   { id: "incomes", label: "Ingresos", href: "/ingresos", icon: TrendingUp },
   { id: "recurring", label: "Recurrentes", href: "/recurrentes", icon: Repeat },
-  { id: "debts", label: "Deudas", href: "/deudas", icon: Scale },
+  { id: "debts", label: "Deudas", href: "/deudas", icon: Scale, hogarOnly: true },
   { id: "categories", label: "Categorías", href: "/categorias", icon: PieChart },
   { id: "goals", label: "Objetivos", href: "/objetivos", icon: Target },
   { id: "reports", label: "Reportes", href: "/reportes", icon: BarChart2 },

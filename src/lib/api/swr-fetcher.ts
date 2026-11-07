@@ -8,7 +8,15 @@ import { useHouseholdStore } from "@/stores/household";
 
 export type SwrKey =
   | string
-  | readonly [path: string, opts?: { query?: ApiRequest["query"]; householdScoped?: boolean }];
+  | readonly [
+      path: string,
+      opts?: {
+        query?: ApiRequest["query"];
+        householdScoped?: boolean;
+        /** Reads this household instead of the current one (it is part of the key). */
+        householdId?: string;
+      },
+    ];
 
 
 /**
@@ -20,7 +28,7 @@ export async function swrFetcher<T = unknown>(key: SwrKey): Promise<T> {
   const householdScoped = opts?.householdScoped ?? true;
 
   const token = useAuthStore.getState().accessToken;
-  const householdId = householdScoped ? useHouseholdStore.getState().currentId : null;
+  const householdId = opts?.householdId ?? (householdScoped ? useHouseholdStore.getState().currentId : null);
 
   const doFetch = (tk: string | null) =>
     apiFetch<T>({

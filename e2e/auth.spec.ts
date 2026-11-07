@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { PASSWORD, loginUI, uniqueEmail } from "./helpers";
 
-test("sign up, create a household, keep the session on reload, log in again", async ({ page, browser }) => {
+test("sign up, land in Mi plata, create a hogar, keep the session on reload, log in again", async ({ page, browser }) => {
   const email = uniqueEmail("signup");
 
   // Sign up through the form.
@@ -14,13 +14,25 @@ test("sign up, create a household, keep the session on reload, log in again", as
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(page).toHaveURL(/\/verify-email\/pending/);
 
-  // Email verification is soft: the app lets the new user in, straight to onboarding.
+  // Email verification is soft: the app lets the new user in, straight to
+  // "Mi plata" (plan 1.2). No hogar yet: no "Yo · Hogar" tabs, no debts.
   await page.goto("/");
-  await expect(page).toHaveURL(/\/onboarding/);
-  await page.getByLabel("Nombre del hogar").fill("Casa E2E");
-  await page.getByRole("button", { name: /Continuar/ }).click();
-  await page.getByRole("button", { name: "Saltar por ahora" }).click();
   await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: "Movimientos" }).first()).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Hogar" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Deudas" })).toHaveCount(0);
+
+  // Creating a hogar is optional, from settings; then the tabs appear.
+  await page.goto("/ajustes");
+  await page.getByRole("link", { name: "Crear hogar" }).click();
+  await page.getByLabel("Nombre del hogar").fill("Casa E2E");
+  await page.getByRole("button", { name: /Crear hogar/ }).click();
+  await expect(page).toHaveURL(/\/ajustes$/);
+  await expect(page.getByRole("tab", { name: "Hogar" }).first()).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("link", { name: "Deudas" }).first()).toBeVisible();
+  await page.getByRole("tab", { name: "Yo" }).first().click();
+  await expect(page.getByRole("link", { name: "Deudas" })).toHaveCount(0);
+  await page.goto("/");
 
   // The access token lives in memory; a reload restores the session through
   // the httpOnly refresh cookie (cross-port, like front and API in prod).

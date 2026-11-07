@@ -1,6 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { DebtsManager } from "@/components/debts-manager";
-import { SplitRulesCard } from "@/components/split-rules-card";
+import { DebtsScreen } from "@/components/debts-screen";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 
 const DEUDAS_HELP: InfoHelpContent = {
@@ -38,10 +37,7 @@ export default function Page() {
           Quién le debe a quién y pagos entre miembros del hogar.
         </p>
       </div>
-      <div className="flex flex-col gap-4">
-        <DebtsManager />
-        <SplitRulesCard />
-      </div>
+      <DebtsScreen />
     </AppShell>
   );
 }

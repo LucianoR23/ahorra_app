@@ -7,4 +7,6 @@ export const STORAGE_KEYS = {
   emailVerifyBannerDismissedAt: "app.email_verify_banner_dismissed_at",
   installDismissed: "app.install.dismissed",
   pushDismissed: "app.push.dismissed",
+  /** Last "Compartido" choice in the expense form (plan 1.2). */
+  expenseShared: "app.expense_shared",
 } as const;
