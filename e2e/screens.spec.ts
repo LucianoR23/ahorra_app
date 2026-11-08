@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { cardClosingToday, createHousehold, loginUI, register } from "./helpers";
+import { PASSWORD, cardClosingToday, createHousehold, loginUI, register } from "./helpers";
 
 // Screenshot harness (plan 1.10a): every screen in light and dark, mobile and
 // desktop, saved under test-results/screens for review (CI uploads them as
@@ -81,5 +81,42 @@ test("screens in light and dark, mobile and desktop", async ({ browser }) => {
     for (const vp of Object.keys(VIEWPORTS) as (keyof typeof VIEWPORTS)[]) {
       await shoot(browser, user.email, theme, vp);
     }
+  }
+});
+
+// Onboarding (plan 1.3) for a user who has not done it, on mobile. The
+// shots stop before any step that writes.
+test("onboarding screens", async ({ browser }) => {
+  test.setTimeout(3 * 60_000);
+  const user = await register("screens-onboarding", "Luciano", { onboarded: false });
+  for (const theme of THEMES) {
+    const context = await browser.newContext({ viewport: VIEWPORTS.mobile, colorScheme: theme, reducedMotion: "reduce" });
+    const page = await context.newPage();
+    const shot = (step: string) => page.screenshot({ path: `test-results/screens/onboarding-${step}.${theme}.mobile.png`, fullPage: true });
+
+    await page.goto("/login");
+    await page.getByLabel("Email", { exact: true }).fill(user.email);
+    await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
+    await page.getByRole("button", { name: "Ingresar" }).click();
+    await page.waitForURL((u) => !u.pathname.startsWith("/login"));
+    if (new URL(page.url()).pathname.startsWith("/verify-email")) {
+      await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/"));
+    }
+    await page.waitForURL((u) => u.pathname === "/onboarding");
+    await expect(page.getByLabel("Tu nombre")).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    await shot("1-nombre");
+
+    await page.getByRole("button", { name: "Saltar" }).click();
+    await page.getByRole("checkbox", { name: /Visa/ }).click();
+    await page.getByRole("checkbox", { name: /Mastercard/ }).click();
+    await page.getByRole("checkbox", { name: /Mercado Pago/ }).click();
+    await shot("2-como-pagas");
+    // Cards only: continuing writes nothing until the cards are saved.
+    await page.getByRole("checkbox", { name: /Mercado Pago/ }).click();
+    await page.getByRole("button", { name: "Continuar · 2 elegidos" }).click();
+    await expect(page.getByRole("heading", { name: "Tus tarjetas" })).toBeVisible();
+    await shot("3-tarjetas");
+    await context.close();
   }
 });

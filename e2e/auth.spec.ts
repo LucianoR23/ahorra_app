@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { PASSWORD, loginUI, uniqueEmail } from "./helpers";
 
-test("sign up, land in Mi plata, create a hogar, keep the session on reload, log in again", async ({ page, browser }) => {
+test("sign up, onboard, land in Mi plata, create a hogar, keep the session on reload, log in again", async ({ page, browser }) => {
   const email = uniqueEmail("signup");
 
   // Sign up through the form.
@@ -14,10 +14,33 @@ test("sign up, land in Mi plata, create a hogar, keep the session on reload, log
   await page.getByRole("button", { name: "Crear cuenta" }).click();
   await expect(page).toHaveURL(/\/verify-email\/pending/);
 
-  // Email verification is soft: the app lets the new user in, straight to
-  // "Mi plata" (plan 1.2). No hogar yet: no "Yo · Hogar" tabs, and "Más"
-  // only offers to start sharing.
+  // Email verification is soft: the app lets the new user in, first through
+  // onboarding (plan 1.3): name, how they pay, the card's days, first expense.
   await page.goto("/");
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await expect(page.getByLabel("Tu nombre")).toHaveValue("Ana");
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.getByRole("checkbox", { name: /Visa/ }).click();
+  await page.getByRole("button", { name: "Continuar · 1 elegido" }).click();
+  await page.getByLabel("Banco").click();
+  await page.getByRole("option", { name: "Galicia" }).click();
+  await page.getByLabel("Día de cierre").fill("25");
+  await page.getByLabel("Día de vencimiento").fill("5");
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByRole("heading", { name: "Cargá tu primer gasto" })).toBeVisible();
+  await page.getByLabel("Monto").fill("1500");
+  await page.getByLabel("Descripción").fill("Café");
+  await page.getByLabel("Método de pago").click();
+  await page.getByRole("option", { name: /Visa Galicia/ }).click();
+  await page.getByRole("button", { name: "Crear gasto" }).click();
+  // Push and install come after and can be declined; then home.
+  for (let i = 0; i < 2 && !/\/$/.test(new URL(page.url()).pathname); i++) {
+    const notNow = page.getByRole("button", { name: "Ahora no" });
+    await notNow.or(page.getByRole("button", { name: "Listo" })).first().click({ timeout: 5_000 }).catch(() => {});
+  }
+
+  // "Mi plata", with no hogar yet: no "Yo · Hogar" tabs, and "Más" only
+  // offers to start sharing.
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("link", { name: "Movimientos" }).first()).toBeVisible();
   await expect(page.getByRole("tab", { name: "Hogar" })).toHaveCount(0);

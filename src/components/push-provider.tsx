@@ -17,6 +17,28 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 const DISMISSED_KEY = STORAGE_KEYS.pushDismissed;
 
+/** The browser can still be asked for push permission (and supports push). */
+export function canAskPush(): boolean {
+  if (typeof window === "undefined" || !("Notification" in window)) return false;
+  if (isIosSafari() && !isStandalone()) return false; // iOS needs the app installed first
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  return Notification.permission === "default";
+}
+
+/** Asks for permission and subscribes this device. True when it worked. */
+export async function enablePush(accessToken: string): Promise<boolean> {
+  const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || (await fetchVapidPublicKey());
+  if (!vapidKey) return false;
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return false;
+  const reg = await registerServiceWorker();
+  if (!reg) return false;
+  const sub = await subscribeToPush(reg, vapidKey);
+  if (!sub) return false;
+  await sendSubscriptionToBackend(sub, accessToken);
+  return true;
+}
+
 /**
  * Drop this inside the Dashboard (authenticated context only).
  * Handles SW registration, silent subscribe, and the opt-in banner.
@@ -78,19 +100,7 @@ export function PushProvider() {
     if (!accessToken) return;
     setSubscribing(true);
     try {
-      const vapidKey =
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-        (await fetchVapidPublicKey());
-      if (!vapidKey) { setBanner(null); return; }
-
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") { setBanner(null); return; }
-
-      const reg = await registerServiceWorker();
-      if (!reg) { setBanner(null); return; }
-
-      const sub = await subscribeToPush(reg, vapidKey);
-      if (sub) await sendSubscriptionToBackend(sub, accessToken);
+      await enablePush(accessToken);
     } finally {
       setSubscribing(false);
       setBanner(null);

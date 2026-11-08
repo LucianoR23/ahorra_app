@@ -27,11 +27,16 @@ async function call<T>(method: string, path: string, opts: { token?: string; hou
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-export async function register(tag: string, firstName: string, inviteToken?: string): Promise<User> {
+/**
+ * Registers a user through the API. Onboarding (plan 1.3) is marked done
+ * unless `onboarded` is false, so specs land on Inicio.
+ */
+export async function register(tag: string, firstName: string, opts: { inviteToken?: string; onboarded?: boolean } = {}): Promise<User> {
   const email = uniqueEmail(tag);
   const r = await call<{ user: { id: string }; accessToken: string }>("POST", "/auth/register", {
-    body: { email, password: PASSWORD, firstName, lastName: "E2E", ...(inviteToken ? { inviteToken } : {}) },
+    body: { email, password: PASSWORD, firstName, lastName: "E2E", ...(opts.inviteToken ? { inviteToken: opts.inviteToken } : {}) },
   });
+  if (opts.onboarded !== false) await call("POST", "/me/onboarding/complete", { token: r.accessToken });
   return { id: r.user.id, email, token: r.accessToken };
 }
 
@@ -47,6 +52,7 @@ export async function addMember(owner: User, householdId: string, firstName: str
   const r = await call<{ user: { id: string }; accessToken: string }>("POST", "/auth/register", {
     body: { email, password: PASSWORD, firstName, lastName: "E2E", inviteToken: inv.token },
   });
+  await call("POST", "/me/onboarding/complete", { token: r.accessToken });
   return { id: r.user.id, email, token: r.accessToken };
 }
 

@@ -47,7 +47,11 @@ function writeSharedPref(v: boolean) {
   }
 }
 
-export function ExpenseForm() {
+/**
+ * `onCreated` replaces the default jump to the new expense's detail
+ * (onboarding's first expense, plan 1.3).
+ */
+export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => void } = {}) {
   const router = useRouter();
   // "Compartido" off → Mi plata; on → the hogar with its split rules.
   const { personal, hogar, current } = useSpaces();
@@ -172,7 +176,8 @@ export function ExpenseForm() {
         undefined,
         { revalidate: true },
       );
-      router.replace(`/movimientos/${detail.expense.id}`);
+      if (onCreated) onCreated(detail.expense.id);
+      else router.replace(`/movimientos/${detail.expense.id}`);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.field) setErrors({ [err.field]: err.message });

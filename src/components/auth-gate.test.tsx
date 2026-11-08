@@ -14,6 +14,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/components/brand-logo", () => ({ BrandLogo: () => <span>logo</span> }));
 
 const user = { id: "u1", email: "ana@example.test", firstName: "Ana", lastName: "Test" } as User;
+const onboarded = { ...user, onboardedAt: "2026-11-08T12:00:00Z" } as User;
 
 beforeEach(() => {
   replace.mockClear();
@@ -47,16 +48,29 @@ describe("AuthGate", () => {
     expect(screen.queryByText("app content")).not.toBeInTheDocument();
   });
 
-  it("goes to /onboarding only after the households resolve to none", () => {
+  it("sends a user who has not onboarded to /onboarding once the households resolve", () => {
+    useAuthStore.setState({ hydrated: true, user, accessToken: "t" });
+    renderGate();
+    act(() => {
+      useHouseholdStore.getState().setCurrentId("h1");
+      useHouseholdStore.getState().markResolved(user.id);
+    });
+
+    expect(replace).toHaveBeenCalledWith("/onboarding");
+    expect(screen.queryByText("app content")).not.toBeInTheDocument();
+  });
+
+  it("does not loop while already on /onboarding", () => {
+    pathname = "/onboarding";
     useAuthStore.setState({ hydrated: true, user, accessToken: "t" });
     renderGate();
     act(() => useHouseholdStore.getState().markResolved(user.id));
 
-    expect(replace).toHaveBeenCalledWith("/onboarding");
+    expect(replace).not.toHaveBeenCalled();
   });
 
-  it("shows the app once a household resolves", () => {
-    useAuthStore.setState({ hydrated: true, user, accessToken: "t" });
+  it("shows the app once a household resolves for an onboarded user", () => {
+    useAuthStore.setState({ hydrated: true, user: onboarded, accessToken: "t" });
     renderGate();
     act(() => {
       useHouseholdStore.getState().setCurrentId("h1");
