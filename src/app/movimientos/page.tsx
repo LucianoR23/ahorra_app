@@ -11,7 +11,7 @@ const MOVIMIENTOS_HELP: InfoHelpContent = {
     "Cargá un gasto nuevo desde «Agregar gasto».",
   ],
   consideraciones: [
-    "Las categorías y los medios de pago de los filtros se crean en otras pantallas (Categorías y Ajustes): si te falta alguno, agregalo ahí primero.",
+    "Las categorías y los medios de pago de los filtros se crean en otras pantallas (Categorías y Tarjetas): si te falta alguno, agregalo ahí primero.",
     "«Fijos» son los gastos generados por un recurrente y «Variables» el resto; los recurrentes se administran en Recurrentes.",
     "Eliminar un gasto desde su detalle no se puede deshacer.",
     "Los importes se muestran en tu moneda base; si el gasto fue en otra moneda, debajo ves el monto original.",
@@ -20,7 +20,7 @@ const MOVIMIENTOS_HELP: InfoHelpContent = {
     { label: "Agregar gasto", href: "/agregar" },
     { label: "Categorías", href: "/categorias" },
     { label: "Recurrentes", href: "/recurrentes" },
-    { label: "Ajustes (medios de pago)", href: "/ajustes" },
+    { label: "Tarjetas", href: "/tarjetas" },
   ],
 };
 

@@ -19,7 +19,7 @@ const NUEVO_INGRESO_HELP: InfoHelpContent = {
   relacionado: [
     { label: "Ingresos", href: "/ingresos" },
     { label: "Recurrentes", href: "/recurrentes" },
-    { label: "Ajustes (cuentas)", href: "/ajustes" },
+    { label: "Tarjetas y cuentas", href: "/tarjetas" },
   ],
 };
 

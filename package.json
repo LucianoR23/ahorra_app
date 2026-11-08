@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --project=chromium",
+    "test:screens": "playwright test --project=screens"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",

@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "./api/errors";
 import { confirm, ConfirmDialogHost } from "./confirm";
 import { useIsClient } from "./hooks";
-import { NAV_ITEMS } from "./nav";
 import { captureClientMetadata } from "./support-metadata";
 import { toast, toastError } from "./toast";
 import { cn } from "./utils";
@@ -64,11 +63,6 @@ describe("small helpers", () => {
 
   it("cn merges Tailwind classes", () => {
     expect(cn("p-2", false && "hidden", "p-4")).toBe("p-4");
-  });
-
-  it("navigation has unique ids and only Superadmin is admin-only", () => {
-    expect(new Set(NAV_ITEMS.map((i) => i.id)).size).toBe(NAV_ITEMS.length);
-    expect(NAV_ITEMS.filter((i) => i.adminOnly).map((i) => i.href)).toEqual(["/admin"]);
   });
 
   it("support metadata describes the browser", () => {

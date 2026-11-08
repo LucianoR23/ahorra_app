@@ -17,7 +17,7 @@ const CATEGORIAS_HELP: InfoHelpContent = {
   relacionado: [
     { label: "Agregar gasto", href: "/agregar" },
     { label: "Movimientos", href: "/movimientos" },
-    { label: "Ajustes (hogar)", href: "/ajustes" },
+    { label: "Hogar", href: "/hogar" },
   ],
 };
 

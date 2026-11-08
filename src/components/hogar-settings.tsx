@@ -32,7 +32,7 @@ function CreateHogarCard() {
             ¿Compartís gastos con alguien? Creá un hogar, invitalo y llevá las cuentas entre ustedes.
           </p>
         </div>
-        <Link href="/ajustes/hogares/nuevo">
+        <Link href="/hogar/nuevo">
           <Button variant="outline" size="xs">
             Crear hogar
           </Button>
@@ -61,7 +61,7 @@ export function HogarOnly({ children }: { children: (hogarId: string) => React.R
             Ir al hogar
           </Button>
         ) : (
-          <Link href="/ajustes/hogares/nuevo">
+          <Link href="/hogar/nuevo">
             <Button variant="outline" size="sm">
               Crear hogar
             </Button>

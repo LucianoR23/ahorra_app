@@ -15,23 +15,26 @@ test("sign up, land in Mi plata, create a hogar, keep the session on reload, log
   await expect(page).toHaveURL(/\/verify-email\/pending/);
 
   // Email verification is soft: the app lets the new user in, straight to
-  // "Mi plata" (plan 1.2). No hogar yet: no "Yo · Hogar" tabs, no debts.
+  // "Mi plata" (plan 1.2). No hogar yet: no "Yo · Hogar" tabs, and "Más"
+  // only offers to start sharing.
   await page.goto("/");
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("link", { name: "Movimientos" }).first()).toBeVisible();
   await expect(page.getByRole("tab", { name: "Hogar" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Deudas" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Más" }).first().click();
+  await expect(page).toHaveURL(/\/mas$/);
+  await expect(page.getByRole("link", { name: "Cuentas entre ustedes" })).toHaveCount(0);
 
-  // Creating a hogar is optional, from settings; then the tabs appear.
-  await page.goto("/ajustes");
+  // Creating a hogar is optional, from "Más"; then the tabs appear.
+  await page.getByRole("link", { name: "Compartir gastos" }).click();
   await page.getByRole("link", { name: "Crear hogar" }).click();
   await page.getByLabel("Nombre del hogar").fill("Casa E2E");
   await page.getByRole("button", { name: /Crear hogar/ }).click();
-  await expect(page).toHaveURL(/\/ajustes$/);
+  await expect(page).toHaveURL(/\/hogar$/);
   await expect(page.getByRole("tab", { name: "Hogar" }).first()).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("link", { name: "Deudas" }).first()).toBeVisible();
-  await page.getByRole("tab", { name: "Yo" }).first().click();
-  await expect(page.getByRole("link", { name: "Deudas" })).toHaveCount(0);
+  await page.goto("/mas");
+  await expect(page.getByRole("link", { name: "Cuentas entre ustedes" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Compartir gastos" })).toHaveCount(0);
   await page.goto("/");
 
   // The access token lives in memory; a reload restores the session through

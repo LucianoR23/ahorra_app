@@ -13,7 +13,7 @@ const AGREGAR_HELP: InfoHelpContent = {
   ],
   consideraciones: [
     "El monto (mayor a 0), la descripción y el método de pago son obligatorios.",
-    "Solo aparecen las categorías y los métodos de pago activos que ya tengas creados: si falta alguno, agregalo en Categorías o en Ajustes.",
+    "Solo aparecen las categorías y los métodos de pago activos que ya tengas creados: si falta alguno, agregalo en Categorías o en Tarjetas.",
     "Las cuotas se habilitan únicamente si el método de pago las admite; con tarjeta de crédito el gasto se divide automáticamente.",
     "Si pagás en otra moneda, la conversión que ves es estimada: la tasa exacta se congela al crear el gasto.",
     "Compartir aparece solo si tu hogar tiene más de un miembro; en división personalizada las partes deben sumar el total.",
@@ -21,7 +21,7 @@ const AGREGAR_HELP: InfoHelpContent = {
   relacionado: [
     { label: "Movimientos", href: "/movimientos" },
     { label: "Categorías", href: "/categorias" },
-    { label: "Ajustes (métodos, tarjetas y hogar)", href: "/ajustes" },
+    { label: "Tarjetas", href: "/tarjetas" },
   ],
 };
 

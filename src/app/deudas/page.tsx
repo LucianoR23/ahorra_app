@@ -21,7 +21,7 @@ const DEUDAS_HELP: InfoHelpContent = {
   relacionado: [
     { label: "Agregar gasto compartido", href: "/agregar" },
     { label: "Movimientos", href: "/movimientos" },
-    { label: "Ajustes (hogar y miembros)", href: "/ajustes" },
+    { label: "Hogar y miembros", href: "/hogar" },
   ],
 };
 

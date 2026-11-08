@@ -21,7 +21,7 @@ const RECURRENTES_HELP: InfoHelpContent = {
     { label: "Movimientos", href: "/movimientos" },
     { label: "Ingresos", href: "/ingresos" },
     { label: "Categorías", href: "/categorias" },
-    { label: "Ajustes (métodos de pago)", href: "/ajustes" },
+    { label: "Tarjetas", href: "/tarjetas" },
   ],
 };
 

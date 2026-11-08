@@ -26,11 +26,11 @@ const NUEVO_HOGAR_HELP: InfoHelpContent = {
     "Creá el hogar: quedás como dueño y pasa a ser tu hogar activo.",
   ],
   consideraciones: [
-    "Vas a ser el dueño del hogar; podés invitar miembros después desde Ajustes.",
+    "Vas a ser el dueño del hogar; podés invitar miembros después desde Hogar.",
     "Todos los montos se convierten a la moneda base para los reportes.",
-    "Al crearlo, se vuelve tu hogar activo y te lleva a Ajustes.",
+    "Al crearlo, se vuelve tu hogar activo y te lleva a Hogar.",
   ],
-  relacionado: [{ label: "Volver a Ajustes", href: "/ajustes" }],
+  relacionado: [{ label: "Volver al hogar", href: "/hogar" }],
 };
 
 export default function Page() {
@@ -70,7 +70,7 @@ function NewHouseholdInner() {
       // Drop household-scoped caches so the switch to the new hogar reflects empty state.
       swrMutate(() => true, undefined, { revalidate: true });
       toast.success(`Hogar "${hh.name}" creado`);
-      router.replace("/ajustes");
+      router.replace("/hogar");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "No se pudo crear el hogar");
     } finally {
@@ -82,10 +82,10 @@ function NewHouseholdInner() {
     <div className="mx-auto w-full max-w-md px-4 py-8">
       <div className="mb-4 flex items-center justify-between">
         <Link
-          href="/ajustes"
+          href="/hogar"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="size-3" /> Volver a Ajustes
+          <ArrowLeft className="size-3" /> Volver al hogar
         </Link>
         <InfoHelp content={NUEVO_HOGAR_HELP} />
       </div>

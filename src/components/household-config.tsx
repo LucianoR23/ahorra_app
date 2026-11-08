@@ -121,7 +121,7 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
       invalidateHouseholds();
       swrMutate(() => true, undefined, { revalidate: true });
       toast.success("Hogar eliminado");
-      router.replace("/ajustes");
+      router.replace("/");
     } catch (e) {
       toastError(e, "No se pudo eliminar el hogar");
     }
@@ -137,7 +137,7 @@ export function HouseholdConfig({ householdId }: { householdId: string }) {
       invalidateHouseholds();
       swrMutate(() => true, undefined, { revalidate: true });
       toast.success("Saliste del hogar");
-      router.replace("/ajustes");
+      router.replace("/");
     } catch (e) {
       toastError(e, "No se pudo salir del hogar");
     }

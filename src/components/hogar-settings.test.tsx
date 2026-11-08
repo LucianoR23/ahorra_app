@@ -21,7 +21,7 @@ describe("HogarSettings", () => {
   it("offers to create a hogar when there is none", async () => {
     households([personalSpace]);
     render(<HogarSettings />, { wrapper: WithSWR });
-    expect(await screen.findByRole("link", { name: "Crear hogar" })).toHaveAttribute("href", "/ajustes/hogares/nuevo");
+    expect(await screen.findByRole("link", { name: "Crear hogar" })).toHaveAttribute("href", "/hogar/nuevo");
   });
 
   it("shows the hogar's settings from the Mi plata tab", async () => {
