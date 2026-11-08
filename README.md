@@ -131,7 +131,7 @@ cd ../valuo_app
 corepack pnpm dev   # http://localhost:3005
 ```
 
-**Before pushing:** `corepack pnpm check` runs what CI runs (lint, typecheck, unit tests, build, `pnpm audit --prod --audit-level high`). CI (`.github/workflows/ci.yml`) also scans the git history with gitleaks and, on PRs, runs the E2E. Dependabot opens weekly update PRs against `next`.
+**Before pushing:** `corepack pnpm check` runs what CI runs (lint, typecheck, unit tests, build, `pnpm audit --audit-level high` on production and on all dependencies). CI (`.github/workflows/ci.yml`) also scans the git history with gitleaks and, on PRs, runs the E2E. Dependabot opens weekly update PRs against `next`.
 
 ### Tests
 
