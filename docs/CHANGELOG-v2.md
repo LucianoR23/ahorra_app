@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### Maintenance: dependencies (2026-11-08)
+- Dev tools (PR #27): shadcn CLI 4.3 → 4.23, tailwindcss and @tailwindcss/postcss 4.2 → 4.3.5, eslint 9.39.5. `pnpm audit` over all dependencies went from 80 advisories (28 high, 1 critical) to 3 with no usable fix, documented in `pnpm-workspace.yaml`. CI and `pnpm check` now fail on high/critical advisories in dev dependencies too.
+- Runtime, within range: @base-ui/react 1.4 → 1.9, lucide-react 1.8 → 1.70 (some icons are redrawn, e.g. the credit card), recharts 3.10.1, swr 2.5.1, zustand 5.1, date-fns 4.4, sonner 2.0.8, tailwind-merge 3.7, React types 19.3. Screenshot harness reviewed: only icon drawings change.
+- eslint stays on 9 for now: eslint 10 lints this codebase fine, but eslint-plugin-react, -import and -jsx-a11y (pulled by eslint-config-next 16.4.5) don't declare support for it yet.
+
 ### 1.4 (app part): Argentine categories
 - Subcategories: every category picker (new expense, recurring, goal, expense detail, the Movimientos filter) uses the new `CategorySelect`, which lists each category followed by its subcategories, indented. Filtering Movimientos by a parent also shows its subcategories' expenses (API side).
 - Categorías lists each category with its subcategories under it. The form has "Dentro de" to pick a top-level parent or none; a category that has subcategories can't go inside another one. Deleting a parent warns that its subcategories become top-level categories.
