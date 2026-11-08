@@ -215,7 +215,7 @@ export default function OnboardingPage() {
               <div>
                 <h1 className="text-lg font-semibold">Invitá a alguien</h1>
                 <p className="text-sm text-muted-foreground">
-                  Opcional — podés invitar miembros ahora o más tarde desde Ajustes.
+                  Opcional — podés invitar miembros ahora o más tarde desde Hogar.
                 </p>
               </div>
             </div>

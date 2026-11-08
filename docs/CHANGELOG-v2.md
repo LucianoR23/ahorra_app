@@ -4,6 +4,17 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10a: redesign foundation
+- Theme from the brand: `globals.css` imports the vendored `brand/tokens.css` and maps the shadcn variables to it, so light and dark come from `brand/tokens.json`. New utilities with the brand names (`bg-surface-2`, `text-ink-muted`, `bg-brand` for the amber, `text-on-brand`, `text-title`, `text-body`, ...), radii 8/14/22, `shadow-sheet`, chart tokens. The old names stay as aliases until 1.10b. Manrope replaces Geist.
+- The theme follows the OS; "Apariencia" in Ajustes overrides it (Sistema, Claro, Oscuro). The header theme toggles are gone; the toaster follows the chosen theme.
+- Lucide is the only icon library (hugeicons removed). Categories show Lucide icons: the editor picks from an icon grid and saves its key; older categories that store an emoji map to an icon when shown (`src/lib/category-icons.ts`; 1.4 migrates the data).
+- `components/ui` per the design components sheet: pill buttons (48 px), 48 px fields with a strong border and focus ring, cards with shadow in light and border in dark, badge, switch, dialog and bottom sheet. New: checkbox, popover, alert, empty-state, result-card, page-header, month-navigator, list-row (+ skeleton, installment bar), menu-list, segmented, money and date-label, with `formatAmount` ("$ 128.450,50", "US$", "+" for incomes) and `dayLabel` ("Hoy", "Ayer", "Lun 2", "3/12").
+- New shell: bottom nav Inicio · Movimientos · + · Tarjetas · Más on mobile, sidebar with "Cargar gasto" on desktop, content up to 1120 px. "Más" is a page with grouped links (Tu plata, Hogar, Cuenta) and "Cerrar sesión". Card setup moved to `/tarjetas`, the hogar to `/hogar` (creating one at `/hogar/nuevo`); Ajustes keeps profile and appearance.
+- Type is never below 12 px. `src/test/design-rules.test.ts` keeps it that way and forbids emojis, other icon libraries and native controls (the two native checkboxes are now `ui/checkbox`).
+- `tailwind-merge` knows the brand type scale: before, `text-body` removed the text color next to it (black text on the black button).
+- Screenshot harness: `pnpm test:screens` (Playwright project `screens`) saves every screen in light/dark, mobile/desktop; CI uploads them as an artifact. Pixel comparison comes in 1.10b.
+- Design handoff copied to `docs/design/app`.
+
 ### 1.2 (app part): "Mi plata" + Hogar
 - Everyone starts in "Mi plata" (the API creates it). The household dropdown is gone; with a hogar, a "Yo · Hogar" selector (new `components/ui/tabs.tsx`, on Base UI Tabs) switches the space every screen reads (`src/lib/spaces.ts`). Without a hogar there is no household UI: no tabs, no "Deudas" in the menu.
 - Add expense: a "Compartido" switch, only with a hogar, remembered per device (`app.expense_shared`). Off: the expense goes to "Mi plata". On: to the hogar with its split rules (custom split still available). Categories follow the chosen space. After saving, the app shows the space the expense went to.

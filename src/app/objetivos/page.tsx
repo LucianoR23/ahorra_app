@@ -21,7 +21,7 @@ const OBJETIVOS_HELP: InfoHelpContent = {
     { label: "Movimientos", href: "/movimientos" },
     { label: "Ingresos", href: "/ingresos" },
     { label: "Categorías", href: "/categorias" },
-    { label: "Ajustes (miembros)", href: "/ajustes" },
+    { label: "Hogar y miembros", href: "/hogar" },
   ],
 };
 

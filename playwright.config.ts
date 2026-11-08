@@ -17,7 +17,7 @@ const WEB_PORT = 3005;
 const API_URL = `http://localhost:${API_PORT}`;
 
 const apiDir = path.resolve(process.env.E2E_API_DIR ?? "../valuo_api");
-const dbURL = process.env.E2E_DATABASE_URL ?? "postgres://postgres:postgres@localhost:5433/valuo_e2e?sslmode=disable";
+const dbURL = process.env.E2E_DATABASE_URL ?? "postgres://valuo:valuo_dev_pw@localhost:5433/valuo_e2e?sslmode=disable";
 const ci = !!process.env.CI;
 
 export default defineConfig({
@@ -38,7 +38,11 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /screens\.spec\.ts/ },
+    // Screenshot harness (plan 1.10a), run on its own: `pnpm test:screens`.
+    { name: "screens", use: { ...devices["Desktop Chrome"] }, testMatch: /screens\.spec\.ts/ },
+  ],
   webServer: [
     {
       command: "go run ./cmd/api",
