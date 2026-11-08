@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CategoryBarChart, DonutChart } from "@/components/report-charts-lazy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMonthlyReport } from "@/lib/api/hooks";
-import { fmtMoney } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_COLORS = [
@@ -105,7 +105,7 @@ export function MonthlyReportCard() {
               <Card key={s.label} className="rounded-2xl border-0 shadow-card">
                 <CardContent className="p-3 text-center">
                   <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <p className="mt-0.5 font-mono text-sm font-bold">{fmtMoney(s.value, cur)}</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold"><Money amount={s.value} currency={cur} /></p>
                 </CardContent>
               </Card>
             ))}
@@ -149,7 +149,7 @@ export function MonthlyReportCard() {
                             <span className="inline-block size-2.5 rounded-sm" style={{ backgroundColor: d.fill }} />
                             <span className="text-xs font-semibold">{d.name}</span>
                           </div>
-                          <p className="ml-4 font-mono text-xs">{fmtMoney(d.value, cur)}</p>
+                          <p className="ml-4 font-mono text-xs"><Money amount={d.value} currency={cur} /></p>
                           <p className="ml-4 text-xs text-muted-foreground">{d.pct.toFixed(1)}%</p>
                         </div>
                       ))}

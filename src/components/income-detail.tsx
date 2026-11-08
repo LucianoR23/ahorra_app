@@ -15,7 +15,8 @@ import { deleteIncome, patchIncome } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { confirm } from "@/lib/confirm";
-import { fmtMoney, fmtDateShort } from "@/lib/format";
+import { fmtDateShort } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { INCOME_SOURCES, incomeSourceLabel } from "@/lib/labels";
@@ -112,11 +113,11 @@ export function IncomeDetailView({ id }: { id: string }) {
             </div>
             <div className="text-right shrink-0">
               <div className="font-mono text-xl font-bold text-positive">
-                +{fmtMoney(income.amountBase, income.baseCurrency, { decimals: 0 })}
+                <Money amount={income.amountBase} currency={income.baseCurrency} income />
               </div>
               {income.currency !== income.baseCurrency && (
                 <div className="text-xs text-muted-foreground">
-                  {fmtMoney(income.amount, income.currency, { decimals: 0 })}
+                  <Money amount={income.amount} currency={income.currency} />
                   {income.rateUsed && ` @ ${income.rateUsed.toFixed(2)}`}
                 </div>
               )}

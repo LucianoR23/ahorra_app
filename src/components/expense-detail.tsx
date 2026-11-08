@@ -26,7 +26,8 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { confirm } from "@/lib/confirm";
-import { fmtMoney, fmtDateShort } from "@/lib/format";
+import { fmtDateShort } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { cn } from "@/lib/utils";
 import type { Installment } from "@/lib/api/schemas";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -155,11 +156,11 @@ export function ExpenseDetailView({ id }: { id: string }) {
             </div>
             <div className="text-right shrink-0">
               <div className="font-mono text-xl font-bold">
-                {fmtMoney(expense.amountBase, expense.baseCurrency, { decimals: 0 })}
+                <Money amount={expense.amountBase} currency={expense.baseCurrency} />
               </div>
               {expense.currency !== expense.baseCurrency && (
                 <div className="text-xs text-muted-foreground">
-                  {fmtMoney(expense.amount, expense.currency, { decimals: 0 })}
+                  <Money amount={expense.amount} currency={expense.currency} />
                   {expense.rateUsed && ` @ ${expense.rateUsed.toFixed(2)}`}
                 </div>
               )}
@@ -353,7 +354,7 @@ function InstallmentRow({
             </div>
           </div>
           <div className="shrink-0 font-mono text-sm font-semibold">
-            {fmtMoney(installment.installmentAmountBase, baseCurrency, { decimals: 0 })}
+            <Money amount={installment.installmentAmountBase} currency={baseCurrency} />
           </div>
         </div>
       </button>
@@ -368,7 +369,7 @@ function InstallmentRow({
                 <div key={s.userId} className="flex items-center justify-between text-xs">
                   <span className="truncate">{getName(s.userId)}</span>
                   <span className="font-mono font-semibold">
-                    {fmtMoney(s.amountBaseOwed, baseCurrency, { decimals: 0 })}
+                    <Money amount={s.amountBaseOwed} currency={baseCurrency} />
                   </span>
                 </div>
               ))}

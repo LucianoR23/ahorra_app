@@ -9,4 +9,6 @@ export const STORAGE_KEYS = {
   pushDismissed: "app.push.dismissed",
   /** Last "Compartido" choice in the expense form (plan 1.2). */
   expenseShared: "app.expense_shared",
+  /** Discreet mode, per device (plan 1.9). */
+  discreet: "app.discreet",
 } as const;

@@ -31,6 +31,7 @@ import {
 import type { Insight } from "@/lib/api/schemas";
 import { toast, toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { useMaskText } from "@/stores/discreet";
 
 const PAGE_SIZE = 25;
 
@@ -459,6 +460,7 @@ function EmptyState({
 }
 
 function InsightRow({ insight }: { insight: Insight }) {
+  const mask = useMaskText();
   const visual = severityVisual(insight.severity);
   const { Icon } = visual;
   const [optimisticRead, setOptimisticRead] = useState(insight.isRead);
@@ -511,7 +513,7 @@ function InsightRow({ insight }: { insight: Insight }) {
         isRead ? "border-border/60 opacity-85" : "border-border",
         removing && "scale-[0.98] opacity-0",
       )}
-      aria-label={`Notificación: ${insight.title}`}
+      aria-label={`Notificación: ${mask(insight.title)}`}
       onClick={() => {
         if (!isRead) {
           setOptimisticRead(true);
@@ -559,10 +561,10 @@ function InsightRow({ insight }: { insight: Insight }) {
             isRead ? "font-semibold" : "font-bold",
           )}
         >
-          {insight.title}
+          {mask(insight.title)}
         </p>
         <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-          {insight.body}
+          {mask(insight.body)}
         </p>
       </div>
 

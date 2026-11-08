@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.9 (part 1): discreet mode
+- One tap on the eye in Inicio hides every amount in the app as `$ ••••••` (fixed length, so it doesn't hint at the size), with `aria-label="Monto oculto"` and the toast from the design. It is a per-device choice (localStorage `app.discreet`) and can also be switched in Seguridad, "Privacidad en este dispositivo".
+- Every amount now goes through `<Money>` or `useFormatAmount()` (`src/stores/discreet.ts`): the 71 uses of `fmtARS`/`fmtMoney` moved over and both are gone. A lint rule forbids importing `formatAmount` anywhere else, so a new screen can't leak an amount. Side effect, per design README §6: amounts read `$ 128.450,50` (space after the symbol, cents only when there are any) and expenses carry no "−" sign; `formatAmount` gained `compact` (`$ 12,5k`).
+- Charts stay (they are proportions) but lose their axis numbers, and their tooltips are masked. Notification titles and bodies mask the amounts the API writes in them.
+- Amount inputs stay visible while you type.
+
 ### Maintenance: dependencies (2026-11-08)
 - Dev tools (PR #27): shadcn CLI 4.3 → 4.23, tailwindcss and @tailwindcss/postcss 4.2 → 4.3.5, eslint 9.39.5. `pnpm audit` over all dependencies went from 80 advisories (28 high, 1 critical) to 3 with no usable fix, documented in `pnpm-workspace.yaml`. CI and `pnpm check` now fail on high/critical advisories in dev dependencies too.
 - Runtime, within range: @base-ui/react 1.4 → 1.9, lucide-react 1.8 → 1.70 (some icons are redrawn, e.g. the credit card), recharts 3.10.1, swr 2.5.1, zustand 5.1, date-fns 4.4, sonner 2.0.8, tailwind-merge 3.7, React types 19.3. Screenshot harness reviewed: only icon drawings change.

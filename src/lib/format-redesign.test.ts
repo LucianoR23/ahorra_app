@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { dayLabel, formatAmount } from "./format";
+import { dayLabel, formatAmount, maskAmountsInText, maskedAmount } from "./format";
 
 describe("formatAmount (design README §6)", () => {
   it("writes pesos with a space and es-AR digits", () => {
@@ -26,6 +26,33 @@ describe("formatAmount (design README §6)", () => {
   it("rounds float noise instead of showing it", () => {
     expect(formatAmount(0.1 + 0.2)).toBe("$ 0,30");
     expect(formatAmount(100.004)).toBe("$ 100");
+  });
+
+  it("compacts thousands below a million with an es-AR comma", () => {
+    expect(formatAmount(12500, "ARS", { compact: true })).toBe("$ 12,5k");
+    expect(formatAmount(250000, "ARS", { compact: true })).toBe("$ 250k");
+    expect(formatAmount(999, "ARS", { compact: true })).toBe("$ 999");
+    expect(formatAmount(2_500_000, "ARS", { compact: true })).toBe("$ 2.500.000");
+    expect(formatAmount(1500, "USD", { compact: true, income: true })).toBe("+ US$ 1,5k");
+  });
+});
+
+describe("discreet mode (plan 1.9)", () => {
+  it("hides an amount behind a fixed-length mask", () => {
+    expect(maskedAmount()).toBe("$ ••••••");
+    expect(maskedAmount("USD")).toBe("US$ ••••••");
+  });
+
+  it("masks the amounts the API writes inside notification text", () => {
+    expect(maskAmountsInText("Juan cargó \"Súper\" te toca 1234.56 ARS")).toBe("Juan cargó \"Súper\" te toca $ ••••••");
+    expect(maskAmountsInText("Semana cerrada: $45210.00")).toBe("Semana cerrada: $ ••••••");
+    expect(maskAmountsInText("Pasó de 10.00 USD a 12.50 USD (umbral 20%).")).toBe("Pasó de $ •••••• a $ •••••• (umbral 20%).");
+    expect(maskAmountsInText("En 3 días vence la cuota 2/6 de \"TV\" ($ 1.500).")).toBe("En 3 días vence la cuota 2/6 de \"TV\" ($ ••••••).");
+  });
+
+  it("leaves text without amounts alone", () => {
+    const text = "Objetivo al 80%. Cuota 3/12 del 15/11. Sumaste 2 categorías.";
+    expect(maskAmountsInText(text)).toBe(text);
   });
 });
 

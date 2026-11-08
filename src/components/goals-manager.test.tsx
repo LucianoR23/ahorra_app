@@ -66,15 +66,16 @@ beforeEach(() => {
 describe("GoalsManager", () => {
   it("measures a USD goal against its target converted with today's rate, and says so", async () => {
     renderGoals();
-    expect(await screen.findByText("$150.000")).toBeInTheDocument();
-    expect(screen.getByText("(US$100)", { exact: false })).toBeInTheDocument();
-    expect(screen.getByText("Calculado con la cotización de hoy (1 USD = $1.500)")).toBeInTheDocument();
+    expect(await screen.findByText("$ 150.000")).toBeInTheDocument();
+    expect(screen.getByText("US$ 100")).toBeInTheDocument();
+    const note = screen.getByText(/Calculado con la cotización de hoy/);
+    expect(note).toHaveTextContent("Calculado con la cotización de hoy (1 USD = $ 1.500)");
     expect(screen.getAllByText("En camino")).toHaveLength(2); // status "ok" renders
   });
 
   it("shows weekly goals as weekly and no rate note for base-currency goals", async () => {
     renderGoals();
-    expect(await screen.findByText("$50.000")).toBeInTheDocument();
+    expect(await screen.findByText("$ 50.000")).toBeInTheDocument();
     expect(screen.getByText(/Semanal/)).toBeInTheDocument();
     expect(screen.getAllByText(/Calculado con la cotización de hoy/)).toHaveLength(1);
   });

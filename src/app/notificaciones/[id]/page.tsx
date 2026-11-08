@@ -22,6 +22,7 @@ import { markInsightRead, deleteInsight } from "@/lib/api/mutations";
 import { invalidateInsights } from "@/components/insights-inbox";
 import { toast, toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { useMaskText } from "@/stores/discreet";
 
 const TYPE_LABELS: Record<string, string> = {
   daily_summary: "Resumen diario",
@@ -53,6 +54,7 @@ function severityVisual(sev: "info" | "warning" | "critical") {
 }
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const mask = useMaskText();
   const { id } = use(params);
   const router = useRouter();
   const { data, isLoading, error } = useInsight(id);
@@ -152,7 +154,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   )}
                 </div>
                 <h1 className="mt-1 text-lg font-bold leading-tight">
-                  {data.title}
+                  {mask(data.title)}
                 </h1>
                 <p className="text-xs text-muted-foreground">
                   {new Date(data.createdAt).toLocaleString("es-AR", {
@@ -167,7 +169,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </div>
 
             <div className="whitespace-pre-wrap rounded-lg bg-muted/40 p-4 text-sm leading-relaxed">
-              {data.body}
+              {mask(data.body)}
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-3">
