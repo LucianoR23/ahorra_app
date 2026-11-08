@@ -114,7 +114,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-x-hidden pb-28 md:pb-10">
           <div
             key={pathname}
-            className="mx-auto w-full max-w-[1120px] px-4 pt-2 animate-in fade-in slide-in-from-bottom-1 duration-(--duration-base) md:px-10 md:pt-2"
+            className="mx-auto w-full max-w-[1120px] px-4 pt-2 animate-in fade-in slide-in-from-bottom-1 duration-(--duration-base) motion-reduce:animate-none md:px-10 md:pt-2"
           >
             {children}
           </div>

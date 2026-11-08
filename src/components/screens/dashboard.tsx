@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Sparkles, AlertTriangle, Info, TrendingUp, PiggyBank } from "lucide-react";
+import { Sparkles, AlertTriangle, Info, TrendingUp, PiggyBank } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +13,6 @@ import { fmtARS, greeting } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useIsClient } from "@/lib/hooks";
 import { useAuthStore } from "@/stores/auth";
-import { InsightsUnreadBadge } from "@/components/insights-inbox";
 import {
   useMonthlyReport,
   useRecentExpenses,
@@ -106,18 +105,6 @@ function Header() {
         <h1 className="mt-0.5 text-2xl md:text-[28px] font-bold tracking-tight first-letter:uppercase">
           {dateLabel}
         </h1>
-      </div>
-      <div className="hidden md:flex items-center gap-2">
-        <Link
-          href="/notificaciones"
-          aria-label="Notificaciones"
-          className="relative grid size-10.5 place-items-center rounded-2xl bg-card shadow-card border border-border text-foreground"
-        >
-          <Bell className="size-4.5" />
-          <span className="absolute -right-1 -top-1">
-            <InsightsUnreadBadge />
-          </span>
-        </Link>
       </div>
     </div>
   );
