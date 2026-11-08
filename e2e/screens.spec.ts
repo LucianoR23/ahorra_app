@@ -43,6 +43,10 @@ async function settle(page: Page) {
     .waitForFunction(() => !document.querySelector('[data-slot="skeleton"]'), undefined, { timeout: 5_000 })
     .catch(() => {});
   await page.evaluate(() => document.fonts.ready);
+  // Let page and view transitions finish so a screen is not shot mid-fade.
+  await page
+    .waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"), undefined, { timeout: 5_000 })
+    .catch(() => {});
 }
 
 async function shoot(browser: Browser, email: string, theme: (typeof THEMES)[number], vp: keyof typeof VIEWPORTS) {
