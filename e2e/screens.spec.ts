@@ -92,7 +92,13 @@ test("onboarding screens", async ({ browser }) => {
   for (const theme of THEMES) {
     const context = await browser.newContext({ viewport: VIEWPORTS.mobile, colorScheme: theme, reducedMotion: "reduce" });
     const page = await context.newPage();
-    const shot = (step: string) => page.screenshot({ path: `test-results/screens/onboarding-${step}.${theme}.mobile.png`, fullPage: true });
+    const shot = async (step: string) => {
+      // Let the checkbox transitions finish before the shot.
+      await page
+        .waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"), undefined, { timeout: 5_000 })
+        .catch(() => {});
+      await page.screenshot({ path: `test-results/screens/onboarding-${step}.${theme}.mobile.png`, fullPage: true });
+    };
 
     await page.goto("/login");
     await page.getByLabel("Email", { exact: true }).fill(user.email);
