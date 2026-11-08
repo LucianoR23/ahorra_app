@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.4 (app part): Argentine categories
+- Subcategories: every category picker (new expense, recurring, goal, expense detail, the Movimientos filter) uses the new `CategorySelect`, which lists each category followed by its subcategories, indented. Filtering Movimientos by a parent also shows its subcategories' expenses (API side).
+- Categorías lists each category with its subcategories under it. The form has "Dentro de" to pick a top-level parent or none; a category that has subcategories can't go inside another one. Deleting a parent warns that its subcategories become top-level categories.
+- Icons are keys only: the emoji map is gone (the API migrated stored emojis). Seven icons were added for the new defaults: SUBE, Taxi, Alquiler, Hogar, Gas, Agua, Salud.
+- `categorySchema.parentId` and `CategoryInput.parentId`.
+- The full-flow onboarding test gets its own 30 s timeout: under coverage it could pass the global 15 s.
+
 ### 1.3: new onboarding
 - `/onboarding` is rebuilt in the new design: name → "¿Cómo pagás?" (Visa, Mastercard, American Express, Mercado Pago, Efectivo o débito) → bank, closing and due day for each card → first expense with the regular form (natural language comes in 3.1). Every step can be skipped.
 - Cards are network × bank: the name defaults to "<Network> <Bank>" and can be changed; the bank comes from the user's banks or an Argentine list (created when missing, "Otro" for any other). The current statement is computed from the two days. Mercado Pago becomes a wallet and asks whether the user also has its credit card (then a Mastercard Mercado Pago card). "Efectivo o débito" adds a "Débito" ("Efectivo" exists from sign-up). Re-entering after a failure does not duplicate what was saved.
