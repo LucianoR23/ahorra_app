@@ -36,7 +36,8 @@ import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { confirm } from "@/lib/confirm";
 import { useHouseholdStore } from "@/stores/household";
-import { fmtMoney, isoToday } from "@/lib/format";
+import { isoToday } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import type { Currency, RecurringExpense, RecurringIncome } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -247,7 +248,7 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
             </div>
           </div>
           <div className="shrink-0 text-right font-mono text-sm font-bold">
-            {fmtMoney(displayAmount, rec.currency, { decimals: 0 })}
+            <Money amount={displayAmount} currency={rec.currency} />
             {rec.amountIsVariable && (
               <div className="text-xs text-muted-foreground">
                 {rec.lastAmount != null ? "último" : "estimado"}
@@ -341,7 +342,7 @@ function RecurringIncomeCard({ rec, onChanged }: { rec: RecurringIncome; onChang
             </div>
           </div>
           <div className="shrink-0 text-right font-mono text-sm font-bold text-positive">
-            +{fmtMoney(rec.amount, rec.currency, { decimals: 0 })}
+            <Money amount={rec.amount} currency={rec.currency} income />
           </div>
         </div>
         <div className="flex gap-1.5 pt-2 border-t border-border">

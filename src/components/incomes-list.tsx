@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useIncomes, useHouseholdMembers } from "@/lib/api/hooks";
-import { fmtMoney, fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
+import { fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { incomeSourceLabel } from "@/lib/labels";
 
 const PAGE = 20;
@@ -68,7 +69,7 @@ export function IncomesList() {
                 Ingresos del mes
               </div>
               <div className="font-mono text-xl font-bold">
-                +{fmtMoney(sum, baseCurrency, { decimals: 0 })}
+                <Money amount={sum} currency={baseCurrency} income />
               </div>
             </div>
             <Link
@@ -109,11 +110,11 @@ export function IncomesList() {
               </div>
               <div className="shrink-0 text-right">
                 <div className="font-mono text-sm font-semibold text-positive">
-                  +{fmtMoney(inc.amountBase, inc.baseCurrency, { decimals: 0 })}
+                  <Money amount={inc.amountBase} currency={inc.baseCurrency} income />
                 </div>
                 {inc.currency !== inc.baseCurrency && (
                   <div className="text-xs text-muted-foreground">
-                    {fmtMoney(inc.amount, inc.currency, { decimals: 0 })}
+                    <Money amount={inc.amount} currency={inc.currency} />
                   </div>
                 )}
               </div>

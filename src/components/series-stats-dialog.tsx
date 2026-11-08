@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSeriesStats } from "@/lib/api/hooks";
-import { fmtMoney, fmtDateShort } from "@/lib/format";
+import { fmtDateShort } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import type { RecurringExpense, SeriesPoint } from "@/lib/api/schemas";
 
 // SeriesStatsDialog: histórico confirmado + variación % mes a mes. Para
@@ -84,7 +85,7 @@ function SummaryRow({
       <div className="rounded-xl bg-muted p-3">
         <div className="text-xs text-muted-foreground">Promedio</div>
         <div className="mt-0.5 font-mono text-sm font-bold">
-          {fmtMoney(average, currency, { decimals: 0 })}
+          <Money amount={average} currency={currency} />
         </div>
       </div>
       <div className="rounded-xl bg-muted p-3">
@@ -128,7 +129,7 @@ function HistoryRow({ point }: { point: SeriesPoint }) {
         )}
       </div>
       <div className="font-mono text-sm font-bold">
-        {fmtMoney(point.amount, point.currency, { decimals: 0 })}
+        <Money amount={point.amount} currency={point.currency} />
       </div>
     </div>
   );

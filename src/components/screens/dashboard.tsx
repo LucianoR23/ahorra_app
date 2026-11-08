@@ -2,6 +2,7 @@
 
 import { Sparkles, AlertTriangle, Info, TrendingUp, PiggyBank } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryIcon } from "@/components/category-icon";
@@ -9,7 +10,10 @@ import { PushProvider } from "@/components/push-provider";
 import { InstallPrompt } from "@/components/install-prompt";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { PendingDraftsCard } from "@/components/pending-drafts-card";
-import { fmtARS, greeting } from "@/lib/format";
+import { greeting } from "@/lib/format";
+import { Money } from "@/components/ui/money";
+import { DiscreetToggle } from "@/components/discreet-toggle";
+import { useMaskText } from "@/stores/discreet";
 import { cn } from "@/lib/utils";
 import { useIsClient } from "@/lib/hooks";
 import { useAuthStore } from "@/stores/auth";
@@ -47,27 +51,27 @@ export function Dashboard() {
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           label="Gastado este mes"
-          value={loadingReport ? null : fmtARS(report?.spentThisMonth ?? 0, { compact: true })}
+          value={loadingReport ? null : <Money amount={report?.spentThisMonth ?? 0} currency={report?.baseCurrency} compact />}
           sub={report ? report.month : "\u00A0"}
           tone="ai"
         />
         <StatCard
           label="A pagar este mes"
-          value={loadingReport ? null : fmtARS(report?.dueThisMonth ?? 0, { compact: true })}
-          sub={report ? `Facturado ${fmtARS(report.billedThisMonth, { compact: true })}` : "\u00A0"}
+          value={loadingReport ? null : <Money amount={report?.dueThisMonth ?? 0} currency={report?.baseCurrency} compact />}
+          sub={report ? <>Facturado <Money amount={report.billedThisMonth} currency={report.baseCurrency} compact /></> : "\u00A0"}
           tone="warn"
         />
         <StatCard
           label="Mayor categoría"
           value={loadingReport ? null : topCat?.categoryName ?? "—"}
-          sub={topCat ? `${fmtARS(topCat.total, { compact: true })} · ${Math.round(topCat.pct)}%` : "Sin datos"}
+          sub={topCat && report ? <><Money amount={topCat.total} currency={report.baseCurrency} compact /> · {Math.round(topCat.pct)}%</> : "Sin datos"}
           textValue
           tone="primary"
         />
         <StatCard
           label="Fijos vs variables"
           value={loadingReport ? null : `${Math.round(fixedPct)}%`}
-          sub={`Fijos ${report ? fmtARS(report.fixedVariable.fixedTotal, { compact: true }) : "—"}`}
+          sub={<>Fijos {report ? <Money amount={report.fixedVariable.fixedTotal} currency={report.baseCurrency} compact /> : "—"}</>}
           tone="positive"
         />
       </div>
@@ -106,6 +110,7 @@ function Header() {
           {dateLabel}
         </h1>
       </div>
+      <DiscreetToggle />
     </div>
   );
 }
@@ -118,8 +123,8 @@ function StatCard({
   textValue,
 }: {
   label: string;
-  value: string | null;
-  sub: string;
+  value: ReactNode | null;
+  sub: ReactNode;
   tone: "ai" | "positive" | "warn" | "primary";
   textValue?: boolean;
 }) {
@@ -154,6 +159,7 @@ function StatCard({
 }
 
 function CoachBubble({ insight, loading }: { insight: Insight | undefined; loading: boolean }) {
+  const mask = useMaskText();
   if (loading) {
     return (
       <div className="flex items-start gap-2.5">
@@ -184,9 +190,9 @@ function CoachBubble({ insight, loading }: { insight: Insight | undefined; loadi
         <div className={cn("text-xs font-bold uppercase tracking-[1.2px]", tone)}>
           Tu coach de hoy
         </div>
-        <div className="mt-1 text-[16px] font-bold tracking-tight">{insight.title}</div>
+        <div className="mt-1 text-[16px] font-bold tracking-tight">{mask(insight.title)}</div>
         <p className="mt-1.5 text-[14px] leading-relaxed text-muted-foreground whitespace-pre-line">
-          {insight.body}
+          {mask(insight.body)}
         </p>
       </div>
     </div>
@@ -236,10 +242,10 @@ function ForecastCard({ report, loading }: { report: MonthlyReport | undefined; 
               Gastado
             </div>
             <div className="mt-0.5 font-mono text-base font-bold tracking-tight">
-              {fmtARS(spent, { compact: true })}
+              <Money amount={spent} currency={report.baseCurrency} compact />
             </div>
             <div className="mt-0.5 font-mono text-xs font-bold text-muted-foreground">
-              de {fmtARS(total, { compact: true })}
+              de <Money amount={total} currency={report.baseCurrency} compact />
             </div>
           </div>
         </div>
@@ -251,10 +257,10 @@ function ForecastCard({ report, loading }: { report: MonthlyReport | undefined; 
             Facturado
           </div>
           <div className="mt-0.5 font-mono text-[24px] font-bold tracking-tight">
-            {fmtARS(report.billedThisMonth, { compact: true })}
+            <Money amount={report.billedThisMonth} currency={report.baseCurrency} compact />
           </div>
           <div className="mt-1 text-xs text-muted-foreground">
-            A pagar {fmtARS(due, { compact: true })} · {report.baseCurrency}
+            A pagar <Money amount={due} currency={report.baseCurrency} compact />
           </div>
         </div>
       </CardContent>
@@ -294,8 +300,7 @@ function IncomeCard({ spent, loadingReport }: { spent: number; loadingReport: bo
               <Skeleton className="mt-1 h-7 w-32" />
             ) : (
               <div className="mt-0.5 font-mono text-[24px] font-bold tracking-tight">
-                {fmtARS(income, { compact: true })}
-                <span className="ml-1 text-xs font-semibold text-muted-foreground">{currency}</span>
+                <Money amount={income} currency={currency} compact />
               </div>
             )}
           </div>
@@ -312,8 +317,7 @@ function IncomeCard({ spent, loadingReport }: { spent: number; loadingReport: bo
                   isPositive ? "text-positive" : "text-destructive",
                 )}
               >
-                {isPositive ? "+" : "−"}
-                {fmtARS(Math.abs(net), { compact: true })}
+                <Money amount={net} currency={currency} income={isPositive} compact className="text-inherit" />
               </div>
             )}
           </div>
@@ -387,7 +391,7 @@ function RecentList({
                 </div>
               </div>
               <div className="shrink-0 font-mono text-sm font-semibold">
-                −{fmtARS(e.amountBase, { compact: e.amountBase > 99999 })}
+                <Money amount={e.amountBase} currency={e.baseCurrency} compact={e.amountBase > 99999} />
               </div>
             </div>
           );

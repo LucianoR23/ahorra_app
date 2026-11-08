@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TrendsLineChart } from "@/components/report-charts-lazy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrendsReport } from "@/lib/api/hooks";
-import { fmtMoney } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { cn } from "@/lib/utils";
 
 const MONTH_OPTIONS = [3, 6, 12] as const;
@@ -86,7 +86,7 @@ export function TrendsReportCard() {
                         <p className="text-xs text-muted-foreground">{l.label} (último mes)</p>
                       </div>
                       <p className="mt-0.5 font-mono text-sm font-bold">
-                        {fmtMoney(last[l.key], cur)}
+                        <Money amount={last[l.key]} currency={cur} />
                       </p>
                     </CardContent>
                   </Card>

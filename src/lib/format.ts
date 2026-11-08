@@ -1,34 +1,3 @@
-export function fmtARS(n: number, opts: { compact?: boolean; decimals?: number } = {}) {
-  const { compact = false, decimals = 0 } = opts;
-  if (compact && Math.abs(n) >= 1000 && Math.abs(n) < 1_000_000) {
-    const k = n / 1000;
-    return "$" + (k >= 100 ? k.toFixed(0) : k.toFixed(1)) + "k";
-  }
-  return (
-    "$" +
-    Number(n).toLocaleString("es-AR", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    })
-  );
-}
-
-export function fmtMoney(n: number, currency: string, opts: { compact?: boolean; decimals?: number } = {}) {
-  const prefix = currency === "USD" ? "US$" : currency === "EUR" ? "€" : "$";
-  const { compact = false, decimals = 0 } = opts;
-  if (compact && Math.abs(n) >= 1000 && Math.abs(n) < 1_000_000) {
-    const k = n / 1000;
-    return prefix + (k >= 100 ? k.toFixed(0) : k.toFixed(1)) + "k";
-  }
-  return (
-    prefix +
-    Number(n).toLocaleString("es-AR", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    })
-  );
-}
-
 export function greeting(hour: number) {
   if (hour < 12) return "Buen día";
   if (hour < 19) return "Buenas tardes";
@@ -113,16 +82,44 @@ const CURRENCY_PREFIX: Record<string, string> = { ARS: "$", USD: "US$", EUR: "�
 export function formatAmount(
   amount: number,
   currency = "ARS",
-  opts: { cents?: MoneyCents; income?: boolean } = {},
+  opts: { cents?: MoneyCents; income?: boolean; compact?: boolean } = {},
 ): string {
-  const { cents = "auto", income = false } = opts;
+  const { cents = "auto", income = false, compact = false } = opts;
   const value = Math.abs(amount);
+  const sign = amount < 0 ? "-" : income ? "+ " : "";
+  const prefix = currencyPrefix(currency);
+  if (compact && value >= 1000 && value < 1_000_000) {
+    const k = value / 1000;
+    const digits = k.toLocaleString("es-AR", { maximumFractionDigits: k >= 100 ? 0 : 1 });
+    return `${sign}${prefix} ${digits}k`;
+  }
   const whole = Math.round(value * 100) % 100 === 0;
   const decimals = cents === "always" || (cents === "auto" && !whole) ? 2 : 0;
   const digits = value.toLocaleString("es-AR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-  const prefix = CURRENCY_PREFIX[currency] ?? currency;
-  const sign = amount < 0 ? "-" : income ? "+ " : "";
   return `${sign}${prefix} ${digits}`;
+}
+
+function currencyPrefix(currency: string): string {
+  return CURRENCY_PREFIX[currency] ?? currency;
+}
+
+// ── Discreet mode (plan 1.9) ────────────────────────────────────────────
+
+/** Fixed length, so a hidden amount doesn't hint at its size. */
+export const MASKED_DIGITS = "••••••";
+
+/** What a hidden amount shows: `$ ••••••`, `US$ ••••••`. */
+export function maskedAmount(currency = "ARS"): string {
+  return `${currencyPrefix(currency)} ${MASKED_DIGITS}`;
+}
+
+// Amounts inside API text (notification titles and bodies): "$1234.56",
+// "1234.56 ARS", "US$ 10". The API writes them in these two shapes.
+const AMOUNT_IN_TEXT = /(?:US\$|\$|€)\s?-?\d(?:[\d.,]*\d)?|-?\d(?:[\d.,]*\d)?\s?(?:ARS|USD|EUR)\b/g;
+
+/** Replaces every amount in a free text with `$ ••••••`. */
+export function maskAmountsInText(text: string): string {
+  return text.replace(AMOUNT_IN_TEXT, maskedAmount());
 }
 
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];

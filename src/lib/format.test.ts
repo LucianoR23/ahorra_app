@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   currentMonth,
-  fmtARS,
   fmtDateShort,
-  fmtMoney,
   fmtMonthLong,
   greeting,
   isoMonth,
@@ -16,27 +14,6 @@ import {
 import { FREQUENCY_LABELS, INCOME_SOURCES, incomeSourceLabel, PAYMENT_METHOD_KIND_LABELS, TICKET_OPEN_STATUSES } from "./labels";
 
 afterEach(() => vi.useRealTimers());
-
-describe("money", () => {
-  it("formats pesos for es-AR", () => {
-    expect(fmtARS(1234567)).toBe("$1.234.567");
-    expect(fmtARS(1234.5, { decimals: 2 })).toBe("$1.234,50");
-    expect(fmtARS(-500)).toBe("$-500");
-  });
-
-  it("compacts thousands only below a million", () => {
-    expect(fmtARS(12500, { compact: true })).toBe("$12.5k");
-    expect(fmtARS(250000, { compact: true })).toBe("$250k");
-    expect(fmtARS(999, { compact: true })).toBe("$999");
-    expect(fmtARS(2_500_000, { compact: true })).toBe("$2.500.000");
-  });
-
-  it("prefixes by currency", () => {
-    expect(fmtMoney(1500, "USD")).toBe("US$1.500");
-    expect(fmtMoney(1500, "EUR", { decimals: 2 })).toBe("€1.500,00");
-    expect(fmtMoney(1500, "ARS", { compact: true })).toBe("$1.5k");
-  });
-});
 
 describe("dates", () => {
   it("greets by hour", () => {

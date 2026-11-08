@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useAiExport } from "@/lib/api/hooks";
-import { fmtMoney } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 
 function isoMonthCurrent() {
   const d = new Date();
@@ -104,19 +104,19 @@ export function AiExportCard() {
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Gastado</span>
-                  <span className="font-mono font-bold">{fmtMoney(data.spent, cur)}</span>
+                  <span className="font-mono font-bold"><Money amount={data.spent} currency={cur} /></span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Facturado</span>
-                  <span className="font-mono font-bold">{fmtMoney(data.billed, cur)}</span>
+                  <span className="font-mono font-bold"><Money amount={data.billed} currency={cur} /></span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Fijo</span>
-                  <span className="font-mono font-bold">{fmtMoney(data.fixedTotal, cur)} ({data.fixedPct.toFixed(0)}%)</span>
+                  <span className="font-mono font-bold"><Money amount={data.fixedTotal} currency={cur} /> ({data.fixedPct.toFixed(0)}%)</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Variable</span>
-                  <span className="font-mono font-bold">{fmtMoney(data.variableTotal, cur)}</span>
+                  <span className="font-mono font-bold"><Money amount={data.variableTotal} currency={cur} /></span>
                 </div>
               </div>
               {data.topCategories.length > 0 && (

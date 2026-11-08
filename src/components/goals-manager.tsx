@@ -35,7 +35,7 @@ import {
 import type { Goal, GoalProgress, Currency } from "@/lib/api/schemas";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
-import { fmtMoney } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { confirm } from "@/lib/confirm";
@@ -160,11 +160,11 @@ export function GoalsManager() {
 
                 <div className="mt-3 flex items-baseline justify-between text-sm">
                   <span className="font-mono font-bold">
-                    {fmtMoney(p.currentAmount, p.baseCurrency)}
+                    <Money amount={p.currentAmount} currency={p.baseCurrency} />
                   </span>
                   <span className="text-muted-foreground">
-                    de <span className="font-semibold text-foreground">{fmtMoney(p.targetAmountBase, p.baseCurrency)}</span>
-                    {p.fxRate !== null && <> ({fmtMoney(p.targetAmount, p.goal.currency)})</>}
+                    de <span className="font-semibold text-foreground"><Money amount={p.targetAmountBase} currency={p.baseCurrency} /></span>
+                    {p.fxRate !== null && <> (<Money amount={p.targetAmount} currency={p.goal.currency} />)</>}
                   </span>
                 </div>
                 <FxNote progress={p} />
@@ -238,7 +238,7 @@ function FxNote({ progress }: { progress: GoalProgress }) {
   if (progress.fxRate === null) return null;
   return (
     <p className="mt-1 text-xs text-muted-foreground">
-      Calculado con la cotización de hoy (1 {progress.goal.currency} = {fmtMoney(progress.fxRate, progress.baseCurrency)})
+      Calculado con la cotización de hoy (1 {progress.goal.currency} = <Money amount={progress.fxRate} currency={progress.baseCurrency} />)
     </p>
   );
 }
@@ -309,16 +309,16 @@ function GoalProgressButton({ goalId, goalName }: { goalId: string; goalName: st
                 <div>
                   <div className="text-xs uppercase text-muted-foreground tracking-wider">Actual</div>
                   <div className="mt-0.5 font-mono text-sm font-bold">
-                    {fmtMoney(data.currentAmount, data.baseCurrency)}
+                    <Money amount={data.currentAmount} currency={data.baseCurrency} />
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs uppercase text-muted-foreground tracking-wider">Objetivo</div>
                   <div className="mt-0.5 font-mono text-sm font-bold">
-                    {fmtMoney(data.targetAmountBase, data.baseCurrency)}
+                    <Money amount={data.targetAmountBase} currency={data.baseCurrency} />
                   </div>
                   {data.fxRate !== null && (
-                    <div className="text-xs text-muted-foreground">{fmtMoney(data.targetAmount, data.goal.currency)}</div>
+                    <div className="text-xs text-muted-foreground"><Money amount={data.targetAmount} currency={data.goal.currency} /></div>
                   )}
                 </div>
                 <div className="col-span-2 border-t border-border pt-2">

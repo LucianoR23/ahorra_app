@@ -19,7 +19,8 @@ import {
 import { useDraftExpenses, useRecurringExpenses } from "@/lib/api/hooks";
 import { confirmDraftExpense } from "@/lib/api/mutations";
 import { toast, toastError } from "@/lib/toast";
-import { fmtMoney, fmtDateShort } from "@/lib/format";
+import { fmtDateShort } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import type { Expense, RecurringExpense } from "@/lib/api/schemas";
 
 // invalidateAfterConfirm: el confirm toca varios caches (drafts, lista de
@@ -118,7 +119,7 @@ function DraftRow({
         </div>
       </div>
       <div className="text-right">
-        <div className="text-sm font-bold">{fmtMoney(draft.amount, draft.currency)}</div>
+        <div className="text-sm font-bold"><Money amount={draft.amount} currency={draft.currency} /></div>
         <div className="text-xs text-amber-700 dark:text-amber-300">Confirmar →</div>
       </div>
     </button>
@@ -180,8 +181,12 @@ function ConfirmDialog({
           <DialogTitle>{draft.description}</DialogTitle>
           <DialogDescription>
             {fmtDateShort(draft.spentAt)} · estimado{" "}
-            {fmtMoney(draft.amount, draft.currency)}
-            {prev !== null ? ` · mes anterior ${fmtMoney(prev, draft.currency)}` : ""}
+            <Money amount={draft.amount} currency={draft.currency} />
+            {prev !== null && (
+              <>
+                {" "}· mes anterior <Money amount={prev} currency={draft.currency} />
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 

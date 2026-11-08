@@ -28,7 +28,8 @@ import {
 import { createSettlement, deleteSettlement } from "@/lib/api/mutations";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
-import { fmtMoney, fmtDateShort, isoToday } from "@/lib/format";
+import { fmtDateShort, isoToday } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { ApiError } from "@/lib/api/errors";
 import { confirm } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
@@ -100,8 +101,7 @@ export function DebtsManager() {
                   net > 0 ? "text-emerald-500" : net < 0 ? "text-destructive" : "text-foreground",
                 )}
               >
-                {net > 0 ? "+" : ""}
-                {fmtMoney(net, baseCurrency)}
+                <Money amount={net} currency={baseCurrency} income={net > 0} className="text-inherit" />
               </span>
               {net > 0 && <TrendingUp className="size-5 text-emerald-500" />}
               {net < 0 && <TrendingDown className="size-5 text-destructive" />}
@@ -161,7 +161,7 @@ export function DebtsManager() {
                       </span>
                     </div>
                     <div className="mt-0.5 font-mono text-base font-bold tracking-tight">
-                      {fmtMoney(b.amount, baseCurrency)}
+                      <Money amount={b.amount} currency={baseCurrency} />
                     </div>
                   </div>
                   {(isMeFrom || isMeTo) && (
@@ -284,7 +284,7 @@ export function DebtsManager() {
                   </div>
                   <div className="shrink-0 text-right">
                     <div className="font-mono text-sm font-semibold">
-                      {fmtMoney(s.amount, s.baseCurrency)}
+                      <Money amount={s.amount} currency={s.baseCurrency} />
                     </div>
                   </div>
                   <SettlementDetailButton id={s.id} fromLabel={memberName(s.fromUser)} toLabel={memberName(s.toUser)} />
@@ -467,7 +467,7 @@ function PayDebtDialog({
             <div className="mt-1 flex items-center justify-between">
               <span className="text-muted-foreground">Deuda actual</span>
               <span className="font-mono font-semibold">
-                {fmtMoney(maxAmount, baseCurrency)}
+                <Money amount={maxAmount} currency={baseCurrency} />
               </span>
             </div>
           </div>
@@ -576,7 +576,7 @@ function SettlementDetailButton({
             <div className="text-center">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Monto</div>
               <div className="mt-0.5 font-mono text-2xl font-bold tracking-tight">
-                {fmtMoney(data.amount, data.baseCurrency)}
+                <Money amount={data.amount} currency={data.baseCurrency} />
               </div>
               <div className="mt-0.5 text-xs font-semibold text-muted-foreground">
                 {data.baseCurrency}

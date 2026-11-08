@@ -21,7 +21,8 @@ import { selectSpace, useSpaces } from "@/lib/spaces";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { createExpense, type ExpenseCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
-import { fmtMoney, isoToday, projectBillingMonth, shiftMonth } from "@/lib/format";
+import { isoToday, projectBillingMonth, shiftMonth } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import type { Currency } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -229,7 +230,7 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
               <div className="text-muted-foreground">
                 1 {currency} ≈ {ratePreview.rate.toLocaleString("es-AR", { maximumFractionDigits: 2 })} {baseCurrency}
                 {" · "}
-                Total: {fmtMoney(ratePreview.amountBase, baseCurrency, { decimals: 0 })}
+                Total: <Money amount={ratePreview.amountBase} currency={baseCurrency} />
               </div>
               <div className="mt-0.5 text-xs text-muted-foreground">La tasa exacta se congela al crear.</div>
             </div>
@@ -310,7 +311,7 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
                 />
                 {amountValid && installments > 1 && (
                   <span className="text-xs text-muted-foreground">
-                    {fmtMoney(amount / installments, currency, { decimals: 0 })} × {installments}
+                    <Money amount={amount / installments} currency={currency} /> × {installments}
                   </span>
                 )}
               </div>
@@ -334,7 +335,7 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
                       )}
                     </span>
                     <span className="font-mono font-semibold shrink-0">
-                      {fmtMoney(b.amountBase, baseCurrency, { decimals: 0 })}
+                      <Money amount={b.amountBase} currency={baseCurrency} />
                     </span>
                   </div>
                 ))}

@@ -13,7 +13,8 @@ import {
   useCategories,
   usePaymentMethods,
 } from "@/lib/api/hooks";
-import { fmtMoney, fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
+import { fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { CategorySelect } from "@/components/category-select";
@@ -211,11 +212,11 @@ export function ExpensesList() {
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="font-mono text-sm font-semibold">
-                    −{fmtMoney(e.amountBase, e.baseCurrency, { compact: e.amountBase > 99999 })}
+                    <Money amount={e.amountBase} currency={e.baseCurrency} compact={e.amountBase > 99999} />
                   </div>
                   {e.currency !== e.baseCurrency && (
                     <div className="text-xs text-muted-foreground">
-                      {fmtMoney(e.amount, e.currency, { decimals: 0 })}
+                      <Money amount={e.amount} currency={e.currency} />
                     </div>
                   )}
                 </div>

@@ -17,7 +17,8 @@ import { useHouseholdStore } from "@/stores/household";
 import { useAuthStore } from "@/stores/auth";
 import { createIncome, type IncomeCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
-import { fmtMoney, isoToday } from "@/lib/format";
+import { isoToday } from "@/lib/format";
+import { Money } from "@/components/ui/money";
 import type { Currency } from "@/lib/api/schemas";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { incomeSourceLabel } from "@/lib/labels";
@@ -143,7 +144,7 @@ export function IncomeForm({
           {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
           {ratePreview && (
             <div className="rounded-lg bg-muted/50 px-3 py-2 text-xs">
-              ≈ {fmtMoney(ratePreview.amountBase, baseCurrency, { decimals: 0 })} (1 {currency} ≈ {ratePreview.rate.toFixed(2)} {baseCurrency})
+              ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> (1 {currency} ≈ {ratePreview.rate.toFixed(2)} {baseCurrency})
             </div>
           )}
         </CardContent>
