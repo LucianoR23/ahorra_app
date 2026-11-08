@@ -167,7 +167,8 @@ describe("OnboardingPage", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
     expect(posts("/me/onboarding/complete")).toHaveLength(1);
     expect(useAuthStore.getState().user?.onboardedAt).toBe("2026-11-08T12:00:00Z");
-  });
+    // The whole flow in one test: under coverage it can pass the global 15 s.
+  }, 30_000);
 
   it("skips the cards step when no card was picked, and reuses a bank the user has", async () => {
     const user = userEvent.setup();

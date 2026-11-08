@@ -7,26 +7,16 @@ describe("category icons", () => {
     expect(categoryIconKey("  bus ")).toBe("bus");
   });
 
-  it("maps the emojis the API seeds and defaults to", () => {
-    // internal/domain/category.go seeds + categories default "💰".
-    expect(categoryIconKey("🍕")).toBe("utensils");
-    expect(categoryIconKey("🏠")).toBe("house");
-    expect(categoryIconKey("🚗")).toBe("car");
-    expect(categoryIconKey("🎬")).toBe("clapperboard");
-    expect(categoryIconKey("💡")).toBe("lightbulb");
-    expect(categoryIconKey("💊")).toBe("pill");
-    expect(categoryIconKey("📦")).toBe("package");
-    expect(categoryIconKey("💰")).toBe("wallet");
-  });
-
-  it("ignores the emoji variation selector", () => {
-    expect(categoryIconKey("✈")).toBe("plane");
-    expect(categoryIconKey("✈️")).toBe("plane");
-    expect(categoryIconKey("🛍")).toBe("shopping-bag");
+  it("has every icon the API seeds (internal/domain/category.go)", () => {
+    const seeded = ["shopping-cart", "store", "bike", "utensils", "bus", "ticket", "car-taxi-front", "fuel", "building",
+      "key-round", "lightbulb", "zap", "flame", "droplet", "wifi", "smartphone", "heart-pulse", "briefcase-medical",
+      "pill", "graduation-cap", "tv", "paw-print", "shirt", "sofa", "gift", "plane", "landmark", "package"];
+    for (const key of seeded) expect(categoryIconKey(key)).toBe(key);
   });
 
   it("falls back for unknown or empty values", () => {
-    for (const value of ["🦄", "whatever", "", null, undefined, "toString", "__proto__"]) {
+    // Plan 1.4 migrated stored emojis; one left over shows the default.
+    for (const value of ["🍕", "🦄", "whatever", "", null, undefined, "toString", "__proto__"]) {
       expect(categoryIconKey(value)).toBe(DEFAULT_CATEGORY_ICON);
     }
     expect(categoryIcon(null)).toBe(CATEGORY_ICONS[DEFAULT_CATEGORY_ICON]);

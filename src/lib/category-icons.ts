@@ -1,21 +1,26 @@
 // Category icons (design README §5): Lucide only, no emojis in the UI.
 //
-// A category stores its icon as a key from CATEGORY_ICONS. Older categories
-// still store an emoji (the API default and seeds); EMOJI_TO_KEY translates
-// them when shown. Plan 1.4 migrates the stored data and drops the emoji map.
+// A category stores its icon as a key from CATEGORY_ICONS (plan 1.4 migrated
+// the old emojis). The API only checks the key format, so a key this list
+// doesn't know shows the default icon.
 import {
   Bike,
   BriefcaseMedical,
   Building2,
   Bus,
   Car,
+  CarTaxiFront,
   Clapperboard,
   Coffee,
+  Droplet,
   Dumbbell,
+  Flame,
   Fuel,
   Gift,
   GraduationCap,
+  HeartPulse,
   House,
+  KeyRound,
   Landmark,
   Lightbulb,
   type LucideIcon,
@@ -27,8 +32,10 @@ import {
   ShoppingBag,
   ShoppingCart,
   Smartphone,
+  Sofa,
   Store,
   Tag,
+  Ticket,
   Tv,
   Utensils,
   Wallet,
@@ -46,14 +53,21 @@ export const CATEGORY_ICONS = {
   utensils: { icon: Utensils, label: "Comida" },
   coffee: { icon: Coffee, label: "Café" },
   bus: { icon: Bus, label: "Transporte" },
+  ticket: { icon: Ticket, label: "SUBE" },
+  "car-taxi-front": { icon: CarTaxiFront, label: "Taxi" },
   car: { icon: Car, label: "Auto" },
   fuel: { icon: Fuel, label: "Combustible" },
   building: { icon: Building2, label: "Expensas" },
+  "key-round": { icon: KeyRound, label: "Alquiler" },
   house: { icon: House, label: "Casa" },
-  zap: { icon: Zap, label: "Luz" },
+  sofa: { icon: Sofa, label: "Hogar" },
   lightbulb: { icon: Lightbulb, label: "Servicios" },
+  zap: { icon: Zap, label: "Luz" },
+  flame: { icon: Flame, label: "Gas" },
+  droplet: { icon: Droplet, label: "Agua" },
   wifi: { icon: Wifi, label: "Internet" },
   smartphone: { icon: Smartphone, label: "Celular" },
+  "heart-pulse": { icon: HeartPulse, label: "Salud" },
   "briefcase-medical": { icon: BriefcaseMedical, label: "Prepaga" },
   pill: { icon: Pill, label: "Farmacia" },
   "graduation-cap": { icon: GraduationCap, label: "Educación" },
@@ -76,60 +90,14 @@ export type CategoryIconKey = keyof typeof CATEGORY_ICONS;
 
 export const DEFAULT_CATEGORY_ICON: CategoryIconKey = "tag";
 
-/** Emojis stored by older categories (API seeds and default included). */
-const EMOJI_TO_KEY: Record<string, CategoryIconKey> = {
-  "💰": "wallet",
-  "💵": "wallet",
-  "🍕": "utensils",
-  "🍔": "utensils",
-  "🍜": "utensils",
-  "🍽️": "utensils",
-  "☕": "coffee",
-  "🛒": "shopping-cart",
-  "🏠": "house",
-  "🏢": "building",
-  "🚗": "car",
-  "🚖": "car",
-  "🚕": "car",
-  "🚌": "bus",
-  "⛽": "fuel",
-  "🎬": "clapperboard",
-  "🎮": "clapperboard",
-  "💡": "lightbulb",
-  "⚡": "zap",
-  "📶": "wifi",
-  "📱": "smartphone",
-  "💊": "pill",
-  "🏥": "briefcase-medical",
-  "📚": "graduation-cap",
-  "🎓": "graduation-cap",
-  "📺": "tv",
-  "🏋️": "dumbbell",
-  "🐶": "paw-print",
-  "🐱": "paw-print",
-  "👕": "shirt",
-  "🛍️": "shopping-bag",
-  "🎁": "gift",
-  "✈️": "plane",
-  "🏛️": "landmark",
-  "🔧": "wrench",
-  "📦": "package",
-};
-
 function isKey(value: string): value is CategoryIconKey {
   return Object.hasOwn(CATEGORY_ICONS, value);
 }
 
-/** The icon key for a stored value: a key, a known emoji, or the default. */
+/** The icon key for a stored value: a known key, or the default. */
 export function categoryIconKey(stored: string | null | undefined): CategoryIconKey {
   const value = stored?.trim() ?? "";
-  if (isKey(value)) return value;
-  // Emoji variation selectors (U+FE0F) come and go between keyboards.
-  const bare = value.replace(/\u{FE0F}/gu, "");
-  for (const candidate of [value, bare, `${bare}\u{FE0F}`]) {
-    if (Object.hasOwn(EMOJI_TO_KEY, candidate)) return EMOJI_TO_KEY[candidate];
-  }
-  return DEFAULT_CATEGORY_ICON;
+  return isKey(value) ? value : DEFAULT_CATEGORY_ICON;
 }
 
 export function categoryIcon(stored: string | null | undefined): CategoryIconDef {

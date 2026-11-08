@@ -360,6 +360,8 @@ export type InsightListResponse = z.infer<typeof insightListResponseSchema>;
 export const categorySchema = z.object({
   id: z.string(),
   householdId: z.string(),
+  /** Set on a subcategory (plan 1.4); one level deep. */
+  parentId: z.string().nullable().optional(),
   name: z.string(),
   icon: z.string().nullable().optional(),
   color: z.string().nullable().optional(),

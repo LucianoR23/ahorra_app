@@ -42,6 +42,7 @@ import { confirm } from "@/lib/confirm";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+import { CategorySelect } from "@/components/category-select";
 
 function invalidateGoals() {
   swrMutate(
@@ -517,19 +518,7 @@ function GoalFormDialog({
           {goalType === "category_limit" && (
             <div>
               <Label>Categoría</Label>
-              <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
-                <SelectTrigger className="text-xs">
-                  <SelectValue placeholder="Seleccionar">
-                    {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Seleccionar") : "Seleccionar")}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Seleccionar</SelectItem>
-                  {categories?.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CategorySelect value={categoryId} onValueChange={setCategoryId} categories={categories} emptyLabel="Seleccionar" className="text-xs" />
             </div>
           )}
 

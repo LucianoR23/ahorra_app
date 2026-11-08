@@ -16,6 +16,7 @@ import {
 import { fmtMoney, fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { CategorySelect } from "@/components/category-select";
 
 const PAGE = 20;
 
@@ -125,19 +126,7 @@ export function ExpensesList() {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Select value={categoryId} onValueChange={(v) => resetOffset(setCategoryId)(v ?? "")}>
-              <SelectTrigger className="text-xs">
-                <SelectValue placeholder="Todas las categorías">
-                  {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Todas las categorías") : "Todas las categorías")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todas las categorías</SelectItem>
-                {categories?.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategorySelect value={categoryId} onValueChange={resetOffset(setCategoryId)} categories={categories} emptyLabel="Todas las categorías" className="text-xs" />
             <Select value={paymentMethodId} onValueChange={(v) => resetOffset(setPaymentMethodId)(v ?? "")}>
               <SelectTrigger className="text-xs">
                 <SelectValue placeholder="Todos los métodos">
