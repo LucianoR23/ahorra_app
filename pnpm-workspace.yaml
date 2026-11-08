@@ -14,6 +14,10 @@ minimumReleaseAgeExclude:
 # Security overrides (plan 0.19): patched versions of build-time transitive
 # deps whose parents (next/styled-jsx, @serwist/build) pin vulnerable ones.
 # Same major only. Remove each once its parent ships the fix.
+# Accepted, with no same-major fix (reviewed 2026-11-08): glob 13 and
+# minimatch 10 under @serwist/build (moderate; build time only, globs our own
+# files) and deepmerge 4.3.1 under the shadcn CLI (low; the patched 4.3.2 is
+# not published). Revisit when Serwist or shadcn release.
 overrides:
   browserslist@<4.28.7: ^4.28.7
   baseline-browser-mapping@<2.11.0: ^2.11.0

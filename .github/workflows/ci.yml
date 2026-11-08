@@ -57,6 +57,11 @@ jobs:
       - name: Audit production dependencies (fails on high/critical)
         run: pnpm audit --prod --audit-level high
 
+      # Dev tools (eslint, shadcn CLI, tailwind) run on our machines and in CI,
+      # so their high/critical advisories fail too.
+      - name: Audit all dependencies (fails on high/critical)
+        run: pnpm audit --audit-level high
+
   # End-to-end (plan 0.21h): the real front end against the real API (branch
   # next) and a throwaway Postgres. PRs only (decided 2026-11-05). The private
   # API repo is checked out with a read-only deploy key (secret API_DEPLOY_KEY).
