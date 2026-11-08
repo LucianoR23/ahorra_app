@@ -55,7 +55,12 @@ async function shoot(browser: Browser, email: string, theme: (typeof THEMES)[num
 
   await loginUI(page, email);
   for (const screen of SCREENS) {
-    await page.goto(screen.path);
+    // Navigate inside the app: a full reload refreshes the session, and the
+    // API allows 30 refreshes per minute per IP.
+    await page.evaluate((path) => {
+      (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push(path);
+    }, screen.path);
+    await page.waitForURL((u) => u.pathname === screen.path);
     await settle(page);
     await page.screenshot({ path: `test-results/screens/${screen.name}.${suffix}.png`, fullPage: true });
   }
