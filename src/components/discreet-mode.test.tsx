@@ -1,17 +1,29 @@
-import { render, renderHook, screen } from "@testing-library/react";
+import { render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DiscreetToggle } from "./discreet-toggle";
 import { PrivacyCard } from "./privacy-card";
 import { Money } from "./ui/money";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { useDiscreetStore, useFormatAmount, useMaskText } from "@/stores/discreet";
+import { WithSWR } from "@/test/spaces";
+
+const device = vi.hoisted(() => ({ pushAmounts: false, fail: false }));
+vi.mock("@/lib/push-amounts", () => ({
+  readPushAmounts: async () => device.pushAmounts,
+  writePushAmounts: async (show: boolean) => {
+    if (device.fail) throw new Error("IndexedDB blocked");
+    device.pushAmounts = show;
+  },
+}));
 
 // Discreet mode (plan 1.9, design ModoDiscreto).
 
 beforeEach(() => {
   localStorage.clear();
   useDiscreetStore.setState({ hidden: false });
+  device.pushAmounts = false;
+  device.fail = false;
 });
 
 describe("Money in discreet mode", () => {
@@ -60,12 +72,33 @@ describe("DiscreetToggle", () => {
 
 describe("PrivacyCard", () => {
   it("turns discreet mode on and off with a switch", async () => {
-    render(<PrivacyCard />);
+    render(<PrivacyCard />, { wrapper: WithSWR });
     const toggle = screen.getByRole("switch", { name: "Modo discreto" });
     expect(toggle).not.toBeChecked();
     await userEvent.click(toggle);
     expect(useDiscreetStore.getState().hidden).toBe(true);
     expect(toggle).toBeChecked();
+  });
+
+  it("keeps amounts out of push notifications until this device opts in", async () => {
+    render(<PrivacyCard />, { wrapper: WithSWR });
+    const toggle = screen.getByRole("switch", { name: "Montos en las notificaciones" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    expect(toggle).not.toBeChecked();
+
+    await userEvent.click(toggle);
+    await waitFor(() => expect(device.pushAmounts).toBe(true));
+    expect(toggle).toBeChecked();
+  });
+
+  it("rolls back and says so when the device can't save the choice", async () => {
+    device.fail = true;
+    render(<PrivacyCard />, { wrapper: WithSWR });
+    const toggle = screen.getByRole("switch", { name: "Montos en las notificaciones" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    await userEvent.click(toggle);
+    await waitFor(() => expect(toggle).not.toBeChecked());
+    expect(device.pushAmounts).toBe(false);
   });
 });
 

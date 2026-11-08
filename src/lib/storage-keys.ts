@@ -11,4 +11,6 @@ export const STORAGE_KEYS = {
   expenseShared: "app.expense_shared",
   /** Discreet mode, per device (plan 1.9). */
   discreet: "app.discreet",
+  /** IndexedDB database the service worker can read too (plan 1.9). */
+  deviceDb: "app.device",
 } as const;

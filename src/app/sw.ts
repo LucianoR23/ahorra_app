@@ -1,6 +1,7 @@
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { Serwist } from "serwist";
 import { brand } from "@/config/brand";
+import { pushBody, readPushAmounts, type PushPayload } from "@/lib/push-amounts";
 import { offlineFallback, runtimeCaching } from "@/lib/sw-caching";
 
 declare global {
@@ -24,13 +25,6 @@ serwist.addEventListeners();
 
 // ── Push notifications ───────────────────────────────────────────────────────
 
-type PushPayload = {
-  title?: string;
-  body?: string;
-  tag?: string;
-  url?: string;
-};
-
 self.addEventListener("push", (event: PushEvent) => {
   if (!event.data) return;
 
@@ -42,16 +36,19 @@ self.addEventListener("push", (event: PushEvent) => {
   }
 
   const title = payload.title ?? brand.name;
-  const options: NotificationOptions = {
-    body: payload.body ?? "",
-    icon: "/brand/png/icon-192.png",
-    badge: "/brand/png/icon-192.png",
-    tag: payload.tag ?? "app",
-    data: { url: payload.url ?? "/" },
-    requireInteraction: false,
-  };
+  // No amounts on the lock screen unless this device opted in (plan 1.9).
+  const show = readPushAmounts().then((showAmounts) =>
+    self.registration.showNotification(title, {
+      body: pushBody(payload, showAmounts),
+      icon: "/brand/png/icon-192.png",
+      badge: "/brand/png/icon-192.png",
+      tag: payload.tag ?? "app",
+      data: { url: payload.url ?? "/" },
+      requireInteraction: false,
+    }),
+  );
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(show);
 });
 
 self.addEventListener("notificationclick", (event: NotificationEvent) => {

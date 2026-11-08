@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.9 (part 2): amounts in push notifications, per device
+- Push notifications show no amount by default, since they can appear on a locked screen (API 1.9 sends `body` without amounts and `bodyWithAmounts` with them). Seguridad, "Privacidad en este dispositivo", gains "Montos en las notificaciones" to opt in on this device.
+- The choice lives in IndexedDB (`app.device`), which the service worker can read; `src/lib/push-amounts.ts` holds the read/write and `pushBody()`. If IndexedDB fails, pushes stay without amounts.
+
 ### 1.9 (part 1): discreet mode
 - One tap on the eye in Inicio hides every amount in the app as `$ ••••••` (fixed length, so it doesn't hint at the size), with `aria-label="Monto oculto"` and the toast from the design. It is a per-device choice (localStorage `app.discreet`) and can also be switched in Seguridad, "Privacidad en este dispositivo".
 - Every amount now goes through `<Money>` or `useFormatAmount()` (`src/stores/discreet.ts`): the 71 uses of `fmtARS`/`fmtMoney` moved over and both are gone. A lint rule forbids importing `formatAmount` anywhere else, so a new screen can't leak an amount. Side effect, per design README §6: amounts read `$ 128.450,50` (space after the symbol, cents only when there are any) and expenses carry no "−" sign; `formatAmount` gained `compact` (`$ 12,5k`).
