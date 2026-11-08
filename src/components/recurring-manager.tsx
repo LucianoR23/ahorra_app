@@ -51,6 +51,7 @@ import {
   type RecurringFrequency,
 } from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
+import { CategorySelect } from "@/components/category-select";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -660,17 +661,7 @@ function RecurringExpenseForm({
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
             <Label>Categoría</Label>
-            <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sin categoría">
-                  {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Sin categoría") : "Sin categoría")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Sin categoría</SelectItem>
-                {categories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <CategorySelect value={categoryId} onValueChange={setCategoryId} categories={categories} emptyLabel="Sin categoría" />
           </div>
           <div className="space-y-1.5">
             <Label>Método de pago</Label>

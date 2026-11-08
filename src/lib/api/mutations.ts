@@ -666,6 +666,8 @@ export type CategoryInput = {
   name: string;
   icon?: string | null;
   color?: string | null;
+  /** Makes it a subcategory; on PATCH, null makes it top-level and leaving it out keeps it. */
+  parentId?: string | null;
 };
 
 export function createCategory(input: CategoryInput) {

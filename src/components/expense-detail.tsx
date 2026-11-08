@@ -29,9 +29,9 @@ import { confirm } from "@/lib/confirm";
 import { fmtMoney, fmtDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Installment } from "@/lib/api/schemas";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
+import { CategorySelect } from "@/components/category-select";
 
 const DETALLE_HELP: InfoHelpContent = {
   titulo: "Detalle del gasto",
@@ -227,7 +227,7 @@ function EditExpense({
   onSaved,
 }: {
   expense: { id: string; description: string; spentAt: string; categoryId?: string | null };
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; parentId?: string | null }[];
   onSaved: () => void;
 }) {
   const [description, setDescription] = useState(expense.description);
@@ -266,19 +266,7 @@ function EditExpense({
           </div>
           <div className="space-y-1.5">
             <Label>Categoría</Label>
-            <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sin categoría">
-                  {(v: string | null) => (v ? (categories.find((c) => c.id === v)?.name ?? "Sin categoría") : "Sin categoría")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Sin categoría</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategorySelect value={categoryId} onValueChange={setCategoryId} categories={categories} emptyLabel="Sin categoría" />
           </div>
         </div>
         {err && <p className="text-xs text-destructive">{err}</p>}

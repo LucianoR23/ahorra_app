@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { PAYMENT_METHOD_KIND_LABELS } from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
+import { CategorySelect } from "@/components/category-select";
 
 const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
 
@@ -255,19 +256,7 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="category">Categoría</Label>
-              <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Sin categoría">
-                    {(v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? "Sin categoría") : "Sin categoría")}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Sin categoría</SelectItem>
-                  {categories?.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CategorySelect value={categoryId} onValueChange={setCategoryId} categories={categories} emptyLabel="Sin categoría" id="category" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="spentAt">Fecha</Label>

@@ -29,6 +29,8 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { CategoryIcon } from "@/components/category-icon";
 import { CategoryIconPicker } from "@/components/category-icon-picker";
 import { categoryIconKey, type CategoryIconKey } from "@/lib/category-icons";
+import { categoryTree, parentChoices } from "@/lib/categories";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PRESET_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e",
@@ -54,7 +56,7 @@ export function CategoriesManager() {
         <p className="text-xs text-muted-foreground">
           {categories ? `${categories.length} categoría${categories.length === 1 ? "" : "s"}` : ""}
         </p>
-        <CategoryFormDialog mode="create" onDone={invalidateCategories} />
+        <CategoryFormDialog mode="create" categories={categories ?? []} onDone={invalidateCategories} />
       </div>
 
       {isLoading ? (
@@ -69,10 +71,14 @@ export function CategoriesManager() {
         </Card>
       ) : (
         <div className="flex flex-col gap-2">
-          {categories.map((cat) => (
-            <Card key={cat.id} className="rounded-2xl border-0 shadow-card">
+          {categoryTree(categories).map(({ category: cat, depth }) => (
+            <Card
+              key={cat.id}
+              data-depth={depth}
+              className={cn("rounded-2xl border-0 shadow-card", depth === 1 && "ml-8")}
+            >
               <CardContent className="flex items-center gap-3 p-4">
-                <CategoryIcon icon={cat.icon} size={40} />
+                <CategoryIcon icon={cat.icon} size={depth === 1 ? 32 : 40} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{cat.name}</p>
                 </div>
@@ -84,7 +90,11 @@ export function CategoriesManager() {
                 >
                   <Pencil className="size-3.5" />
                 </Button>
-                <DeleteCategoryButton id={cat.id} />
+                <DeleteCategoryButton
+                  id={cat.id}
+                  name={cat.name}
+                  hasChildren={categories.some((c) => c.parentId === cat.id)}
+                />
               </CardContent>
             </Card>
           ))}
@@ -95,6 +105,7 @@ export function CategoriesManager() {
         <CategoryFormDialog
           mode="edit"
           category={editing}
+          categories={categories ?? []}
           open
           onOpenChange={(v) => !v && setEditing(null)}
           onDone={() => { invalidateCategories(); setEditing(null); }}
@@ -104,12 +115,14 @@ export function CategoriesManager() {
   );
 }
 
-function DeleteCategoryButton({ id }: { id: string }) {
+function DeleteCategoryButton({ id, name, hasChildren }: { id: string; name: string; hasChildren: boolean }) {
   const [busy, setBusy] = useState(false);
   async function handle() {
     const ok = await confirm({
       title: "¿Eliminar esta categoría?",
-      description: "Los gastos que la usan quedarán sin categoría.",
+      description: hasChildren
+        ? "Sus subcategorías quedan como categorías comunes. Los gastos que usan esta categoría quedarán sin categoría."
+        : "Los gastos que la usan quedarán sin categoría.",
       confirmLabel: "Eliminar",
       destructive: true,
     });
@@ -125,21 +138,25 @@ function DeleteCategoryButton({ id }: { id: string }) {
     }
   }
   return (
-    <Button size="icon-sm" variant="ghost" onClick={handle} disabled={busy}>
+    <Button size="icon-sm" variant="ghost" aria-label={`Eliminar ${name}`} onClick={handle} disabled={busy}>
       {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
     </Button>
   );
 }
 
+const TOP_LEVEL = "";
+
 function CategoryFormDialog({
   mode,
   category,
+  categories,
   open: controlledOpen,
   onOpenChange,
   onDone,
 }: {
   mode: "create" | "edit";
   category?: Category;
+  categories: Category[];
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
   onDone: () => void;
@@ -151,13 +168,17 @@ function CategoryFormDialog({
   const [name, setName] = useState(category?.name ?? "");
   const [icon, setIcon] = useState<CategoryIconKey>(categoryIconKey(category?.icon));
   const [color, setColor] = useState(category?.color ?? PRESET_COLORS[0]);
+  const [parentId, setParentId] = useState(category?.parentId ?? TOP_LEVEL);
   const [saving, setSaving] = useState(false);
+  const parents = parentChoices(categories, category?.id);
+  const hasChildren = !!category && categories.some((c) => c.parentId === category.id);
   const [err, setErr] = useState<string | null>(null);
 
   function resetForm() {
     setName(category?.name ?? "");
     setIcon(categoryIconKey(category?.icon));
     setColor(category?.color ?? PRESET_COLORS[0]);
+    setParentId(category?.parentId ?? TOP_LEVEL);
     setErr(null);
   }
 
@@ -170,6 +191,7 @@ function CategoryFormDialog({
       name: name.trim(),
       icon,
       color: color || null,
+      parentId: parentId || null,
     };
     try {
       if (mode === "create") {
@@ -212,6 +234,29 @@ function CategoryFormDialog({
               placeholder="Ej. Comida"
               autoFocus
             />
+          </div>
+
+          <div>
+            <Label htmlFor="cat-parent">Dentro de</Label>
+            {hasChildren ? (
+              <p className="mt-1.5 text-caption text-ink-muted">
+                Tiene subcategorías, así que no puede ir dentro de otra categoría.
+              </p>
+            ) : (
+              <Select value={parentId} onValueChange={(v) => setParentId(v ?? TOP_LEVEL)}>
+                <SelectTrigger id="cat-parent" className="mt-1.5 w-full">
+                  <SelectValue placeholder="Ninguna (es principal)">
+                    {(v: string | null) => (v ? (parents.find((c) => c.id === v)?.name ?? "Ninguna (es principal)") : "Ninguna (es principal)")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TOP_LEVEL}>Ninguna (es principal)</SelectItem>
+                  {parents.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div>
