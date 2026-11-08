@@ -4,6 +4,15 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.3: new onboarding
+- `/onboarding` is rebuilt in the new design: name → "¿Cómo pagás?" (Visa, Mastercard, American Express, Mercado Pago, Efectivo o débito) → bank, closing and due day for each card → first expense with the regular form (natural language comes in 3.1). Every step can be skipped.
+- Cards are network × bank: the name defaults to "<Network> <Bank>" and can be changed; the bank comes from the user's banks or an Argentine list (created when missing, "Otro" for any other). The current statement is computed from the two days. Mercado Pago becomes a wallet and asks whether the user also has its credit card (then a Mastercard Mercado Pago card). "Efectivo o débito" adds a "Débito" ("Efectivo" exists from sign-up). Re-entering after a failure does not duplicate what was saved.
+- Users without `onboardedAt` (API 1.3) are sent there; the first expense or skipping it marks onboarding done. After the first expense the app asks for push permission (where the browser can) and shows how to install it (the browser's prompt, or the steps for iPhone).
+- The old "Creá tu hogar" onboarding is gone: a hogar is created from Más (design rule: never inside onboarding).
+- Each step calls `track()` (`src/lib/track.ts`), a no-op until analytics land in 13.3.
+- New `components/ui/check-card` (whole-row checkbox). `ExpenseForm` takes `onCreated` to replace the jump to the expense's detail.
+- E2E: API-registered users complete onboarding through the API; the sign-up test goes through it in the UI. The screenshot harness adds the onboarding steps (mobile, light and dark).
+
 ### 1.10a: redesign foundation
 - Theme from the brand: `globals.css` imports the vendored `brand/tokens.css` and maps the shadcn variables to it, so light and dark come from `brand/tokens.json`. New utilities with the brand names (`bg-surface-2`, `text-ink-muted`, `bg-brand` for the amber, `text-on-brand`, `text-title`, `text-body`, ...), radii 8/14/22, `shadow-sheet`, chart tokens. The old names stay as aliases until 1.10b. Manrope replaces Geist.
 - The theme follows the OS; "Apariencia" in Ajustes overrides it (Sistema, Claro, Oscuro). The header theme toggles are gone; the toaster follows the chosen theme.

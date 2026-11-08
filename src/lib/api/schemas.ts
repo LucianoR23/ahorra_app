@@ -9,6 +9,8 @@ export const userSchema = z.object({
   /** An email change waiting for the link sent to the new address (plan 0.5). */
   pendingEmail: z.string().optional(),
   isSuperadmin: z.boolean().optional().default(false),
+  /** When onboarding was finished or skipped; missing sends to /onboarding (plan 1.3). */
+  onboardedAt: z.string().optional(),
 });
 export type User = z.infer<typeof userSchema>;
 
@@ -305,6 +307,10 @@ export const paymentMethodSchema = z.object({
 });
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
 
+/** credit_cards.network, the API's closed list (plan 1.3, migration 000033). */
+export const cardNetworkSchema = z.enum(["visa", "mastercard", "amex", "cabal", "naranja", "maestro", "other"]);
+export type CardNetwork = z.infer<typeof cardNetworkSchema>;
+
 export const creditCardSchema = z.object({
   id: z.string(),
   paymentMethodId: z.string(),
@@ -313,6 +319,7 @@ export const creditCardSchema = z.object({
   defaultClosingDay: z.number(),
   defaultDueDay: z.number(),
   debitPaymentMethodId: z.string().nullable().optional(),
+  network: cardNetworkSchema.nullable().optional(),
   createdAt: z.string(),
 });
 export type CreditCard = z.infer<typeof creditCardSchema>;

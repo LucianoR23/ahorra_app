@@ -20,6 +20,7 @@ import type {
   PaymentMethod,
   PaymentMethodKind,
   CreditCard,
+  CardNetwork,
   CreditCardPeriod,
   Household,
   Category,
@@ -351,6 +352,7 @@ export type PaymentMethodCreateInput = {
     defaultClosingDay: number;
     defaultDueDay: number;
     debitPaymentMethodId?: string | null;
+    network?: CardNetwork | null;
     // Fechas "YYYY-MM-DD" del ciclo concreto. El backend persiste
     // estos períodos junto con la tarjeta en la misma transacción.
     currentPeriod?: { closingDate: string; dueDate: string };
@@ -388,6 +390,7 @@ export type CreditCardPatchInput = {
   defaultClosingDay?: number;
   defaultDueDay?: number;
   debitPaymentMethodId?: string | null;
+  network?: CardNetwork | null;
 };
 
 export function patchCreditCard(paymentMethodId: string, input: CreditCardPatchInput) {
@@ -549,6 +552,16 @@ export async function patchMe(input: MePatchInput): Promise<User> {
     method: "PATCH",
     path: "/me",
     body: input,
+    householdScoped: false,
+  });
+  return userSchema.parse(json);
+}
+
+/** Onboarding finished or skipped (plan 1.3). Idempotent. */
+export async function completeOnboarding(): Promise<User> {
+  const json = await apiMutate<unknown>({
+    method: "POST",
+    path: "/me/onboarding/complete",
     householdScoped: false,
   });
   return userSchema.parse(json);

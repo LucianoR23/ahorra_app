@@ -24,12 +24,14 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     // Decide only once the user's households are known; until then the
     // splash stays (no onboarding flash right after logging in).
     if (!householdsResolved) return;
-    if (!currentHouseholdId && pathname !== "/onboarding") {
+    // New users go through onboarding first (plan 1.3). "Mi plata" always
+    // exists, so a missing household is never the signal anymore.
+    if (!user.onboardedAt && pathname !== "/onboarding") {
       router.replace("/onboarding");
     }
-  }, [hydrated, user, householdsResolved, currentHouseholdId, pathname, router]);
+  }, [hydrated, user, householdsResolved, pathname, router]);
 
-  if (!hydrated || !user || !householdsResolved || !currentHouseholdId) {
+  if (!hydrated || !user || !householdsResolved || !currentHouseholdId || !user.onboardedAt) {
     return <AuthSplash />;
   }
   return (
