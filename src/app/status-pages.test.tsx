@@ -19,7 +19,7 @@ describe("error.tsx", () => {
     expect(screen.queryByText(/ana@example.com/)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(retry).toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Ir al inicio" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Ir al inicio" })).toHaveAttribute("href", "/");
   });
 });
 
@@ -27,7 +27,7 @@ describe("not-found.tsx", () => {
   it("links home", () => {
     render(<NotFound />);
     expect(screen.getByRole("heading", { name: "No encontramos esta página" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ir al inicio" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Ir al inicio" })).toHaveAttribute("href", "/");
   });
 });
 

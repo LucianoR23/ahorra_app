@@ -1,22 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { mutate as swrMutate } from "swr";
-import { ArrowLeft, ArrowRight, Home, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { AuthGate } from "@/components/auth-gate";
+import { AppShell } from "@/components/app-shell";
+import { PageHeader } from "@/components/ui/page-header";
+import { Segmented } from "@/components/ui/segmented";
 import { createHousehold } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { useHouseholdStore } from "@/stores/household";
 import type { Currency } from "@/lib/api/schemas";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
+
+const CURRENCIES = [
+  { value: "ARS", label: "ARS" },
+  { value: "USD", label: "USD" },
+  { value: "EUR", label: "EUR" },
+] as const;
 
 const NUEVO_HOGAR_HELP: InfoHelpContent = {
   titulo: "Crear nuevo hogar",
@@ -35,9 +39,9 @@ const NUEVO_HOGAR_HELP: InfoHelpContent = {
 
 export default function Page() {
   return (
-    <AuthGate>
+    <AppShell>
       <NewHouseholdInner />
-    </AuthGate>
+    </AppShell>
   );
 }
 
@@ -79,79 +83,41 @@ function NewHouseholdInner() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <Link
-          href="/hogar"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-3" /> Volver al hogar
-        </Link>
-        <InfoHelp content={NUEVO_HOGAR_HELP} />
-      </div>
-
-      <Card className="p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-            <Home className="size-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">Crear nuevo hogar</h1>
-            <p className="text-sm text-muted-foreground">
-              Vas a ser el dueño del hogar. Podés invitar miembros después.
-            </p>
-          </div>
+    <div className="mx-auto flex w-full max-w-md flex-col gap-4">
+      <PageHeader
+        title="Crear hogar"
+        description="Vas a ser el dueño. Después invitás a quien quieras."
+        back={{ href: "/hogar", label: "Volver a Hogar" }}
+        action={<InfoHelp content={NUEVO_HOGAR_HELP} size="icon" />}
+        className="mb-0"
+      />
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="hh-name">Nombre del hogar</Label>
+          <Input
+            id="hh-name"
+            placeholder="Casa, Familia, Depto…"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoFocus
+            disabled={busy}
+            aria-invalid={!!err}
+          />
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="hh-name">Nombre del hogar</Label>
-            <Input
-              id="hh-name"
-              placeholder="Casa, Familia, Depto..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-              disabled={busy}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="hh-currency">Moneda base</Label>
-            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)} disabled={busy}>
-              <SelectTrigger id="hh-currency" className="h-10">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ARS">ARS — Peso argentino</SelectItem>
-                <SelectItem value="USD">USD — Dólar</SelectItem>
-                <SelectItem value="EUR">EUR — Euro</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Todos los montos se convierten a esta moneda para reportes.
-            </p>
-          </div>
-
-          {err && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {err}
-            </div>
-          )}
-
-          <Button type="submit" size="lg" className="w-full" disabled={busy}>
-            {busy ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" /> Creando…
-              </>
-            ) : (
-              <>
-                Crear hogar <ArrowRight className="ml-2 size-4" />
-              </>
-            )}
-          </Button>
-        </form>
-      </Card>
+        <div className="flex flex-col gap-1.5">
+          <Label id="hh-currency">Moneda base</Label>
+          <Segmented aria-labelledby="hh-currency" value={currency} onValueChange={setCurrency} options={CURRENCIES} />
+          <p className="text-caption text-ink-muted">Los reportes del hogar se muestran en esta moneda.</p>
+        </div>
+        {err && (
+          <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
+            {err}
+          </p>
+        )}
+        <Button type="submit" size="lg" className="w-full" disabled={busy}>
+          {busy ? "Creando…" : "Crear hogar"}
+        </Button>
+      </form>
     </div>
   );
 }

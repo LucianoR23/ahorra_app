@@ -1,3 +1,4 @@
+import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -42,15 +43,26 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * One button. Rendered as a link (`nativeButton={false}` and
+ * `render={<Link href />}`) it keeps the link role: it navigates, so a
+ * screen reader should say "link", not "button".
+ */
 function Button({
   className,
   variant = "default",
   size = "default",
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  const render = props.render
+  const isLink =
+    props.nativeButton === false &&
+    React.isValidElement<{ href?: unknown }>(render) &&
+    render.props.href !== undefined
   return (
     <ButtonPrimitive
       data-slot="button"
+      role={isLink ? "link" : undefined}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

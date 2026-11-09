@@ -4,6 +4,7 @@ import { Inbox } from "lucide-react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Alert } from "./alert";
+import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import { DateLabel } from "./date-label";
 import { Dialog, DialogContent, DialogTitle } from "./dialog";
@@ -198,5 +199,20 @@ describe("DialogContent", () => {
     expect(center).toHaveAttribute("data-layout", "center");
     expect(center.querySelector("[data-slot=dialog-grabber]")).toBeNull();
     expect(center.className).not.toContain("max-sm:bottom-0");
+  });
+});
+
+describe("Button as a link", () => {
+  it("keeps the link role, so it is announced as a link", () => {
+    render(
+      <>
+        <Button nativeButton={false} render={<a href="/hogar/nuevo" />}>
+          Crear hogar
+        </Button>
+        <Button>Guardar</Button>
+      </>,
+    );
+    expect(screen.getByRole("link", { name: "Crear hogar" })).toHaveAttribute("href", "/hogar/nuevo");
+    expect(screen.getByRole("button", { name: "Guardar" })).toBeInTheDocument();
   });
 });
