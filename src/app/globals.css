@@ -205,6 +205,20 @@
   to   { transform: scaleX(1); }
 }
 
+/* List items rise into place when they mount (`rise`), one after the other
+   when they carry `--i` (capped at 8 steps so long lists do not wait). No
+   animation at all with reduced motion. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise var(--duration-base) var(--ease-out) both;
+    animation-delay: calc(min(var(--i, 0), 8) * 30ms);
+  }
+}
+
 @keyframes vt-fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }

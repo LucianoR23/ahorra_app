@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Motion
+- Lists rise into place when they appear: the day groups of Movimientos and Ingresos one after the other (30 ms apart, at most 8 steps), and each group of the grouped lists. `rise` in `globals.css`, with the brand's `duration-base` and `ease-out`; nothing moves with reduced motion.
+- Press feedback: rows that are links or buttons (`ListRow`, `MenuItem`) dim while held, and the button's 1 px press now eases instead of jumping.
+
 ### 1.10b Acceso y Superadmin
 - Login, Crear cuenta, Recuperar contraseña and Nueva contraseña share one frame (`components/auth/auth-shell`): the wordmark, a narrow column flat on the phone like Onboarding and a card from `sm` up, the screen title in `text-title`, labels over the fields, errors under them in `negative` and server errors in the inline alert. The panel fades in, except with reduced motion.
 - Outcome screens use the result card with an `h1` (`ResultCard` takes `headingLevel`): "Te enviamos un mail", "Este link no sirve" (reset and verify without token), "Verificá tu email", "Email verificado", the invite and its dead ends ("Esta invitación ya se usó", "venció", "la canceló"). Their actions are pill buttons; the old links inside buttons are gone.

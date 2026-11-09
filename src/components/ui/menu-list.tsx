@@ -20,7 +20,7 @@ function MenuGroup({
   className?: string
 }) {
   return (
-    <section data-slot="menu-group" aria-label={title} className={cn("flex flex-col gap-2", className)}>
+    <section data-slot="menu-group" aria-label={title} className={cn("rise flex flex-col gap-2", className)}>
       {title ? <h2 className="px-1 text-caption font-semibold text-ink-muted">{title}</h2> : null}
       <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card px-4 shadow-card dark:ring-1 dark:ring-border">
         {children}
@@ -39,8 +39,10 @@ function MenuRow({ children, className }: { children: React.ReactNode; className
   )
 }
 
+// Press feedback: the row dims while held (rows have no side padding, so a
+// background would touch the text).
 const rowClass =
-  "flex min-h-14 w-full cursor-pointer items-center gap-4 py-3 text-left text-body text-ink outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+  "flex min-h-14 w-full cursor-pointer items-center gap-4 py-3 text-left text-body text-ink outline-none transition-opacity duration-(--duration-fast) active:opacity-60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
 
 /** A row: icon, label, optional detail on the right, chevron for links. */
 function MenuItem({

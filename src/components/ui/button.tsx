@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 // Design "Componentes" → Botones: pill, 48 px tall, one primary action per
 // screen. Focus ring = focus token, 2 px with 2 px offset.
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border border-transparent bg-clip-padding font-semibold whitespace-nowrap transition-colors duration-(--duration-fast) outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:bg-surface-2 disabled:text-ink-muted disabled:border-transparent aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border border-transparent bg-clip-padding font-semibold whitespace-nowrap transition-[color,background-color,border-color,transform] duration-(--duration-fast) outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:bg-surface-2 disabled:text-ink-muted disabled:border-transparent aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
