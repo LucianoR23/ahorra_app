@@ -89,6 +89,12 @@ async function shoot(
   await expect(page.getByText("Gastaron juntos", { exact: false }).first()).toBeVisible();
   await settle(page);
   await page.screenshot({ path: `test-results/screens/inicio-hogar.${suffix}.png`, fullPage: true });
+  // Cuentas entre ustedes (plan 1.10b), in the hogar where they live.
+  await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/deudas"));
+  await page.waitForURL((u) => u.pathname === "/deudas");
+  await expect(page.getByRole("region", { name: "Lo que se deben" })).toBeVisible();
+  await settle(page);
+  await page.screenshot({ path: `test-results/screens/deudas-hogar.${suffix}.png`, fullPage: true });
   // Reportes · Tendencias (plan 1.10b): the chart in theme colors.
   await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/reportes"));
   await page.waitForURL((u) => u.pathname === "/reportes");

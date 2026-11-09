@@ -2,299 +2,247 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { ArrowRight, TrendingDown, TrendingUp, Trash2, Loader2, Eye } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeftRight, ChevronDown, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  useBalances,
-  useBalancesMe,
-  useSettlements,
-  useSettlement,
-  useHouseholdMembers,
-  useHouseholds,
-} from "@/lib/api/hooks";
-import { createSettlement, deleteSettlement } from "@/lib/api/mutations";
-import { useAuthStore } from "@/stores/auth";
-import { useHouseholdStore } from "@/stores/household";
-import { fmtDateShort, isoToday } from "@/lib/format";
+import { ListRow, ListRowSkeleton } from "@/components/ui/list-row";
 import { Money } from "@/components/ui/money";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useBalances, useBalancesMe, useHouseholdMembers, useHouseholds, useSettlements } from "@/lib/api/hooks";
+import { createSettlement, deleteSettlement } from "@/lib/api/mutations";
+import type { Settlement } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
 import { confirm } from "@/lib/confirm";
+import { fmtDateShort, isoToday } from "@/lib/format";
+import { toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useAuthStore } from "@/stores/auth";
+import { useHouseholdStore } from "@/stores/household";
+
+const PAGE = 50;
+const MAX_ROWS = 200;
 
 export function invalidateDebts() {
   swrMutate(
-    (k) =>
-      Array.isArray(k) &&
-      typeof k[0] === "string" &&
-      (k[0].startsWith("/balances") || k[0].startsWith("/settlements")),
+    (k) => Array.isArray(k) && typeof k[0] === "string" && (k[0].startsWith("/balances") || k[0].startsWith("/settlements")),
     undefined,
     { revalidate: true },
   );
 }
 
+/**
+ * Cuentas entre ustedes (plan 1.10b, no design: the `Movimientos` list).
+ * Your net balance on top, who owes whom with a button to pay, and the
+ * payments, filtered by person and date; each payment opens its sheet.
+ */
 export function DebtsManager() {
   const me = useAuthStore((s) => s.user);
   const currentHhId = useHouseholdStore((s) => s.currentId);
   const { data: households } = useHouseholds();
-  const household = households?.find((h) => h.id === currentHhId) ?? null;
-  const baseCurrency = household?.baseCurrency ?? "ARS";
-
+  const baseCurrency = households?.find((h) => h.id === currentHhId)?.baseCurrency ?? "ARS";
   const { data: balances, isLoading: balLoading } = useBalances();
   const { data: meBal, isLoading: meLoading } = useBalancesMe();
   const { data: members } = useHouseholdMembers();
 
-  // Filtros del historial. "withUser" = OR (from o to), 'datePreset' resuelve
-  // a from/to ISO via computeRange().
-  const [withUserId, setWithUserId] = useState<string>("");
+  const [withUserId, setWithUserId] = useState("");
   const [datePreset, setDatePreset] = useState<DatePreset>("all");
-  const [customFrom, setCustomFrom] = useState<string>("");
-  const [customTo, setCustomTo] = useState<string>("");
-  const [singleDay, setSingleDay] = useState<string>("");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [singleDay, setSingleDay] = useState("");
+  const [rows, setRows] = useState(PAGE);
+  const [open, setOpen] = useState<Settlement | null>(null);
 
-  const dateRange = computeRange(datePreset, customFrom, customTo, singleDay);
-
+  const range = computeRange(datePreset, customFrom, customTo, singleDay);
   const { data: settlements, isLoading: sLoading } = useSettlements({
-    limit: 50,
+    limit: rows,
     withUser: withUserId || undefined,
-    from: dateRange.from,
-    to: dateRange.to,
+    from: range.from,
+    to: range.to,
   });
 
-  const memberName = (id: string) => {
-    if (id === me?.id) return "Yo";
-    const m = members?.find((x) => x.userId === id);
-    return m ? `${m.firstName} ${m.lastName[0] ?? ""}.` : "—";
-  };
-
+  const firstName = (id: string) => (id === me?.id ? "Vos" : (members?.find((x) => x.userId === id)?.firstName ?? "Alguien"));
+  // Go sends an empty slice as null (the SWR fetcher does not apply zod defaults).
+  const debts = balances?.balances ?? [];
+  const items = settlements?.items ?? [];
+  const count = settlements?.totalCount ?? 0;
   const net = meBal?.net ?? 0;
 
+  function debtLabel(from: string, to: string) {
+    if (to === me?.id) return `${firstName(from)} te debe`;
+    if (from === me?.id) return `Le debés a ${firstName(to)}`;
+    return `${firstName(from)} le debe a ${firstName(to)}`;
+  }
+
+  function payLabel(from: string, to: string) {
+    if (from === me?.id) return `Le pagaste a ${firstName(to)}`;
+    if (to === me?.id) return `${firstName(from)} te pagó`;
+    return `${firstName(from)} le pagó a ${firstName(to)}`;
+  }
+
+  function filter<T>(set: (v: T) => void) {
+    return (v: T) => {
+      setRows(PAGE);
+      set(v);
+    };
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      {/* Mi balance neto */}
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Mi balance neto
-          </div>
+    <div className="flex flex-col gap-6">
+      <Card>
+        <CardContent className="flex flex-col items-center gap-1 text-center">
+          <p className="text-body text-ink-muted">{net > 0 ? "Te deben" : net < 0 ? "Debés" : "Tu saldo"}</p>
           {meLoading ? (
-            <Skeleton className="mt-2 h-9 w-40" />
+            <Skeleton className="h-10 w-40" />
           ) : (
-            <div className="mt-1 flex items-baseline gap-2">
-              <span
-                className={cn(
-                  "font-mono text-3xl font-extrabold tracking-tight",
-                  net > 0 ? "text-emerald-500" : net < 0 ? "text-destructive" : "text-foreground",
-                )}
-              >
-                <Money amount={net} currency={baseCurrency} income={net > 0} className="text-inherit" />
-              </span>
-              {net > 0 && <TrendingUp className="size-5 text-emerald-500" />}
-              {net < 0 && <TrendingDown className="size-5 text-destructive" />}
-            </div>
+            <p className={cn("text-display font-bold", net > 0 ? "text-positive" : net < 0 ? "text-negative" : "text-ink")}>
+              <Money amount={Math.abs(net)} currency={baseCurrency} />
+            </p>
           )}
-          <p className="mt-1 text-xs text-muted-foreground">
-            {net > 0
-              ? "Te deben netos en total."
-              : net < 0
-                ? "Debés netos en total."
-                : "Estás en cero."}
+          <p className="text-caption text-ink-muted">
+            {net === 0 ? "Están al día." : "Sumando lo que te deben y lo que debés en el hogar."}
           </p>
         </CardContent>
       </Card>
 
-      {/* Deudas — matriz */}
-      <div>
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-sm font-bold">Deudas actuales</h2>
-          {balances && (
-            <span className="text-xs text-muted-foreground">
-              {balances.balances.length} pendiente{balances.balances.length === 1 ? "" : "s"}
-            </span>
-          )}
+      <section aria-label="Lo que se deben" className="flex flex-col gap-2">
+        <h2 className="px-1 text-caption font-semibold text-ink-muted">Lo que se deben</h2>
+        {balLoading ? (
+          <Card className="py-1">
+            <CardContent>
+              <ListRowSkeleton />
+            </CardContent>
+          </Card>
+        ) : debts.length === 0 ? (
+          <Card>
+            <CardContent className="text-center text-body text-ink-muted">Todo saldado. Nadie le debe nada a nadie.</CardContent>
+          </Card>
+        ) : (
+          <Card className="py-1">
+            <CardContent>
+              <ul className="divide-y divide-border">
+                {debts.map((b) => {
+                  const mine = b.from === me?.id || b.to === me?.id;
+                  return (
+                    <li key={`${b.from}-${b.to}`} className="flex min-h-16 items-center gap-3 py-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-body text-ink">{debtLabel(b.from, b.to)}</p>
+                        <p className={cn("text-title font-bold", b.to === me?.id ? "text-positive" : b.from === me?.id ? "text-negative" : "text-ink")}>
+                          <Money amount={b.amount} currency={baseCurrency} />
+                        </p>
+                      </div>
+                      {mine && (
+                        <PayDebtDialog
+                          fromUser={b.from}
+                          toUser={b.to}
+                          maxAmount={b.amount}
+                          fromLabel={firstName(b.from)}
+                          toLabel={firstName(b.to)}
+                          baseCurrency={baseCurrency}
+                        />
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      <section aria-label="Pagos" className="flex flex-col gap-2">
+        <h2 className="px-1 text-caption font-semibold text-ink-muted">Pagos</h2>
+        <div role="group" aria-label="Filtros" className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden">
+          <Chip pressed={withUserId === ""} onClick={() => filter(setWithUserId)("")}>
+            Todos
+          </Chip>
+          {members
+            ?.filter((m) => m.userId !== me?.id)
+            .map((m) => (
+              <Chip key={m.userId} pressed={withUserId === m.userId} onClick={() => filter(setWithUserId)(m.userId)}>
+                Con {m.firstName}
+              </Chip>
+            ))}
+          <DateMenu value={datePreset} onChange={filter(setDatePreset)} />
         </div>
-        <Card className="rounded-2xl border-0 shadow-card overflow-hidden">
-          {balLoading ? (
-            <div className="p-3 space-y-2">
-              <Skeleton className="h-14 w-full rounded-md" />
-              <Skeleton className="h-14 w-full rounded-md" />
-            </div>
-          ) : !balances?.balances.length ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              Todo saldado. No hay deudas pendientes.
-            </div>
-          ) : (
-            balances.balances.map((b, i) => {
-              const isLast = i === balances.balances.length - 1;
-              const isMeFrom = b.from === me?.id;
-              const isMeTo = b.to === me?.id;
-              return (
-                <div
-                  key={`${b.from}-${b.to}`}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3",
-                    !isLast && "border-b border-border",
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className={cn("font-semibold", isMeFrom && "text-destructive")}>
-                        {memberName(b.from)}
-                      </span>
-                      <ArrowRight className="size-3.5 text-muted-foreground" />
-                      <span className={cn("font-semibold", isMeTo && "text-emerald-500")}>
-                        {memberName(b.to)}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 font-mono text-base font-bold tracking-tight">
-                      <Money amount={b.amount} currency={baseCurrency} />
-                    </div>
-                  </div>
-                  {(isMeFrom || isMeTo) && (
-                    <PayDebtDialog
-                      fromUser={b.from}
-                      toUser={b.to}
-                      maxAmount={b.amount}
-                      fromLabel={memberName(b.from)}
-                      toLabel={memberName(b.to)}
-                      baseCurrency={baseCurrency}
+        {datePreset === "day" && <DatePicker value={singleDay} onChange={filter(setSingleDay)} placeholder="Elegí el día" />}
+        {datePreset === "range" && (
+          <div className="grid grid-cols-2 gap-2">
+            <DatePicker value={customFrom} onChange={filter(setCustomFrom)} placeholder="Desde" />
+            <DatePicker value={customTo} onChange={filter(setCustomTo)} placeholder="Hasta" />
+          </div>
+        )}
+
+        {sLoading ? (
+          <Card className="py-1">
+            <CardContent>
+              {[0, 1].map((i) => (
+                <ListRowSkeleton key={i} />
+              ))}
+            </CardContent>
+          </Card>
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={HandCoins}
+            title={withUserId || datePreset !== "all" ? "Sin pagos con estos filtros" : "Todavía no registraron pagos"}
+            description="Cuando alguien salde una deuda, registralo con «Pagar» y aparece acá."
+          />
+        ) : (
+          <Card className="py-1">
+            <CardContent>
+              <ul className="divide-y divide-border">
+                {items.map((s) => (
+                  <li key={s.id}>
+                    <ListRow
+                      onClick={() => setOpen(s)}
+                      leading={
+                        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-2 text-ink">
+                          <ArrowLeftRight className="size-5" strokeWidth={1.75} />
+                        </span>
+                      }
+                      title={payLabel(s.fromUser, s.toUser)}
+                      subtitle={[fmtDateShort(s.paidAt), s.note].filter(Boolean).join(" · ")}
+                      trailing={<Money amount={s.amount} currency={s.baseCurrency} />}
                     />
-                  )}
-                </div>
-              );
-            })
-          )}
-        </Card>
-      </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Historial */}
-      <div>
-        <div className="mb-2 flex items-center justify-between gap-2 px-1">
-          <h2 className="text-sm font-bold">Historial de pagos</h2>
-          {(withUserId || datePreset !== "all") && (
-            <button
-              type="button"
-              onClick={() => {
-                setWithUserId("");
-                setDatePreset("all");
-                setCustomFrom("");
-                setCustomTo("");
-                setSingleDay("");
-              }}
-              className="cursor-pointer text-xs font-semibold text-primary hover:underline"
-            >
-              Limpiar filtros
-            </button>
-          )}
-        </div>
-
-        {/* Filtros */}
-        <Card className="mb-2 rounded-2xl border-0 shadow-card">
-          <CardContent className="space-y-2 p-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              <FilterChip active={withUserId === ""} onClick={() => setWithUserId("")}>
-                Todos
-              </FilterChip>
-              {members?.map((m) => {
-                const label = m.userId === me?.id ? "Yo" : `${m.firstName} ${m.lastName[0] ?? ""}.`;
-                return (
-                  <FilterChip
-                    key={m.userId}
-                    active={withUserId === m.userId}
-                    onClick={() => setWithUserId(m.userId)}
-                  >
-                    {label}
-                  </FilterChip>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Select value={datePreset} onValueChange={(v) => setDatePreset((v as DatePreset) ?? "all")}>
-                <SelectTrigger className="text-xs">
-                  <SelectValue>
-                    {(v: string | null) => DATE_PRESET_LABELS[(v ?? "all") as DatePreset]}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(DATE_PRESET_LABELS) as DatePreset[]).map((k) => (
-                    <SelectItem key={k} value={k}>{DATE_PRESET_LABELS[k]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {datePreset === "day" && (
-                <DatePicker value={singleDay} onChange={setSingleDay} placeholder="Día" />
-              )}
-              {datePreset === "range" && (
-                <div className="flex flex-1 gap-2">
-                  <DatePicker value={customFrom} onChange={setCustomFrom} placeholder="Desde" />
-                  <DatePicker value={customTo} onChange={setCustomTo} placeholder="Hasta" />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-0 shadow-card overflow-hidden">
-          {sLoading ? (
-            <div className="p-3 space-y-2">
-              <Skeleton className="h-12 w-full rounded-md" />
-              <Skeleton className="h-12 w-full rounded-md" />
-            </div>
-          ) : !settlements?.items.length ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              Aún no registraste pagos.
-            </div>
+        {items.length < count &&
+          (rows < MAX_ROWS ? (
+            <Button variant="secondary" className="self-center" onClick={() => setRows(Math.min(rows + PAGE, MAX_ROWS))}>
+              Cargar más
+            </Button>
           ) : (
-            settlements.items.map((s, i) => {
-              const isLast = i === settlements.items.length - 1;
-              return (
-                <div
-                  key={s.id}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3",
-                    !isLast && "border-b border-border",
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <span className="truncate font-semibold">{memberName(s.fromUser)}</span>
-                      <ArrowRight className="size-3 text-muted-foreground" />
-                      <span className="truncate font-semibold">{memberName(s.toUser)}</span>
-                    </div>
-                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {fmtDateShort(s.paidAt)}
-                      {s.note ? ` · ${s.note}` : ""}
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <div className="font-mono text-sm font-semibold">
-                      <Money amount={s.amount} currency={s.baseCurrency} />
-                    </div>
-                  </div>
-                  <SettlementDetailButton id={s.id} fromLabel={memberName(s.fromUser)} toLabel={memberName(s.toUser)} />
-                  <DeleteSettlementButton id={s.id} />
-                </div>
-              );
-            })
-          )}
-        </Card>
-      </div>
+            <p className="text-center text-caption text-ink-muted">
+              Ves los últimos {MAX_ROWS} de {count}.
+            </p>
+          ))}
+      </section>
+
+      {open && (
+        <SettlementSheet
+          settlement={open}
+          fromLabel={firstName(open.fromUser)}
+          toLabel={firstName(open.toUser)}
+          onOpenChange={(v) => !v && setOpen(null)}
+        />
+      )}
     </div>
   );
 }
@@ -308,37 +256,44 @@ const DATE_PRESET_LABELS: Record<DatePreset, string> = {
   last_30: "Últimos 30 días",
   last_90: "Últimos 90 días",
   year: "Este año",
-  day: "Día específico",
-  range: "Rango personalizado",
+  day: "Un día",
+  range: "Entre dos fechas",
 };
 
-function toIso(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+function DateMenu({ value, onChange }: { value: DatePreset; onChange: (v: DatePreset) => void }) {
+  const active = value !== "all";
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Chip active={active} aria-label={`Fecha: ${DATE_PRESET_LABELS[value]}`} />}>
+        {active ? DATE_PRESET_LABELS[value] : "Fecha"}
+        <ChevronDown aria-hidden strokeWidth={1.75} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="min-w-56">
+        <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(v as DatePreset)}>
+          {(Object.keys(DATE_PRESET_LABELS) as DatePreset[]).map((k) => (
+            <DropdownMenuRadioItem key={k} value={k} className="min-h-11 text-body">
+              {DATE_PRESET_LABELS[k]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
-function computeRange(
-  preset: DatePreset,
-  customFrom: string,
-  customTo: string,
-  singleDay: string,
-): { from?: string; to?: string } {
+function toIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function computeRange(preset: DatePreset, customFrom: string, customTo: string, singleDay: string): { from?: string; to?: string } {
   const now = new Date();
   switch (preset) {
     case "all":
       return {};
-    case "this_month": {
-      const from = new Date(now.getFullYear(), now.getMonth(), 1);
-      const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      return { from: toIso(from), to: toIso(to) };
-    }
-    case "last_month": {
-      const from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const to = new Date(now.getFullYear(), now.getMonth(), 0);
-      return { from: toIso(from), to: toIso(to) };
-    }
+    case "this_month":
+      return { from: toIso(new Date(now.getFullYear(), now.getMonth(), 1)), to: toIso(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
+    case "last_month":
+      return { from: toIso(new Date(now.getFullYear(), now.getMonth() - 1, 1)), to: toIso(new Date(now.getFullYear(), now.getMonth(), 0)) };
     case "last_30": {
       const from = new Date(now);
       from.setDate(from.getDate() - 30);
@@ -349,47 +304,16 @@ function computeRange(
       from.setDate(from.getDate() - 90);
       return { from: toIso(from), to: toIso(now) };
     }
-    case "year": {
-      const from = new Date(now.getFullYear(), 0, 1);
-      const to = new Date(now.getFullYear(), 11, 31);
-      return { from: toIso(from), to: toIso(to) };
-    }
+    case "year":
+      return { from: toIso(new Date(now.getFullYear(), 0, 1)), to: toIso(new Date(now.getFullYear(), 11, 31)) };
     case "day":
       return singleDay ? { from: singleDay, to: singleDay } : {};
     case "range":
-      return {
-        from: customFrom || undefined,
-        to: customTo || undefined,
-      };
+      return { from: customFrom || undefined, to: customTo || undefined };
   }
 }
 
-function FilterChip({
-  children,
-  active,
-  onClick,
-}: {
-  children: React.ReactNode;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "inline-flex shrink-0 cursor-pointer items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
-        active
-          ? "border-primary/60 bg-primary/10 text-primary"
-          : "border-border bg-card text-muted-foreground hover:bg-muted",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-/** "Registrar pago" of one debt. `trigger` replaces the small "Pagar" button. */
+/** "Registrar pago" of one debt. `trigger` replaces the "Pagar" button. */
 export function PayDebtDialog({
   fromUser,
   toUser,
@@ -414,11 +338,9 @@ export function PayDebtDialog({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const amountNum = Number(amount);
-  const invalid =
-    !Number.isFinite(amountNum) ||
-    amountNum <= 0 ||
-    amountNum > maxAmount + 0.005;
+  const amountNum = Number(amount.replace(",", "."));
+  const tooMuch = amountNum > maxAmount + 0.005;
+  const invalid = !Number.isFinite(amountNum) || amountNum <= 0 || tooMuch;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -426,13 +348,7 @@ export function PayDebtDialog({
     setErr(null);
     setSaving(true);
     try {
-      await createSettlement({
-        fromUser,
-        toUser,
-        amount: Number(amountNum.toFixed(2)),
-        note: note.trim() || undefined,
-        paidAt,
-      });
+      await createSettlement({ fromUser, toUser, amount: Number(amountNum.toFixed(2)), note: note.trim() || undefined, paidAt });
       invalidateDebts();
       setOpen(false);
     } catch (e) {
@@ -443,224 +359,134 @@ export function PayDebtDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => {
-      setOpen(next);
-      if (next) {
-        setAmount(maxAmount.toFixed(2));
-        setNote("");
-        setPaidAt(isoToday());
-        setErr(null);
-      }
-    }}>
-      {trigger ? (
-        <DialogTrigger render={trigger} />
-      ) : (
-        <DialogTrigger render={<Button size="sm" variant="secondary" />}>Pagar</DialogTrigger>
-      )}
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) {
+          setAmount(maxAmount.toFixed(2));
+          setNote("");
+          setPaidAt(isoToday());
+          setErr(null);
+        }
+      }}
+    >
+      {trigger ? <DialogTrigger render={trigger} /> : <DialogTrigger render={<Button variant="secondary" />}>Pagar</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Registrar pago</DialogTitle>
+          <DialogDescription>
+            {fromLabel === "Vos" ? `Le pagás a ${toLabel}` : `${fromLabel} te paga`}. La deuda es de{" "}
+            <Money amount={maxAmount} currency={baseCurrency} className="font-semibold text-ink" />.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="rounded-md bg-muted/60 p-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">De</span>
-              <span className="font-semibold">{fromLabel}</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <span className="text-muted-foreground">Para</span>
-              <span className="font-semibold">{toLabel}</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <span className="text-muted-foreground">Deuda actual</span>
-              <span className="font-mono font-semibold">
-                <Money amount={maxAmount} currency={baseCurrency} />
-              </span>
-            </div>
-          </div>
-
-          <div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="pay-amount">Monto</Label>
             <Input
               id="pay-amount"
-              type="number"
               inputMode="decimal"
-              step="0.01"
-              min="0.01"
-              max={maxAmount}
+              autoComplete="off"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              autoFocus
+              aria-invalid={tooMuch}
+              aria-describedby={tooMuch ? "pay-amount-error" : undefined}
+              className="tabular-nums"
             />
-            {amountNum > maxAmount + 0.005 && (
-              <p className="mt-1 text-xs text-destructive">
-                No podés pagar más que la deuda actual.
+            {tooMuch && (
+              <p id="pay-amount-error" className="text-caption text-negative">
+                No puede ser más que la deuda.
               </p>
             )}
           </div>
-
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="pay-date">Fecha</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label>Fecha</Label>
               <DatePicker value={paidAt} onChange={setPaidAt} />
             </div>
-            <div>
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="pay-note">Nota</Label>
-              <Input
-                id="pay-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Opcional"
-              />
+              <Input id="pay-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" />
             </div>
           </div>
-
           {err && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
               {err}
-            </div>
+            </p>
           )}
-
-          <DialogFooter>
-            <DialogClose render={<Button type="button" variant="ghost" />}>Cancelar</DialogClose>
-            <Button type="submit" disabled={invalid || saving}>
-              {saving && <Loader2 className="mr-1 size-3.5 animate-spin" />}
-              Confirmar pago
-            </Button>
-          </DialogFooter>
+          <Button type="submit" size="lg" className="w-full" disabled={invalid || saving}>
+            {saving ? "Guardando…" : "Confirmar pago"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
 
-function SettlementDetailButton({
-  id,
+/** A payment's sheet: who paid whom, how much, when, the note; delete at the end. */
+function SettlementSheet({
+  settlement: s,
   fromLabel,
   toLabel,
+  onOpenChange,
 }: {
-  id: string;
+  settlement: Settlement;
   fromLabel: string;
   toLabel: string;
+  onOpenChange: (v: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const { data, isLoading, error } = useSettlement(open ? id : null);
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            aria-label="Ver detalle del pago"
-            className="grid size-7 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          />
-        }
-      >
-        <Eye className="size-3.5" />
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Detalle del pago</DialogTitle>
-        </DialogHeader>
-
-        {isLoading && <Skeleton className="h-32 w-full rounded-lg" />}
-
-        {error && !isLoading && (
-          <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            No se pudo cargar el detalle.
-          </div>
-        )}
-
-        {data && (
-          <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-4 text-sm">
-            <div className="flex items-center justify-center gap-2 text-base font-semibold">
-              <span className="truncate">{fromLabel}</span>
-              <ArrowRight className="size-4 text-muted-foreground" />
-              <span className="truncate">{toLabel}</span>
-            </div>
-
-            <div className="text-center">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Monto</div>
-              <div className="mt-0.5 font-mono text-2xl font-bold tracking-tight">
-                <Money amount={data.amount} currency={data.baseCurrency} />
-              </div>
-              <div className="mt-0.5 text-xs font-semibold text-muted-foreground">
-                {data.baseCurrency}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-xs">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Pagado</div>
-                <div className="mt-0.5">{fmtDateShort(data.paidAt)}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Registrado</div>
-                <div className="mt-0.5">
-                  {new Date(data.createdAt).toLocaleDateString("es-AR", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {data.note && (
-              <div className="border-t border-border pt-3">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Nota</div>
-                <p className="mt-1 whitespace-pre-wrap text-xs">{data.note}</p>
-              </div>
-            )}
-
-            <div className="border-t border-border pt-3">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">ID</div>
-              <code className="mt-0.5 block truncate font-mono text-xs text-muted-foreground">
-                {data.id}
-              </code>
-            </div>
-          </div>
-        )}
-
-        <DialogFooter>
-          <DialogClose render={<Button type="button" variant="ghost" />}>Cerrar</DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DeleteSettlementButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
-  async function handleClick() {
+
+  async function handleDelete() {
     const ok = await confirm({
       title: "¿Eliminar este pago?",
-      description: "La deuda se restaurará.",
+      description: "La deuda vuelve a estar como antes del pago.",
       confirmLabel: "Eliminar",
       destructive: true,
     });
     if (!ok) return;
     setBusy(true);
     try {
-      await deleteSettlement(id);
+      await deleteSettlement(s.id);
       invalidateDebts();
-    } catch {
-      /* noop */
-    } finally {
+      onOpenChange(false);
+    } catch (e) {
+      toastError(e, "No se pudo eliminar el pago");
       setBusy(false);
     }
   }
+
+  const row = (label: string, value: React.ReactNode) => (
+    <div className="flex min-h-12 items-center justify-between gap-4 py-2 text-body">
+      <dt className="text-ink-muted">{label}</dt>
+      <dd className="min-w-0 text-right font-semibold text-ink">{value}</dd>
+    </div>
+  );
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={busy}
-      aria-label="Eliminar pago"
-      className="grid size-7 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-    </button>
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Pago</DialogTitle>
+        </DialogHeader>
+        <p className="text-center text-display font-bold">
+          <Money amount={s.amount} currency={s.baseCurrency} />
+        </p>
+        <dl className="divide-y divide-border">
+          {row("De", fromLabel)}
+          {row("Para", toLabel)}
+          {row("Fecha", fmtDateShort(s.paidAt))}
+          {s.note ? row("Nota", <span className="font-normal whitespace-pre-wrap">{s.note}</span>) : null}
+        </dl>
+        <Button
+          variant="ghost"
+          className="self-center text-negative hover:bg-negative-soft hover:text-negative"
+          onClick={handleDelete}
+          disabled={busy}
+        >
+          {busy ? "Eliminando…" : "Eliminar pago"}
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }
-

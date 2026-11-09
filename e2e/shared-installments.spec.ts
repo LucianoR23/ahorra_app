@@ -21,6 +21,7 @@ test("an expense in 3 installments, shared, reaches the balances", async ({ page
 
   // First installment (300) is billed today and split in two: the member owes 150.
   await page.goto("/deudas");
-  await expect(page.getByText("Te deben netos en total.")).toBeVisible();
-  await expect(page.getByText("+ $ 150", { exact: true })).toBeVisible();
+  await expect(page.getByText("Te deben", { exact: true })).toBeVisible();
+  const debts = page.getByRole("region", { name: "Lo que se deben" });
+  await expect(debts.getByText("$ 150", { exact: true })).toBeVisible();
 });
