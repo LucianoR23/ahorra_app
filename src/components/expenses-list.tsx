@@ -206,8 +206,8 @@ export function ExpensesList({ help }: { help?: React.ReactNode }) {
               <h2 className="font-semibold">{dayLabel(g.day)}</h2>
               <Money amount={g.total} currency={baseCurrency} />
             </div>
-            <Card>
-              <CardContent className="py-1">
+            <Card className="py-1">
+              <CardContent>
                 <ul className="divide-y divide-border">
                   {g.items.map((e) => {
                     const category = e.categoryId ? categoryById.get(e.categoryId) : undefined;
