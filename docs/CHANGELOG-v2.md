@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 4.1 (app part): credit card statements
+- Tarjetas starts with the statements (design `Tarjetas`): a card picker when there is more than one credit card, "Resumen a pagar" (the period before the open one) with its total per currency, closing and due dates, status, "Marcar como pagado" and "Ver detalle", and "Próximo resumen" with what it has so far. Without credit cards it invites to add one.
+- New `/tarjetas/[id]/resumen/[ym]`: month navigator, total, minimum payment (in pesos), pay or unmark the payment, the installments with the space they belong to (Mi plata or the Hogar), and the adjustments (interest, taxes, fees, credits, other) to add, edit or delete.
+- "Marcar como pagado" proposes the total and accepts what was actually paid; every installment of the statement is marked paid either way.
+- `src/lib/statements.ts` (labels, date lines, which statement is to pay), schemas, hooks and mutations for the statements API. E2E spec `card-statements.spec.ts`; the screenshot harness adds a card with a closed statement and the statement screen.
+
 ### 1.9 (part 2): amounts in push notifications, per device
 - Push notifications show no amount by default, since they can appear on a locked screen (API 1.9 sends `body` without amounts and `bodyWithAmounts` with them). Seguridad, "Privacidad en este dispositivo", gains "Montos en las notificaciones" to opt in on this device.
 - The choice lives in IndexedDB (`app.device`), which the service worker can read; `src/lib/push-amounts.ts` holds the read/write and `pushBody()`. If IndexedDB fails, pushes stay without amounts.

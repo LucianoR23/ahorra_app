@@ -609,3 +609,68 @@ export const pagedTicketsSchema = z.object({
   next_cursor: z.string().optional(), // ausente = última página
 });
 export type PagedTickets = z.infer<typeof pagedTicketsSchema>;
+
+// --- Credit card statements (plan 4.1) ------------------------------------
+
+export const statementStatusSchema = z.enum(["open", "closed", "overdue", "paid"]);
+export type StatementStatus = z.infer<typeof statementStatusSchema>;
+
+export const currencyAmountSchema = z.object({ currency: currencySchema, amount: z.number() });
+export type CurrencyAmount = z.infer<typeof currencyAmountSchema>;
+
+export const cardStatementSchema = z.object({
+  periodYm: z.string(),
+  closingDate: z.string(),
+  dueDate: z.string(),
+  status: statementStatusSchema,
+  /** One per currency, installments plus adjustments. Empty when nothing was billed. */
+  totals: z.array(currencyAmountSchema),
+  installmentCount: z.number(),
+  /** In pesos. */
+  minimumPayment: z.number().nullable(),
+  paidAt: z.string().nullable(),
+  paidAmount: z.number().nullable(),
+  paidCurrency: currencySchema.nullable(),
+});
+export type CardStatement = z.infer<typeof cardStatementSchema>;
+
+export const cardStatementListSchema = z.object({
+  /** The period open today; the one before it is the statement to pay. */
+  openPeriodYm: z.string(),
+  statements: z.array(cardStatementSchema),
+});
+export type CardStatementList = z.infer<typeof cardStatementListSchema>;
+
+export const adjustmentKindSchema = z.enum(["interest", "tax", "fee", "credit", "other"]);
+export type AdjustmentKind = z.infer<typeof adjustmentKindSchema>;
+
+export const statementInstallmentSchema = z.object({
+  installmentId: z.string(),
+  expenseId: z.string(),
+  householdId: z.string(),
+  categoryId: z.string().nullable(),
+  description: z.string(),
+  spentAt: z.string(),
+  installmentNumber: z.number(),
+  totalInstallments: z.number(),
+  amount: z.number(),
+  currency: currencySchema,
+  isPaid: z.boolean(),
+});
+export type StatementInstallment = z.infer<typeof statementInstallmentSchema>;
+
+export const statementAdjustmentSchema = z.object({
+  id: z.string(),
+  kind: adjustmentKindSchema,
+  description: z.string(),
+  amount: z.number(),
+  currency: currencySchema,
+  createdAt: z.string(),
+});
+export type StatementAdjustment = z.infer<typeof statementAdjustmentSchema>;
+
+export const cardStatementDetailSchema = cardStatementSchema.extend({
+  installments: z.array(statementInstallmentSchema),
+  adjustments: z.array(statementAdjustmentSchema),
+});
+export type CardStatementDetail = z.infer<typeof cardStatementDetailSchema>;

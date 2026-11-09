@@ -70,6 +70,30 @@ export async function cardClosingToday(owner: User, name: string): Promise<strin
   return pm.id;
 }
 
+/** A credit card whose period closed yesterday: its statement is the one to pay (plan 4.1). */
+export async function cardClosedYesterday(owner: User, name: string): Promise<string> {
+  const yesterday = localDate(-1);
+  const pm = await call<{ id: string }>("POST", "/payment-methods", {
+    token: owner.token,
+    body: {
+      name, kind: "credit",
+      creditCard: { alias: name, defaultClosingDay: Number(yesterday.slice(8)), defaultDueDay: 28,
+        currentPeriod: { closingDate: yesterday, dueDate: localDate(9) } },
+    },
+  });
+  return pm.id;
+}
+
+/** The user's "Mi plata" space. */
+export async function personalSpaceOf(user: User): Promise<string> {
+  const list = await call<{ id: string; kind: string }[]>("GET", "/households", { token: user.token });
+  return list.find((h) => h.kind === "personal")!.id;
+}
+
+export async function createExpense(user: User, householdId: string, body: Record<string, unknown>) {
+  await call("POST", "/expenses", { token: user.token, household: householdId, body: { currency: "ARS", installments: 1, ...body } });
+}
+
 export async function cashOf(user: User): Promise<string> {
   const list = await call<{ id: string; kind: string }[]>("GET", "/payment-methods", { token: user.token });
   return list.find((p) => p.kind === "cash")!.id;

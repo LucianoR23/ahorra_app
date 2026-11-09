@@ -33,6 +33,8 @@ import type {
   AiExport,
   AdminDeletedHousehold,
   TotalIncomeResponse,
+  CardStatementList,
+  CardStatementDetail,
 } from "./schemas";
 
 function useReady() {
@@ -283,6 +285,25 @@ export function useCreditCardPeriods(paymentMethodId: string | null | undefined)
   return useSWR<CreditCardPeriod[]>(
     token && paymentMethodId
       ? ([`/payment-methods/${paymentMethodId}/credit-card/periods`, { householdScoped: false }] as const)
+      : null,
+  );
+}
+
+/** A card's statements (plan 4.1): by default 6 months back and 11 ahead. */
+export function useCardStatements(paymentMethodId: string | null | undefined) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<CardStatementList>(
+    token && paymentMethodId
+      ? ([`/payment-methods/${paymentMethodId}/credit-card/statements`, { householdScoped: false }] as const)
+      : null,
+  );
+}
+
+export function useCardStatement(paymentMethodId: string | null | undefined, ym: string | null | undefined) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<CardStatementDetail>(
+    token && paymentMethodId && ym
+      ? ([`/payment-methods/${paymentMethodId}/credit-card/statements/${ym}`, { householdScoped: false }] as const)
       : null,
   );
 }
