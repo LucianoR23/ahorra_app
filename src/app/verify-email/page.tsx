@@ -3,35 +3,28 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, AlertCircle, CheckCircle2, MailCheck } from "lucide-react";
+import { CircleAlert, Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { BrandLogo } from "@/components/brand-logo";
+import { AuthResult, AuthShell } from "@/components/auth/auth-shell";
 import { verifyEmail } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
-import { brand } from "@/config/brand";
+
+function Verifying() {
+  return (
+    <AuthResult icon={MailCheck} tone="neutral" title="Verificando tu email…">
+      <Loader2 aria-label="Cargando" className="mx-auto size-5 animate-spin text-ink-muted" />
+    </AuthResult>
+  );
+}
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh flex-col items-center px-4 py-10">
-      <Link href="/" aria-label={`${brand.name} — Inicio`} className="mb-6 flex items-center">
-        <BrandLogo variant="wordmark" size={40} priority />
-      </Link>
-      <div className="w-full max-w-sm">
-        <Suspense
-          fallback={
-            <Card className="p-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> Verificando…
-              </div>
-            </Card>
-          }
-        >
-          <VerifyEmailInner />
-        </Suspense>
-      </div>
-    </div>
+    <AuthShell home="/">
+      <Suspense fallback={<Verifying />}>
+        <VerifyEmailInner />
+      </Suspense>
+    </AuthShell>
   );
 }
 
@@ -78,99 +71,49 @@ function VerifyEmailInner() {
 
   if (state === "no-token") {
     return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="grid size-12 place-items-center rounded-full bg-destructive/10 text-destructive">
-            <AlertCircle className="size-6" />
-          </div>
-          <h1 className="text-xl font-semibold">Link inválido</h1>
-          <p className="text-sm text-muted-foreground">
-            Este link no tiene token de verificación.
-          </p>
-        </div>
-        <Link
-          href="/"
-          className="mt-6 block text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
+      <AuthResult icon={CircleAlert} tone="negative" title="Este link no sirve" description="Le falta una parte. Abrilo de nuevo desde el mail.">
+        <Button variant="outline" size="lg" className="w-full" nativeButton={false} render={<Link href="/" />}>
           Volver al inicio
-        </Link>
-      </Card>
+        </Button>
+      </AuthResult>
     );
   }
 
-  if (state === "loading") {
-    return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <MailCheck className="size-6" />
-          </div>
-          <h1 className="text-xl font-semibold">Verificando tu email…</h1>
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        </div>
-      </Card>
-    );
-  }
+  if (state === "loading") return <Verifying />;
 
   if (state === "success") {
-    // If we haven't hydrated yet, AuthBootstrap may still be recovering the
-    // session from the refresh cookie. Show a spinner so the CTA doesn't flicker.
+    // Before hydration AuthBootstrap may still be recovering the session from
+    // the refresh cookie: hold the button so it does not flicker.
     const waitingForSession = !hydrated;
     const needsLogin = hydrated && !user;
-    const cta = waitingForSession
-      ? { href: "#", label: "Cargando…" }
-      : needsLogin
-      ? { href: "/login", label: "Iniciar sesión" }
-      : { href: "/", label: "Ir al inicio" };
-
     return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="grid size-12 place-items-center rounded-full bg-emerald-500/10 text-emerald-500">
-            <CheckCircle2 className="size-6" />
-          </div>
-          <h1 className="text-xl font-semibold">¡Email verificado!</h1>
-          <p className="text-sm text-muted-foreground">
-            {needsLogin
-              ? "Iniciá sesión para terminar de configurar tu cuenta."
-              : "Listo. Ya podés usar todas las funciones de tu cuenta."}
-          </p>
-        </div>
-        <Link
-          href={cta.href}
-          className={`mt-6 block ${waitingForSession ? "pointer-events-none" : ""}`}
-          aria-disabled={waitingForSession}
-        >
-          <Button size="lg" className="w-full" disabled={waitingForSession}>
-            {waitingForSession ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                {cta.label}
-              </>
-            ) : (
-              cta.label
-            )}
+      <AuthResult
+        title="Email verificado"
+        description={
+          needsLogin
+            ? "Iniciá sesión para terminar de armar tu cuenta."
+            : "Listo. Ya podés usar todo."
+        }
+      >
+        {waitingForSession ? (
+          <Button size="lg" className="w-full" disabled>
+            <Loader2 aria-hidden className="size-4 animate-spin" />
+            Cargando…
           </Button>
-        </Link>
-      </Card>
+        ) : (
+          <Button size="lg" className="w-full" nativeButton={false} render={<Link href={needsLogin ? "/login" : "/"} />}>
+            {needsLogin ? "Iniciar sesión" : "Ir al inicio"}
+          </Button>
+        )}
+      </AuthResult>
     );
   }
 
   return (
-    <Card className="p-6">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="grid size-12 place-items-center rounded-full bg-destructive/10 text-destructive">
-          <AlertCircle className="size-6" />
-        </div>
-        <h1 className="text-xl font-semibold">No pudimos verificar tu email</h1>
-        <p className="text-sm text-muted-foreground">{message}</p>
-      </div>
-      <Link
-        href="/"
-        className="mt-6 block text-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-      >
+    <AuthResult icon={CircleAlert} tone="negative" title="No pudimos verificar tu email" description={message}>
+      <Button variant="outline" size="lg" className="w-full" nativeButton={false} render={<Link href="/" />}>
         Volver al inicio
-      </Link>
-    </Card>
+      </Button>
+    </AuthResult>
   );
 }

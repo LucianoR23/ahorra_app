@@ -2,116 +2,79 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import {
-  AlertTriangle,
-  Bell,
-  Loader2,
-  RotateCcw,
-  ShieldCheck,
-  Trash2,
-  Sparkles,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Bell, House, Loader2, ShieldAlert, ShieldCheck, Sparkles } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useAuthStore } from "@/stores/auth";
+import { MenuGroup, MenuItem, MenuRow } from "@/components/ui/menu-list";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminDeletedHouseholds } from "@/lib/api/hooks";
-import {
-  purgeAdminHousehold,
-  restoreAdminHousehold,
-  generateInsights,
-  adminSendTestPush,
-} from "@/lib/api/mutations";
+import { adminSendTestPush, generateInsights, purgeAdminHousehold, restoreAdminHousehold } from "@/lib/api/mutations";
 import type { AdminDeletedHousehold } from "@/lib/api/schemas";
+import { confirm } from "@/lib/confirm";
 import { toast, toastError } from "@/lib/toast";
-import { DatePicker } from "@/components/ui/date-picker";
+import { useAuthStore } from "@/stores/auth";
 
 function invalidate() {
   swrMutate(
-    (k) =>
-      Array.isArray(k) &&
-      typeof k[0] === "string" &&
-      (k[0].startsWith("/admin/") || k[0].startsWith("/households")),
+    (k) => Array.isArray(k) && typeof k[0] === "string" && (k[0].startsWith("/admin/") || k[0].startsWith("/households")),
     undefined,
     { revalidate: true },
   );
 }
 
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" });
+
+/**
+ * Superadmin tools (plan 1.10b, no design: the grouped list of `Mas`; each
+ * tool opens a sheet).
+ */
 export function AdminPanel() {
   const user = useAuthStore((s) => s.user);
-
   if (!user) return null;
 
   if (!user.isSuperadmin) {
     return (
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2">
-            <div className="grid size-7 place-items-center rounded-lg bg-destructive/10 text-destructive">
-              <AlertTriangle className="size-3.5" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-destructive">Acceso denegado</h2>
-              <p className="text-xs text-muted-foreground">
-                Esta sección es exclusiva para superadmins.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={ShieldAlert}
+        title="Esta sección no es para tu cuenta"
+        description="Solo la ven quienes administran la app."
+      />
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2">
-            <div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
-              <ShieldCheck className="size-3.5" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold">Superadmin</h2>
-              <p className="text-xs text-muted-foreground">
-                Sesión iniciada como <span className="font-semibold">{user.email}</span>. Este
-                rol es independiente del rol por-hogar.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <GenerateInsightsCard />
-      <TestPushCard />
-      <DeletedHouseholdsCard />
+    <div className="flex flex-col gap-6">
+      <MenuGroup title="Cuenta" footer="Este rol es de la app, no depende de tu rol en un hogar.">
+        <MenuRow>
+          <ShieldCheck aria-hidden className="size-5 shrink-0 text-ink-muted" strokeWidth={1.75} />
+          <span className="min-w-0 flex-1 truncate">{user.email}</span>
+          <span className="text-caption text-ink-muted">Superadmin</span>
+        </MenuRow>
+      </MenuGroup>
+      <MenuGroup title="Herramientas">
+        <GenerateInsightsItem />
+        <TestPushItem />
+      </MenuGroup>
+      <DeletedHouseholdsGroup />
     </div>
   );
 }
 
-function TestPushCard() {
+function TestPushItem() {
   const [busy, setBusy] = useState(false);
 
   async function handle() {
     setBusy(true);
     try {
       const r = await adminSendTestPush();
-      if (r.sent) {
-        toast.success(`Push enviada a ${r.subscriptions} dispositivo(s)`);
-      } else {
-        toast.error(r.reason ?? "No se pudo enviar la push");
-      }
+      if (r.sent) toast.success(`Push enviada a ${r.subscriptions} dispositivo(s)`);
+      else toast.error(r.reason ?? "No se pudo enviar la push");
     } catch (e) {
       toastError(e, "No se pudo enviar la push");
     } finally {
@@ -120,35 +83,19 @@ function TestPushCard() {
   }
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
-            <Bell className="size-3.5" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold">Probar push notification</h2>
-            <p className="text-xs text-muted-foreground">
-              Envía una notificación de prueba solo a tu usuario (a todos los dispositivos suscriptos).
-            </p>
-          </div>
-        </div>
-        <Button type="button" onClick={handle} disabled={busy}>
-          {busy ? (
-            <Loader2 className="mr-1 size-3.5 animate-spin" />
-          ) : (
-            <Bell className="mr-1 size-3.5" />
-          )}
-          Enviar push de prueba
-        </Button>
-      </CardContent>
-    </Card>
+    <MenuItem
+      icon={busy ? Loader2 : Bell}
+      label="Enviar push de prueba"
+      detail="A tus dispositivos"
+      onClick={busy ? undefined : handle}
+    />
   );
 }
 
-function GenerateInsightsCard() {
+function GenerateInsightsItem() {
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [at, setAt] = useState<string>("");
+  const [at, setAt] = useState("");
   const [result, setResult] = useState<{ created: number; failed: number } | null>(null);
 
   async function handle() {
@@ -157,12 +104,10 @@ function GenerateInsightsCard() {
     try {
       const r = await generateInsights(at || undefined);
       setResult(r);
-      swrMutate(
-        (k) => Array.isArray(k) && typeof k[0] === "string" && k[0].startsWith("/insights"),
-        undefined,
-        { revalidate: true },
-      );
-      toast.success(`Insights generados (${r.created} creados, ${r.failed} fallidos)`);
+      swrMutate((k) => Array.isArray(k) && typeof k[0] === "string" && k[0].startsWith("/insights"), undefined, {
+        revalidate: true,
+      });
+      toast.success("Insights generados");
     } catch (e) {
       toastError(e, "No se pudieron generar");
     } finally {
@@ -171,237 +116,151 @@ function GenerateInsightsCard() {
   }
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <div className="grid size-7 place-items-center rounded-lg bg-ai/10 text-ai">
-            <Sparkles className="size-3.5" />
+    <>
+      <MenuItem icon={Sparkles} label="Regenerar insights" onClick={() => setOpen(true)} />
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (!v) setResult(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Regenerar insights</DialogTitle>
+            <DialogDescription>Corre el motor para todos los hogares. Sirve para probar cambios.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="insights-at">Fecha</Label>
+            <DatePicker id="insights-at" value={at} onChange={setAt} placeholder="Hoy" />
+            <p className="text-caption text-ink-muted">Vacía, usa la de hoy.</p>
           </div>
-          <div>
-            <h2 className="text-sm font-bold">Regenerar insights</h2>
-            <p className="text-xs text-muted-foreground">
-              Ejecuta el pipeline de generación para todos los hogares. Útil para probar cambios del motor.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <div className="flex-1">
-            <Label htmlFor="insights-at" className="text-xs">
-              Fecha (opcional)
-            </Label>
-            <DatePicker
-              value={at}
-              onChange={setAt}
-              placeholder="Hoy"
-              className="mt-1"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Vacío = hoy.
-            </p>
-          </div>
-          <Button type="button" onClick={handle} disabled={busy}>
-            {busy ? (
-              <Loader2 className="mr-1 size-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="mr-1 size-3.5" />
-            )}
-            Generar ahora
-          </Button>
-        </div>
-
-        {result && (
-          <div className="mt-3 flex gap-2 text-xs">
-            <Badge className="bg-positive/15 text-positive border-0">
+          {result && (
+            <p role="status" className="text-body text-ink">
               {result.created} creados
-            </Badge>
-            {result.failed > 0 && (
-              <Badge className="bg-destructive/15 text-destructive border-0">
-                {result.failed} fallidos
-              </Badge>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              {result.failed > 0 && <span className="text-negative"> · {result.failed} fallidos</span>}
+            </p>
+          )}
+          <Button type="button" size="lg" className="w-full" onClick={handle} disabled={busy}>
+            {busy && <Loader2 aria-hidden className="size-4 animate-spin" />}
+            {busy ? "Generando…" : "Generar ahora"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
-function DeletedHouseholdsCard() {
+function DeletedHouseholdsGroup() {
   const { data, isLoading, error } = useAdminDeletedHouseholds();
+  const [selected, setSelected] = useState<AdminDeletedHousehold | null>(null);
+  // Go sends an empty slice as null (the SWR fetcher does not apply zod defaults).
+  const list = data ?? [];
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4">
-        <div className="mb-3">
-          <h2 className="text-sm font-bold">Hogares soft-deleted</h2>
-          <p className="text-xs text-muted-foreground">
-            Hogares marcados como borrados por sus owners. Podés restaurarlos o purgarlos
-            definitivamente (cascade).
-          </p>
-        </div>
-
-        {isLoading && <Skeleton className="h-24 w-full rounded-md" />}
-
-        {error && (
-          <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+    <MenuGroup
+      title="Hogares borrados"
+      footer="Los borraron sus dueños. Podés devolverlos o eliminarlos con todos sus datos."
+    >
+      {isLoading ? (
+        <MenuRow>
+          <Skeleton className="h-10 w-full" />
+        </MenuRow>
+      ) : error ? (
+        <MenuRow>
+          <Alert variant="error" className="w-full">
             No se pudo cargar la lista.
-          </div>
-        )}
-
-        {!isLoading && !error && (!data || data.length === 0) && (
-          <p className="rounded-md bg-muted/40 px-3 py-6 text-center text-xs text-muted-foreground">
-            No hay hogares soft-deleted.
-          </p>
-        )}
-
-        {data && data.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {data.map((h) => (
-              <DeletedHouseholdRow key={h.id} household={h} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </Alert>
+        </MenuRow>
+      ) : list.length === 0 ? (
+        <MenuRow>
+          <span className="text-ink-muted">No hay hogares borrados.</span>
+        </MenuRow>
+      ) : (
+        list.map((h) => (
+          <MenuItem
+            key={h.id}
+            icon={House}
+            label={h.name}
+            detail={`Borrado el ${fmtDate(h.deletedAt)}`}
+            onClick={() => setSelected(h)}
+          />
+        ))
+      )}
+      {selected && <DeletedHouseholdSheet household={selected} onClose={() => setSelected(null)} />}
+    </MenuGroup>
   );
 }
 
-function DeletedHouseholdRow({ household }: { household: AdminDeletedHousehold }) {
-  const deletedAt = new Date(household.deletedAt).toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-  const ownerName = household.owner
-    ? `${household.owner.firstName} ${household.owner.lastName}`.trim()
-    : "—";
-  const ownerEmail = household.owner?.email ?? "—";
+function DeletedHouseholdSheet({ household, onClose }: { household: AdminDeletedHousehold; onClose: () => void }) {
+  const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState<"restore" | "purge" | null>(null);
+  const matches = typed.trim() === household.name;
+  const owner = household.owner;
 
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 sm:flex-row sm:items-center">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-semibold">{household.name}</p>
-          <Badge variant="outline" className="h-4 px-1.5 text-xs">
-            {household.baseCurrency}
-          </Badge>
-        </div>
-        <p className="truncate text-xs text-muted-foreground">
-          Owner: {ownerName} · {ownerEmail}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Borrado el {deletedAt} · ID <code className="font-mono">{household.id.slice(0, 8)}</code>
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <RestoreButton household={household} />
-        <PurgeButton household={household} />
-      </div>
-    </div>
-  );
-}
-
-function RestoreButton({ household }: { household: AdminDeletedHousehold }) {
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  async function handle() {
-    setBusy(true);
+  async function restore() {
+    const ok = await confirm({
+      title: "¿Devolver el hogar?",
+      description: `${household.name} vuelve a aparecer para sus miembros, con todos sus datos.`,
+      confirmLabel: "Restaurar",
+    });
+    if (!ok) return;
+    setBusy("restore");
     try {
       await restoreAdminHousehold(household.id);
       invalidate();
       toast.success("Hogar restaurado");
-      setOpen(false);
+      onClose();
     } catch (e) {
       toastError(e, "No se pudo restaurar");
-    } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="xs" variant="outline" />}>
-        <RotateCcw className="mr-1 size-3" /> Restaurar
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>¿Restaurar el hogar?</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          El hogar{" "}
-          <span className="font-semibold text-foreground">{household.name}</span> vuelve a estar
-          visible para sus miembros inmediatamente. Toda la data (gastos, objetivos, etc.) queda
-          intacta.
-        </p>
-        <DialogFooter>
-          <DialogClose render={<Button type="button" variant="ghost" />}>Cancelar</DialogClose>
-          <Button type="button" onClick={handle} disabled={busy}>
-            {busy && <Loader2 className="mr-1 size-3.5 animate-spin" />}
-            Restaurar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function PurgeButton({ household }: { household: AdminDeletedHousehold }) {
-  const [open, setOpen] = useState(false);
-  const [typed, setTyped] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const matches = typed.trim() === household.name;
-
-  async function handle() {
+  async function purge() {
     if (!matches) return;
-    setBusy(true);
+    setBusy("purge");
     try {
       await purgeAdminHousehold(household.id);
       invalidate();
-      toast.success("Hogar purgado definitivamente");
-      setOpen(false);
+      toast.success("Hogar eliminado para siempre");
+      onClose();
     } catch (e) {
-      toastError(e, "No se pudo purgar");
-    } finally {
-      setBusy(false);
+      toastError(e, "No se pudo eliminar");
+      setBusy(null);
     }
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) setTyped("");
-      }}
-    >
-      <DialogTrigger
-        render={
-          <Button
-            size="xs"
-            variant="outline"
-            className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          />
-        }
-      >
-        <Trash2 className="mr-1 size-3" /> Purgar
-      </DialogTrigger>
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-destructive">Purgar hogar (irreversible)</DialogTitle>
+          <DialogTitle>{household.name}</DialogTitle>
+          <DialogDescription>Borrado el {fmtDate(household.deletedAt)}</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-3 text-sm">
-          <p className="text-muted-foreground">
-            Se elimina físicamente la fila de <span className="font-semibold text-foreground">households</span>{" "}
-            con CASCADE sobre members, categories, expenses, installments, shares, incomes,
-            recurring, goals, settlements, split rules e invites. <span className="font-semibold text-destructive">Esta acción es irreversible.</span>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-body">
+          <dt className="text-ink-muted">Dueño</dt>
+          <dd className="min-w-0 text-right [overflow-wrap:anywhere]">
+            {owner ? `${owner.firstName} ${owner.lastName}`.trim() : "Sin dueño"}
+            {owner && <span className="block text-caption text-ink-muted">{owner.email}</span>}
+          </dd>
+          <dt className="text-ink-muted">Moneda</dt>
+          <dd className="text-right">{household.baseCurrency}</dd>
+          <dt className="text-ink-muted">ID</dt>
+          <dd className="text-right font-mono text-caption">{household.id.slice(0, 8)}</dd>
+        </dl>
+        <Button type="button" variant="outline" size="lg" className="w-full" onClick={restore} disabled={busy !== null}>
+          {busy === "restore" && <Loader2 aria-hidden className="size-4 animate-spin" />}
+          Restaurar
+        </Button>
+        <div className="flex flex-col gap-3 border-t border-border pt-4">
+          <p className="text-caption text-ink-muted">
+            Eliminar para siempre borra el hogar con sus gastos, cuotas, ingresos, objetivos, pagos e invitaciones. No
+            se puede deshacer.
           </p>
-          <div>
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor={`purge-${household.id}`}>
-              Escribí el nombre del hogar para confirmar:{" "}
-              <span className="font-bold text-destructive">{household.name}</span>
+              Escribí <span className="font-semibold">{household.name}</span> para confirmar
             </Label>
             <Input
               id={`purge-${household.id}`}
@@ -410,22 +269,14 @@ function PurgeButton({ household }: { household: AdminDeletedHousehold }) {
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
-              placeholder={household.name}
+              disabled={busy !== null}
             />
           </div>
-        </div>
-        <DialogFooter>
-          <DialogClose render={<Button type="button" variant="ghost" />}>Cancelar</DialogClose>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={handle}
-            disabled={busy || !matches}
-          >
-            {busy && <Loader2 className="mr-1 size-3.5 animate-spin" />}
-            Purgar definitivamente
+          <Button type="button" variant="destructive" size="lg" className="w-full" onClick={purge} disabled={busy !== null || !matches}>
+            {busy === "purge" && <Loader2 aria-hidden className="size-4 animate-spin" />}
+            Eliminar para siempre
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

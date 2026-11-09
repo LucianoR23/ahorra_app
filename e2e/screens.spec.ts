@@ -64,12 +64,21 @@ async function shoot(
   page.on("console", async (m) => {
     if (m.type() !== "error") return;
     const args = await Promise.all(m.args().map((a) => a.jsonValue().catch(() => "?")));
-    console.log(`[console] ${new URL(page.url()).pathname}: ${args.map(String).join(" | ").slice(0, 400)}`);
+    console.log(`[console] ${new URL(page.url()).pathname}: ${args.map(String).join(" | ").slice(0, 3000)}`);
   });
   page.on("pageerror", (e) => console.log(`[pageerror] ${new URL(page.url()).pathname}: ${e.message.slice(0, 300)}`));
 
-  await page.goto("/login");
-  await page.screenshot({ path: `test-results/screens/login.${suffix}.png`, fullPage: true });
+  // Screens outside the app, before signing in.
+  for (const [name, path] of [
+    ["register", "/register"],
+    ["forgot-password", "/forgot-password"],
+    ["reset-password-sin-token", "/reset-password"],
+    ["login", "/login"],
+  ] as const) {
+    await page.goto(path);
+    await page.getByRole("heading", { level: 1 }).waitFor();
+    await page.screenshot({ path: `test-results/screens/${name}.${suffix}.png`, fullPage: true });
+  }
 
   await loginUI(page, email);
   for (const screen of screens) {

@@ -4,6 +4,15 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Acceso y Superadmin
+- Login, Crear cuenta, Recuperar contraseña and Nueva contraseña share one frame (`components/auth/auth-shell`): the wordmark, a narrow column flat on the phone like Onboarding and a card from `sm` up, the screen title in `text-title`, labels over the fields, errors under them in `negative` and server errors in the inline alert. The panel fades in, except with reduced motion.
+- Outcome screens use the result card with an `h1` (`ResultCard` takes `headingLevel`): "Te enviamos un mail", "Este link no sirve" (reset and verify without token), "Verificá tu email", "Email verificado", the invite and its dead ends ("Esta invitación ya se usó", "venció", "la canceló"). Their actions are pill buttons; the old links inside buttons are gone.
+- `/login` no longer logs a hydration mismatch: the remembered email is read after hydration and the form mounts again with it. Same fix for the email on "Verificá tu email" (sessionStorage).
+- Login honors `?next=`: "Ya tengo cuenta" on an invite now comes back to the invite after signing in, instead of dropping it on Inicio. `lib/safe-next` only accepts paths of the app, so the param is not an open redirect.
+- Superadmin follows the grouped list of Más with a back button: your account, "Regenerar insights" (a sheet with the date), "Enviar push de prueba", and "Hogares borrados" as rows that open a sheet with the owner, "Restaurar" (confirmed) and "Eliminar para siempre" (typed name). A regular account gets an empty state. An empty list sent as `null` no longer breaks it.
+- `ui/date-picker` takes an `id` for its label.
+- Tests for the hydration (fails on the old page), `next`, the result screens, the invite links and the superadmin sheet. The screenshot harness also shoots Crear cuenta, Recuperar contraseña and the reset link without token.
+
 ### 1.10b Cuentas entre ustedes
 - Deudas is now "Cuentas entre ustedes", like in Más, with a back button. Your balance on top ("Te deben", "Debés" or "Tu saldo", big, in `positive` or `negative`); "Lo que se deben" in plain words ("Luis te debe", "Le debés a Ana") with "Pagar" on the ones that involve you; "Pagos" filtered with chips ("Todos", "Con Luis") and a date menu, each payment a row ("Luis te pagó", date and note) that opens its sheet, where it is deleted; "Cargar más"; then "Cómo se dividen los gastos".
 - Registrar pago: one line saying who pays whom and the debt, the amount (no more than the debt), date and note, one "Confirmar pago" button. The settlement id and the "emerald" and "font-mono" leftovers are gone.

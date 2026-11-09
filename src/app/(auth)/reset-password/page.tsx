@@ -3,19 +3,17 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { TriangleAlert } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
-import {
-  PasswordStrengthMeter,
-  isPasswordStrongEnough,
-} from "@/components/ui/password-strength-meter";
+import { PasswordStrengthMeter, isPasswordStrongEnough } from "@/components/ui/password-strength-meter";
+import { AuthHeading, AuthPanel, AuthResult, FieldError } from "@/components/auth/auth-shell";
 import { passwordSchema } from "@/lib/api/schemas";
 import { resetPassword } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/errors";
 import { toastError, toast } from "@/lib/toast";
-import { KeyRound, AlertTriangle } from "lucide-react";
 
 function ResetPasswordInner() {
   const router = useRouter();
@@ -29,24 +27,16 @@ function ResetPasswordInner() {
 
   if (!token) {
     return (
-      <Card className="p-6">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="grid size-12 place-items-center rounded-full bg-destructive/10 text-destructive">
-            <AlertTriangle className="size-6" />
-          </div>
-          <h1 className="text-xl font-semibold">Link inválido</h1>
-          <p className="text-sm text-muted-foreground">
-            Este enlace de restablecimiento no tiene token. Pedí uno nuevo desde la página de
-            recuperación.
-          </p>
-        </div>
-        <Link
-          href="/forgot-password"
-          className="mt-6 block text-center text-sm text-foreground underline-offset-4 hover:underline"
-        >
-          Solicitar otro link
-        </Link>
-      </Card>
+      <AuthResult
+        icon={TriangleAlert}
+        tone="negative"
+        title="Este link no sirve"
+        description="Le falta una parte. Pedí uno nuevo y abrilo desde el mail."
+      >
+        <Button size="lg" className="w-full" nativeButton={false} render={<Link href="/forgot-password" />}>
+          Pedir otro link
+        </Button>
+      </AuthResult>
     );
   }
 
@@ -61,9 +51,7 @@ function ResetPasswordInner() {
 
     const parsed = passwordSchema.safeParse(password);
     if (!parsed.success) {
-      setErrors({
-        password: parsed.error.issues[0]?.message ?? "Contraseña inválida",
-      });
+      setErrors({ password: parsed.error.issues[0]?.message ?? "Contraseña inválida" });
       return;
     }
 
@@ -71,7 +59,7 @@ function ResetPasswordInner() {
     try {
       await resetPassword(token!, password);
       toast.success("Contraseña actualizada", {
-        description: "Ya podés iniciar sesión con tu nueva contraseña.",
+        description: "Ya podés iniciar sesión con la nueva.",
       });
       router.replace("/login");
     } catch (err) {
@@ -79,9 +67,7 @@ function ResetPasswordInner() {
         if (err.code === "rate_limited") {
           toastError(err);
         } else if (err.code === "unauthorized") {
-          setErrors({
-            form: "Token inválido o expirado. Pedí un link nuevo.",
-          });
+          setErrors({ form: "El link venció o ya se usó. Pedí uno nuevo." });
         } else if (err.field) {
           setErrors({ [err.field]: err.message });
         } else {
@@ -96,23 +82,14 @@ function ResetPasswordInner() {
   }
 
   const passwordOk = isPasswordStrongEnough(password);
-  const passwordsMatch =
-    confirmPassword.length === 0 || password === confirmPassword;
+  const passwordsMatch = confirmPassword.length === 0 || password === confirmPassword;
 
   return (
-    <Card className="p-6">
-      <div className="mb-6 space-y-1">
-        <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-          <KeyRound className="size-5" />
-        </div>
-        <h1 className="text-xl font-semibold">Nueva contraseña</h1>
-        <p className="text-sm text-muted-foreground">
-          Elegí una contraseña segura que no uses en otros sitios.
-        </p>
-      </div>
+    <AuthPanel>
+      <AuthHeading title="Nueva contraseña" description="Elegí una que no uses en otros sitios." />
 
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-1.5">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="password">Nueva contraseña</Label>
           <PasswordInput
             id="password"
@@ -124,10 +101,10 @@ function ResetPasswordInner() {
             autoFocus
           />
           <PasswordStrengthMeter password={password} className="pt-1" />
-          {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+          <FieldError>{errors.password}</FieldError>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
           <PasswordInput
             id="confirmPassword"
@@ -137,27 +114,23 @@ function ResetPasswordInner() {
             aria-invalid={!!errors.confirmPassword || !passwordsMatch}
             disabled={submitting}
           />
-          {!passwordsMatch && (
-            <p className="text-xs text-destructive">Las contraseñas no coinciden</p>
-          )}
+          <FieldError>{!passwordsMatch ? "Las contraseñas no coinciden" : errors.confirmPassword}</FieldError>
         </div>
 
         {errors.form && (
-          <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {errors.form}
-          </div>
+          <Alert variant="error">
+            {errors.form}{" "}
+            <Link href="/forgot-password" className="font-semibold underline underline-offset-4">
+              Pedir otro link
+            </Link>
+          </Alert>
         )}
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          disabled={submitting || !passwordOk || !passwordsMatch}
-        >
+        <Button type="submit" size="lg" className="w-full" disabled={submitting || !passwordOk || !passwordsMatch}>
           {submitting ? "Guardando…" : "Cambiar contraseña"}
         </Button>
       </form>
-    </Card>
+    </AuthPanel>
   );
 }
 
