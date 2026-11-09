@@ -1,17 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MailCheck, Loader2, CheckCircle2 } from "lucide-react";
+import { MailCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { BrandLogo } from "@/components/brand-logo";
+import { AuthResult, AuthShell } from "@/components/auth/auth-shell";
 import { getMe, resendVerificationEmail } from "@/lib/api/auth";
+import { useIsClient } from "@/lib/hooks";
 import { useAuthStore } from "@/stores/auth";
-import { toastError } from "@/lib/toast";
-import { toast } from "@/lib/toast";
-import { brand } from "@/config/brand";
+import { toast, toastError } from "@/lib/toast";
+
+function readPendingEmail(): string | null {
+  try {
+    return sessionStorage.getItem("pending_verify_email");
+  } catch {
+    return null;
+  }
+}
 
 export default function Page() {
   const router = useRouter();
@@ -19,9 +24,10 @@ export default function Page() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
 
-  const [email] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : sessionStorage.getItem("pending_verify_email"),
-  );
+  // sessionStorage only exists in the browser: read it after hydration so the
+  // first client render matches the server one.
+  const isClient = useIsClient();
+  const email = isClient ? readPendingEmail() : null;
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -106,69 +112,34 @@ export default function Page() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col items-center px-4 py-10">
-      <Link href="/" aria-label={`${brand.name} — Inicio`} className="mb-6 flex items-center">
-        <BrandLogo variant="wordmark" size={40} priority />
-      </Link>
-      <div className="w-full max-w-sm">
-        <Card className="p-6">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <div className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
-              <MailCheck className="size-6" />
-            </div>
-            <h1 className="text-xl font-semibold">Verificá tu email</h1>
-            <p className="text-sm text-muted-foreground">
-              Te enviamos un email a{" "}
-              {email ? (
-                <span className="font-medium text-foreground">{email}</span>
-              ) : (
-                "tu casilla de correo"
-              )}
-              . Hacé clic en el link para continuar.
-            </p>
-          </div>
-
-          <div className="mt-6 flex flex-col gap-2">
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleCheckVerified}
-              disabled={checking || !accessToken}
-            >
-              {checking ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Chequeando…
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-2 size-4" />
-                  Ya verifiqué mi email
-                </>
-              )}
-            </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full"
-              onClick={handleResend}
-              disabled={resending || resent || !accessToken}
-            >
-              {resending ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Reenviando…
-                </>
-              ) : resent ? (
-                "Email enviado"
-              ) : (
-                "Reenviar email"
-              )}
-            </Button>
-          </div>
-        </Card>
-      </div>
-    </div>
+    <AuthShell home="/">
+      <AuthResult
+        icon={MailCheck}
+        tone="neutral"
+        title="Verificá tu email"
+        description={
+          <>
+            Te mandamos un mail a{" "}
+            {email ? <span className="font-semibold text-ink">{email}</span> : "tu casilla"}. Tocá el link que trae
+            para seguir.
+          </>
+        }
+      >
+        <Button size="lg" className="w-full" onClick={handleCheckVerified} disabled={checking || !accessToken}>
+          {checking && <Loader2 aria-hidden className="size-4 animate-spin" />}
+          {checking ? "Revisando…" : "Ya lo verifiqué"}
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className="w-full"
+          onClick={handleResend}
+          disabled={resending || resent || !accessToken}
+        >
+          {resending && <Loader2 aria-hidden className="size-4 animate-spin" />}
+          {resending ? "Reenviando…" : resent ? "Mail enviado" : "Reenviar mail"}
+        </Button>
+      </AuthResult>
+    </AuthShell>
   );
 }

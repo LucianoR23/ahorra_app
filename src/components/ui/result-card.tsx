@@ -13,6 +13,7 @@ function ResultCard({
   description,
   children,
   className,
+  headingLevel: Heading = "h2",
 }: {
   icon?: LucideIcon
   tone?: "positive" | "negative" | "neutral"
@@ -20,6 +21,8 @@ function ResultCard({
   description?: React.ReactNode
   children?: React.ReactNode
   className?: string
+  /** h1 when the card is the whole screen (auth, invite). */
+  headingLevel?: "h1" | "h2"
 }) {
   return (
     <div data-slot="result-card" className={cn("flex flex-col items-center gap-2 text-center", className)}>
@@ -33,7 +36,7 @@ function ResultCard({
       >
         <Icon aria-hidden className="size-6" strokeWidth={1.75} />
       </div>
-      <h2 className="text-heading text-ink">{title}</h2>
+      <Heading className="text-heading text-ink">{title}</Heading>
       {description ? <p className="max-w-sm text-caption text-ink-muted">{description}</p> : null}
       {children ? <div className="mt-3 flex w-full flex-col gap-2">{children}</div> : null}
     </div>

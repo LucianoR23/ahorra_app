@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { PasswordInput } from "@/components/ui/password-input";
 import {
   PasswordStrengthMeter,
@@ -18,6 +18,14 @@ import { ApiError } from "@/lib/api/errors";
 import { useAuthStore } from "@/stores/auth";
 import { toastError, toast } from "@/lib/toast";
 import { GoogleSignInButton } from "@/components/auth/google-button";
+import {
+  AuthDivider,
+  AuthFootnote,
+  AuthHeading,
+  AuthPanel,
+  FieldError,
+  authLink,
+} from "@/components/auth/auth-shell";
 
 function RegisterInner() {
   const router = useRouter();
@@ -101,19 +109,19 @@ function RegisterInner() {
     form.confirmPassword.length === 0 || form.password === form.confirmPassword;
 
   return (
-    <Card className="p-6 md:p-8">
-      <div className="mb-6 space-y-1">
-        <h1 className="text-xl md:text-2xl font-semibold">Crear cuenta</h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          {inviteToken
-            ? "Al completar el registro te vas a unir al hogar al que te invitaron."
-            : "Empezá a controlar tus gastos hoy."}
-        </p>
-      </div>
+    <AuthPanel>
+      <AuthHeading
+        title="Crear cuenta"
+        description={
+          inviteToken
+            ? "Cuando termines, quedás adentro del hogar al que te invitaron."
+            : "Empezá a ordenar tu plata hoy."
+        }
+      />
 
-      <form onSubmit={onSubmit} className="space-y-4 md:space-y-5">
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
+          <div className="flex min-w-0 flex-col gap-1.5">
             <Label htmlFor="firstName">Nombre</Label>
             <Input
               id="firstName"
@@ -122,11 +130,10 @@ function RegisterInner() {
               onChange={(e) => update("firstName", e.target.value)}
               aria-invalid={!!errors.firstName}
               disabled={submitting}
-              className="md:h-11 md:text-base"
             />
-            {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+            <FieldError>{errors.firstName}</FieldError>
           </div>
-          <div className="space-y-1.5">
+          <div className="flex min-w-0 flex-col gap-1.5">
             <Label htmlFor="lastName">Apellido</Label>
             <Input
               id="lastName"
@@ -135,13 +142,12 @@ function RegisterInner() {
               onChange={(e) => update("lastName", e.target.value)}
               aria-invalid={!!errors.lastName}
               disabled={submitting}
-              className="md:h-11 md:text-base"
             />
-            {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+            <FieldError>{errors.lastName}</FieldError>
           </div>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -150,19 +156,20 @@ function RegisterInner() {
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
             aria-invalid={!!errors.email}
+            aria-describedby={invitedEmail ? "email-hint" : undefined}
             disabled={submitting}
             readOnly={!!invitedEmail}
-            className={invitedEmail ? "md:h-11 md:text-base bg-muted text-muted-foreground" : "md:h-11 md:text-base"}
+            className={invitedEmail ? "bg-surface-2 text-ink-muted" : undefined}
           />
           {invitedEmail && (
-            <p className="text-xs text-muted-foreground">
-              Este email viene de la invitación y no se puede cambiar.
+            <p id="email-hint" className="text-caption text-ink-muted">
+              Es el email de la invitación, no se puede cambiar.
             </p>
           )}
-          {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+          <FieldError>{errors.email}</FieldError>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="password">Contraseña</Label>
           <PasswordInput
             id="password"
@@ -171,13 +178,12 @@ function RegisterInner() {
             onChange={(e) => update("password", e.target.value)}
             aria-invalid={!!errors.password}
             disabled={submitting}
-            className="md:h-11 md:text-base"
           />
           <PasswordStrengthMeter password={form.password} className="pt-1" />
-          {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+          <FieldError>{errors.password}</FieldError>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
           <PasswordInput
             id="confirmPassword"
@@ -186,52 +192,35 @@ function RegisterInner() {
             onChange={(e) => update("confirmPassword", e.target.value)}
             aria-invalid={!!errors.confirmPassword || !passwordsMatch}
             disabled={submitting}
-            className="md:h-11 md:text-base"
           />
-          {!passwordsMatch && (
-            <p className="text-xs text-destructive">Las contraseñas no coinciden</p>
-          )}
-          {errors.confirmPassword && passwordsMatch && (
-            <p className="text-xs text-destructive">{errors.confirmPassword}</p>
-          )}
+          <FieldError>{!passwordsMatch ? "Las contraseñas no coinciden" : errors.confirmPassword}</FieldError>
         </div>
 
-        {errors.form && <p className="text-xs text-destructive">{errors.form}</p>}
+        {errors.form && <Alert variant="error">{errors.form}</Alert>}
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          disabled={submitting || !passwordOk || !passwordsMatch}
-        >
+        <Button type="submit" size="lg" className="w-full" disabled={submitting || !passwordOk || !passwordsMatch}>
           {submitting ? "Creando…" : "Crear cuenta"}
         </Button>
       </form>
 
-      {/* El flujo de Google no soporta inviteToken — si el user vino de una
-          invitación, ocultamos el botón para forzar el registro clásico que
-          acepta el invite en el mismo request. */}
+      {/* Google sign-up cannot carry the invite token: an invited user signs up
+          with email so the invite is accepted in the same request. */}
       {!inviteToken && (
         <>
-          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" />
-            <span>o</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
+          <AuthDivider />
           <div className="flex justify-center">
             <GoogleSignInButton />
           </div>
         </>
       )}
 
-      <p className="mt-4 text-center text-sm text-muted-foreground">
+      <AuthFootnote>
         ¿Ya tenés cuenta?{" "}
-        <Link href="/login" className="text-foreground underline-offset-4 hover:underline">
+        <Link href="/login" className={authLink}>
           Iniciar sesión
         </Link>
-      </p>
-    </Card>
+      </AuthFootnote>
+    </AuthPanel>
   );
 }
 

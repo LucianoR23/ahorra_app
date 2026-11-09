@@ -34,6 +34,8 @@ interface DatePickerProps {
    *  meses previos. Útil para "solo del mes en curso hacia adelante". */
   minDate?: Date
   "aria-invalid"?: boolean
+  /** For a `<Label htmlFor>`. */
+  id?: string
 }
 
 function DatePicker({
@@ -44,6 +46,7 @@ function DatePicker({
   disabled,
   minDate,
   "aria-invalid": ariaInvalid,
+  id,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const selected = isoToDate(value)
@@ -51,6 +54,7 @@ function DatePicker({
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger
+        id={id}
         disabled={disabled}
         aria-invalid={ariaInvalid}
         className={cn(

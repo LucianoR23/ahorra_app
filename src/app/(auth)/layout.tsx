@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth";
-import { BrandLogo } from "@/components/brand-logo";
-import { DevSignature } from "@/components/dev-signature";
-import { brand } from "@/config/brand";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { safeNext } from "@/lib/safe-next";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -16,23 +14,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!hydrated || !user) return;
     if (user.emailVerifiedAt) {
-      router.replace("/");
+      // Read here, not with useSearchParams: a layout would need a Suspense boundary.
+      router.replace(safeNext(window.location.search));
     } else {
       router.replace("/verify-email/pending");
     }
   }, [hydrated, user, router]);
 
-  return (
-    <div className="flex min-h-svh flex-col items-center px-4 py-10">
-      <Link
-        href="/login"
-        aria-label={`${brand.name} — Inicio`}
-        className="vt-brand-hero mb-6 flex items-center"
-      >
-        <BrandLogo variant="wordmark" size={40} priority />
-      </Link>
-      <div className="w-full max-w-sm md:max-w-md">{children}</div>
-      <DevSignature className="mt-8" size={14} />
-    </div>
-  );
+  return <AuthShell>{children}</AuthShell>;
 }
