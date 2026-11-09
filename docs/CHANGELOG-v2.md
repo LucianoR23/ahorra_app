@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Movimientos
+- Movimientos follows its design: the month navigator says "Gastaste $ 486.320 · 38 gastos" (the whole filtered list, from the API's new `totalAmountBase`), filter chips replace the selects (Todos, Fijos, Variables, Categoría and Pago menus), and expenses come grouped by day ("Hoy", "Ayer", "Lun 2") with each day's total and the category icon. A dollar expense shows its dollars and "≈ $" in pesos. Search moved behind the magnifier button. "Cargar más" (50 at a time, up to 200) replaces the page buttons, and the "Agregar gasto" button left (the + in the nav does it).
+- New `ui/chip` primitive (44 px filter chip, ink fill when pressed).
+
 ### 1.10b Inicio · Hogar
 - The hogar's Inicio follows the `Hogar` design and replaces the previous dashboard: the hogar's name with its members, "Gastaron juntos en noviembre" with what each one put, "Cuentas entre ustedes" (who owes whom, "Registrar pago" right there and "Ver detalle" to Deudas; hidden while alone in the hogar), "En qué se fue" (top three categories plus "Otros", the first bar highlighted) and "Últimos compartidos" with who paid each one. "Invitar" leads to the hogar's settings (icon only on phones).
 - The screenshot harness adds a second member, two shared expenses and Inicio · Hogar.
