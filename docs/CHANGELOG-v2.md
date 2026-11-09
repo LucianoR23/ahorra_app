@@ -10,6 +10,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 - Crear hogar uses the app shell, the page header with back and the currency as a segmented control.
 - Copy without internal terms ("soft-deleted", "owner", "DB").
 - Tests for removing a member, inviting, the split sheet and the member's read-only view.
+- `ui/button`: a button rendered as a link (`render={<Link href />}`) keeps the link role, so screen readers say "link" (it was "button" in 16 places, like "Crear hogar" and "Ir al inicio").
 
 ### 1.10b Soporte
 - Soporte follows the Movimientos list: page header with the + for a new report, a "Solo abiertos" chip, the reports as rows (bug or idea icon, subject, date, attachments and replies, status badge on the right), "Cargar más" and an empty state. An empty page from the API (`items: null`) no longer breaks it.
