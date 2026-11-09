@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { PASSWORD, cardClosingToday, createHousehold, loginUI, register } from "./helpers";
+import { PASSWORD, cardClosedYesterday, createExpense, createHousehold, localDate, loginUI, personalSpaceOf, register } from "./helpers";
 
 // Screenshot harness (plan 1.10a): every screen in light and dark, mobile and
 // desktop, saved under test-results/screens for review (CI uploads them as
@@ -49,7 +49,13 @@ async function settle(page: Page) {
     .catch(() => {});
 }
 
-async function shoot(browser: Browser, email: string, theme: (typeof THEMES)[number], vp: keyof typeof VIEWPORTS) {
+async function shoot(
+  browser: Browser,
+  email: string,
+  screens: { name: string; path: string }[],
+  theme: (typeof THEMES)[number],
+  vp: keyof typeof VIEWPORTS,
+) {
   const context = await browser.newContext({ viewport: VIEWPORTS[vp], colorScheme: theme, reducedMotion: "reduce" });
   const page = await context.newPage();
   const suffix = `${theme}.${vp}`;
@@ -58,7 +64,7 @@ async function shoot(browser: Browser, email: string, theme: (typeof THEMES)[num
   await page.screenshot({ path: `test-results/screens/login.${suffix}.png`, fullPage: true });
 
   await loginUI(page, email);
-  for (const screen of SCREENS) {
+  for (const screen of screens) {
     // Navigate inside the app: a full reload refreshes the session, and the
     // API allows 30 refreshes per minute per IP.
     await page.evaluate((path) => {
@@ -75,11 +81,15 @@ test("screens in light and dark, mobile and desktop", async ({ browser }) => {
   test.setTimeout(10 * 60_000);
   const user = await register("screens", "Luciano");
   await createHousehold(user, "Casa");
-  await cardClosingToday(user, "Visa 4417");
+  // A card with a closed statement to pay (plan 4.1).
+  const card = await cardClosedYesterday(user, "Visa 4417");
+  const space = await personalSpaceOf(user);
+  await createExpense(user, space, { paymentMethodId: card, amount: 435000, description: "Notebook", spentAt: localDate(-1), installments: 3 });
+  const screens = [...SCREENS, { name: "tarjetas-resumen", path: `/tarjetas/${card}/resumen/${localDate(-1).slice(0, 7)}` }];
 
   for (const theme of THEMES) {
     for (const vp of Object.keys(VIEWPORTS) as (keyof typeof VIEWPORTS)[]) {
-      await shoot(browser, user.email, theme, vp);
+      await shoot(browser, user.email, screens, theme, vp);
     }
   }
 });

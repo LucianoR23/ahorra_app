@@ -26,6 +26,8 @@ import type {
   Category,
   User,
   InsightGenerateResult,
+  CardStatementDetail,
+  AdjustmentKind,
 } from "./schemas";
 import { userSchema } from "./schemas";
 
@@ -423,6 +425,40 @@ export function deleteCreditCardPeriod(paymentMethodId: string, ym: string) {
     path: `/payment-methods/${paymentMethodId}/credit-card/periods/${ym}`,
     householdScoped: false,
   });
+}
+
+// --- Credit card statements (plan 4.1) -----------------------------------
+
+function statementPath(paymentMethodId: string, ym: string) {
+  return `/payment-methods/${paymentMethodId}/credit-card/statements/${ym}`;
+}
+
+/** Amount omitted pays the total; currency omitted means pesos (or the only one). */
+export function payCardStatement(paymentMethodId: string, ym: string, input: { amount?: number; currency?: Currency } = {}) {
+  return apiMutate<CardStatementDetail>({ method: "POST", path: `${statementPath(paymentMethodId, ym)}/pay`, body: input, householdScoped: false });
+}
+
+export function unpayCardStatement(paymentMethodId: string, ym: string) {
+  return apiMutate<CardStatementDetail>({ method: "POST", path: `${statementPath(paymentMethodId, ym)}/unpay`, householdScoped: false });
+}
+
+/** null clears it. In pesos. */
+export function setStatementMinimum(paymentMethodId: string, ym: string, minimumPayment: number | null) {
+  return apiMutate<CardStatementDetail>({ method: "PATCH", path: statementPath(paymentMethodId, ym), body: { minimumPayment }, householdScoped: false });
+}
+
+export type AdjustmentInput = { kind: AdjustmentKind; description: string; amount: number; currency: Currency };
+
+export function createStatementAdjustment(paymentMethodId: string, ym: string, input: AdjustmentInput) {
+  return apiMutate<CardStatementDetail>({ method: "POST", path: `${statementPath(paymentMethodId, ym)}/adjustments`, body: input, householdScoped: false });
+}
+
+export function updateStatementAdjustment(paymentMethodId: string, ym: string, id: string, input: AdjustmentInput) {
+  return apiMutate<CardStatementDetail>({ method: "PATCH", path: `${statementPath(paymentMethodId, ym)}/adjustments/${id}`, body: input, householdScoped: false });
+}
+
+export function deleteStatementAdjustment(paymentMethodId: string, ym: string, id: string) {
+  return apiMutate<CardStatementDetail>({ method: "DELETE", path: `${statementPath(paymentMethodId, ym)}/adjustments/${id}`, householdScoped: false });
 }
 
 // --- Households -----------------------------------------------------------
