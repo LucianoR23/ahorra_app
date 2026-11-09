@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Inicio · Hogar
+- The hogar's Inicio follows the `Hogar` design and replaces the previous dashboard: the hogar's name with its members, "Gastaron juntos en noviembre" with what each one put, "Cuentas entre ustedes" (who owes whom, "Registrar pago" right there and "Ver detalle" to Deudas; hidden while alone in the hogar), "En qué se fue" (top three categories plus "Otros", the first bar highlighted) and "Últimos compartidos" with who paid each one. "Invitar" leads to the hogar's settings (icon only on phones).
+- The screenshot harness adds a second member, two shared expenses and Inicio · Hogar.
+
 ### 4.3 (app part): card period nudges
 - "Cargá el cierre de este mes de tu Visa" on Inicio and in the expense form (when the picked method is a credit card), during the week before the closing, when this month's dates come from the card's usual days. "Son esas" saves the estimated dates; "Cambiar fechas" opens a dialog with them filled in. Once saved, the nudge goes and statements, Comprometido and installments refresh.
 - The card reminders from the API ("Mañana cierra tu Visa", "En 3 días vence tu Visa") have their labels in Notificaciones, and their detail links to Tarjetas or to the statement.
