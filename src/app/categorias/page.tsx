@@ -5,12 +5,13 @@ import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 const CATEGORIAS_HELP: InfoHelpContent = {
   titulo: "Categorías",
   acciones: [
-    "Creá una categoría con nombre, ícono (texto o emoji) y color.",
-    "Editá el nombre, el ícono o el color de una categoría existente.",
-    "Eliminá una categoría que ya no uses.",
+    "Creá una categoría con el botón +, o una subcategoría dentro de otra (Servicios > Luz).",
+    "Tocá una categoría para cambiarle el nombre, el ícono o dónde va.",
+    "Eliminá una categoría que ya no uses desde su hoja de edición.",
   ],
   consideraciones: [
-    "Solo el nombre es obligatorio; el ícono y el color son opcionales.",
+    "Solo el nombre es obligatorio.",
+    "Una categoría con subcategorías no puede ir dentro de otra.",
     "Al eliminar una categoría, los gastos que la usaban quedan sin categoría (no se borran).",
     "Las categorías son del hogar activo: las comparten todos sus miembros.",
   ],
@@ -24,14 +25,7 @@ const CATEGORIAS_HELP: InfoHelpContent = {
 export default function Page() {
   return (
     <AppShell>
-      <div className="mb-4">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-2xl font-bold tracking-tight">Categorías</h1>
-          <InfoHelp content={CATEGORIAS_HELP} size="icon" />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">Organizá tus gastos por categorías del hogar.</p>
-      </div>
-      <CategoriesManager />
+      <CategoriesManager help={<InfoHelp content={CATEGORIAS_HELP} size="icon" />} />
     </AppShell>
   );
 }

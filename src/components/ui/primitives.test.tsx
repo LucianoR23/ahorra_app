@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Alert } from "./alert";
 import { Checkbox } from "./checkbox";
 import { DateLabel } from "./date-label";
+import { Dialog, DialogContent, DialogTitle } from "./dialog";
 import { EmptyState } from "./empty-state";
 import { InstallmentBar, ListRow } from "./list-row";
 import { Money } from "./money";
@@ -161,5 +162,41 @@ describe("Segmented", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Ingresos fijos" }));
     expect(screen.getByRole("radio", { name: "Ingresos fijos" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("radio", { name: "Gastos fijos" })).toHaveAttribute("aria-checked", "false");
+  });
+});
+
+describe("ListRow as a button", () => {
+  it("is one button that calls onClick", async () => {
+    const onClick = vi.fn();
+    render(<ListRow onClick={onClick} aria-label="Editar Luz" title="Luz" subtitle="Día 10" trailing="$ 1" />);
+    await userEvent.click(screen.getByRole("button", { name: "Editar Luz" }));
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+});
+
+describe("DialogContent", () => {
+  const open = (layout?: "center") =>
+    render(
+      <Dialog open>
+        <DialogContent layout={layout}>
+          <DialogTitle>Título</DialogTitle>
+        </DialogContent>
+      </Dialog>,
+    );
+
+  it("is a bottom sheet with a grabber on phones", () => {
+    open();
+    const sheet = screen.getByRole("dialog");
+    expect(sheet).toHaveAttribute("data-layout", "sheet");
+    expect(sheet.querySelector("[data-slot=dialog-grabber]")).not.toBeNull();
+    expect(sheet.className).toContain("max-sm:bottom-0");
+  });
+
+  it("stays centered for confirmations", () => {
+    open("center");
+    const center = screen.getByRole("dialog");
+    expect(center).toHaveAttribute("data-layout", "center");
+    expect(center.querySelector("[data-slot=dialog-grabber]")).toBeNull();
+    expect(center.className).not.toContain("max-sm:bottom-0");
   });
 });

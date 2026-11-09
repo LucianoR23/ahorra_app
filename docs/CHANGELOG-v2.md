@@ -4,6 +4,15 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Recurrentes, Categorías, Presupuestos y objetivos
+- Create and edit dialogs open as a bottom sheet on phones (with a grabber, sliding up, still under reduced motion) and stay a centered dialog from `sm` up, as the design's components sheet asks. Confirmations stay centered everywhere (`DialogContent layout="center"`). This applies to every create/edit dialog in the app.
+- `ListRow` takes `onClick` (the row is one button that opens a sheet); its inner markup is spans so it is valid inside a button.
+- Recurrentes: header from the components sheet, "Gastos fijos · Ingresos fijos" tabs, one list per tab (category icon, "Día 10 · Visa · Variable · Pausado", the amount, "último"/"estimado" for variable bills), the + button for a new one, and an empty state. Tapping a series opens its sheet: the form, "Ver histórico" (expenses), "Pausar"/"Activar" and delete. The form rules stay: a monthly series is charged on its start date's day, a variable bill is one installment, the start date can't change. A fixed income's account no longer lists credit cards. First tests for this screen.
+- Categorías: one list with subcategories indented and "2 subcategorías" under their parent; tapping a row opens its sheet, where it is also deleted. Empty state.
+- Presupuestos y objetivos (renamed from Objetivos): a card per goal with its status (theme colors, no more emerald and amber literals), "$ X de $ Y", the progress bar and the period; tapping it opens its sheet to edit, check how it was going on a date, pause or delete. Currency and period use the segmented control; "who is it for" only shows in a hogar. Empty state.
+- Help texts updated (no more "ícono (texto o emoji)" or "anual" goals).
+- The screenshot harness seeds a fixed expense, a fixed income and a goal.
+
 ### 1.10b Ingresos
 - Ingresos follows the Movimientos pattern (no design of its own): "Entraron + $ 1.151.143 · 1 ingreso" in the month navigator (the month's real total; before, it added up only the page shown), incomes grouped by day with the day's total, "Cargar más", and the + button for a new one. An empty month invites to add one.
 - The income detail follows the Detalle pattern: centered amount, data rows (Fuente, Fecha, Lo recibió, Cuenta, Espacio), editing in a dialog (with "Otro" for a source of its own), "Eliminar ingreso" at the end.

@@ -2,45 +2,51 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { Plus, Repeat, Trash2, Pause, Play, Edit3, X, LineChart } from "lucide-react";
+import { Plus, Repeat } from "lucide-react";
+import { CategoryIcon } from "@/components/category-icon";
+import { CategorySelect } from "@/components/category-select";
+import { IncomeIcon } from "@/components/incomes-list";
 import { SeriesStatsDialog } from "@/components/series-stats-dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ListRow, ListRowSkeleton } from "@/components/ui/list-row";
+import { Money } from "@/components/ui/money";
+import { PageHeader } from "@/components/ui/page-header";
+import { Segmented } from "@/components/ui/segmented";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  useRecurringExpenses,
-  useRecurringIncomes,
-  useRecurringExpense,
-  useRecurringIncome,
   useCategories,
-  usePaymentMethods,
   useHouseholds,
+  usePaymentMethods,
+  useRecurringExpense,
+  useRecurringExpenses,
+  useRecurringIncome,
+  useRecurringIncomes,
 } from "@/lib/api/hooks";
+import { ApiError } from "@/lib/api/errors";
 import {
   createRecurringExpense,
-  patchRecurringExpense,
-  toggleRecurringExpense,
-  deleteRecurringExpense,
   createRecurringIncome,
-  patchRecurringIncome,
-  toggleRecurringIncome,
+  deleteRecurringExpense,
   deleteRecurringIncome,
+  patchRecurringExpense,
+  patchRecurringIncome,
+  toggleRecurringExpense,
+  toggleRecurringIncome,
   type RecurringExpenseInput,
   type RecurringIncomeInput,
 } from "@/lib/api/mutations";
-import { ApiError } from "@/lib/api/errors";
-import { toast } from "@/lib/toast";
-import { confirm } from "@/lib/confirm";
-import { useHouseholdStore } from "@/stores/household";
-import { isoToday } from "@/lib/format";
-import { Money } from "@/components/ui/money";
 import type { Currency, RecurringExpense, RecurringIncome } from "@/lib/api/schemas";
-import { cn } from "@/lib/utils";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { confirm } from "@/lib/confirm";
+import { isoToday } from "@/lib/format";
 import {
   FREQUENCY_LABELS,
   INCOME_SOURCES,
@@ -51,154 +57,274 @@ import {
   incomeSourceLabel,
   type RecurringFrequency,
 } from "@/lib/labels";
-import { DatePicker } from "@/components/ui/date-picker";
-import { CategorySelect } from "@/components/category-select";
+import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { useHouseholdStore } from "@/stores/household";
 
-const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
+const CURRENCIES = [
+  { value: "ARS", label: "ARS" },
+  { value: "USD", label: "USD" },
+  { value: "EUR", label: "EUR" },
+] as const;
 
-// Primer día del mes en curso. Lo usamos como mínimo del selector "Desde" al
-// crear: solo se puede arrancar un recurrente dentro del mes vigente hacia
-// adelante (no en meses pasados), así el backend puede materializar el cargo
-// de este mes al instante.
+type Frequency = "weekly" | "monthly" | "yearly";
+
+const FREQUENCIES = [
+  { value: "weekly", label: "Semanal" },
+  { value: "monthly", label: "Mensual" },
+  { value: "yearly", label: "Anual" },
+] as const;
+
+// First day of the current month: the lowest "Desde" when creating. A series
+// can only start this month or later, so the API can generate this month's
+// charge right away.
 function firstOfCurrentMonth(): Date {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-// Día del mes (1..31) a partir de un ISO "YYYY-MM-DD". Para frecuencia mensual,
-// el día de cobro se deriva de la fecha de inicio en vez de pedirse aparte.
+// Day of month (1..31) of an ISO date. A monthly series is charged on the day
+// of its start date instead of asking for it separately.
 function dayFromIso(iso: string): number {
   const d = Number(iso?.slice(8, 10));
   return d >= 1 && d <= 31 ? d : 1;
 }
 
+function refresh() {
+  swrMutate(
+    (k) =>
+      Array.isArray(k) &&
+      typeof k[0] === "string" &&
+      (k[0].startsWith("/recurring") ||
+        k[0].startsWith("/expenses") ||
+        k[0].startsWith("/incomes") ||
+        k[0].startsWith("/reports")),
+    undefined,
+    { revalidate: true },
+  );
+}
+
+function useBaseCurrency(): Currency {
+  const currentHouseholdId = useHouseholdStore((s) => s.currentId);
+  const { data: households } = useHouseholds();
+  const household = households?.find((h) => h.id === currentHouseholdId) ?? households?.[0];
+  return (household?.baseCurrency ?? "ARS") as Currency;
+}
+
 type Tab = "expenses" | "incomes";
+type Open = { kind: Tab; id?: string } | null;
 
-export function RecurringManager() {
+/**
+ * Recurrentes (plan 1.10b, no design: the header from `Componentes`, the
+ * `Movimientos` list, and the sheet for create/edit). Each row opens its
+ * sheet, where it is edited, paused or deleted.
+ */
+export function RecurringManager({ help }: { help?: React.ReactNode }) {
   const [tab, setTab] = useState<Tab>("expenses");
-  const [creating, setCreating] = useState(false);
-
+  const [open, setOpen] = useState<Open>(null);
   const { data: recExp, isLoading: loadingExp } = useRecurringExpenses();
   const { data: recInc, isLoading: loadingInc } = useRecurringIncomes();
+  const { data: categories } = useCategories();
+  const { data: paymentMethods } = usePaymentMethods();
 
-  function refresh() {
-    swrMutate(
-      (k) => Array.isArray(k) && typeof k[0] === "string" &&
-        (k[0].startsWith("/recurring") || k[0].startsWith("/expenses") || k[0].startsWith("/incomes") || k[0].startsWith("/reports")),
-      undefined,
-      { revalidate: true },
-    );
-  }
+  const loading = tab === "expenses" ? loadingExp : loadingInc;
+  const count = tab === "expenses" ? (recExp?.length ?? 0) : (recInc?.length ?? 0);
+  const newLabel = tab === "expenses" ? "Nuevo gasto fijo" : "Nuevo ingreso fijo";
+  const close = (v: boolean) => !v && setOpen(null);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
-        <button
-          type="button"
-          onClick={() => setTab("expenses")}
-          className={cn(
-            "cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
-            tab === "expenses" ? "bg-card shadow-card" : "text-muted-foreground",
-          )}
-        >
-          Gastos fijos
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("incomes")}
-          className={cn(
-            "cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
-            tab === "incomes" ? "bg-card shadow-card" : "text-muted-foreground",
-          )}
-        >
-          Ingresos fijos
-        </button>
-      </div>
-
-      {creating ? (
-        tab === "expenses" ? (
-          <RecurringExpenseForm onDone={() => { setCreating(false); refresh(); }} />
-        ) : (
-          <RecurringIncomeForm onDone={() => { setCreating(false); refresh(); }} />
-        )
-      ) : (
-        <Button onClick={() => setCreating(true)} size="lg" className="w-full">
-          <Plus className="size-4" /> Nuevo {tab === "expenses" ? "gasto fijo" : "ingreso fijo"}
-        </Button>
-      )}
-
-      {tab === "expenses" ? (
-        loadingExp ? (
-          <Skeleton className="h-28 w-full rounded-2xl" />
-        ) : !recExp || recExp.length === 0 ? (
-          <Card className="rounded-2xl border-0 shadow-card">
-            <CardContent className="p-6 text-center text-sm text-muted-foreground">
-              Todavía no tenés gastos fijos.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {recExp.map((r) => (
-              <RecurringExpenseCard key={r.id} rec={r} onChanged={refresh} />
-            ))}
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-4">
+      <PageHeader
+        title="Recurrentes"
+        description="Gastos e ingresos que se cargan solos cada mes."
+        className="mb-0"
+        action={
+          <div className="flex items-center gap-2">
+            {help}
+            <Button size="icon" aria-label={newLabel} onClick={() => setOpen({ kind: tab })}>
+              <Plus aria-hidden strokeWidth={2} />
+            </Button>
           </div>
-        )
-      ) : loadingInc ? (
-        <Skeleton className="h-28 w-full rounded-2xl" />
-      ) : !recInc || recInc.length === 0 ? (
-        <Card className="rounded-2xl border-0 shadow-card">
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Todavía no tenés ingresos fijos.
+        }
+      />
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="w-full">
+        <TabsList className="w-full" aria-label="Tipo">
+          <TabsTrigger value="expenses">Gastos fijos</TabsTrigger>
+          <TabsTrigger value="incomes">Ingresos fijos</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {loading ? (
+        <Card className="py-1">
+          <CardContent>
+            {[0, 1, 2].map((i) => (
+              <ListRowSkeleton key={i} />
+            ))}
           </CardContent>
         </Card>
+      ) : count === 0 ? (
+        <EmptyState
+          icon={Repeat}
+          title={tab === "expenses" ? "Todavía no tenés gastos fijos" : "Todavía no tenés ingresos fijos"}
+          description={
+            tab === "expenses"
+              ? "Netflix, el alquiler o la luz: cargalos una vez y se suman solos cada mes."
+              : "Tu sueldo o un alquiler que cobrás: cargalo una vez y entra solo cada mes."
+          }
+          action={
+            <Button variant="outline" onClick={() => setOpen({ kind: tab })}>
+              {newLabel}
+            </Button>
+          }
+        />
       ) : (
-        <div className="flex flex-col gap-2">
-          {recInc.map((r) => (
-            <RecurringIncomeCard key={r.id} rec={r} onChanged={refresh} />
-          ))}
-        </div>
+        <Card className="py-1">
+          <CardContent>
+            <ul className="divide-y divide-border">
+              {tab === "expenses"
+                ? recExp?.map((r) => {
+                    const cat = categories?.find((c) => c.id === r.categoryId);
+                    const pm = paymentMethods?.find((p) => p.id === r.paymentMethodId);
+                    // A variable bill shows what was last paid, not the template's estimate.
+                    const amount = r.amountIsVariable && r.lastAmount != null ? r.lastAmount : r.amount;
+                    return (
+                      <li key={r.id} className={cn(!r.isActive && "opacity-60")}>
+                        <ListRow
+                          onClick={() => setOpen({ kind: "expenses", id: r.id })}
+                          aria-label={`Editar ${r.description}`}
+                          leading={<CategoryIcon icon={cat?.icon} />}
+                          title={r.description}
+                          subtitle={[
+                            frequencyLabel(r),
+                            pm?.name,
+                            r.amountIsVariable ? "Variable" : null,
+                            r.isActive ? null : "Pausado",
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                          trailing={
+                            <>
+                              <Money amount={amount} currency={r.currency} />
+                              {r.amountIsVariable ? (
+                                <span className="block text-caption font-normal text-ink-muted">
+                                  {r.lastAmount != null ? "último" : "estimado"}
+                                </span>
+                              ) : r.installments > 1 ? (
+                                <span className="block text-caption font-normal text-ink-muted">en {r.installments} cuotas</span>
+                              ) : null}
+                            </>
+                          }
+                        />
+                      </li>
+                    );
+                  })
+                : recInc?.map((r) => (
+                    <li key={r.id} className={cn(!r.isActive && "opacity-60")}>
+                      <ListRow
+                        onClick={() => setOpen({ kind: "incomes", id: r.id })}
+                        aria-label={`Editar ${r.description || incomeSourceLabel(r.source)}`}
+                        leading={<IncomeIcon />}
+                        title={r.description || incomeSourceLabel(r.source)}
+                        subtitle={[frequencyLabel(r), incomeSourceLabel(r.source), r.isActive ? null : "Pausado"]
+                          .filter(Boolean)
+                          .join(" · ")}
+                        trailing={<Money amount={r.amount} currency={r.currency} income />}
+                      />
+                    </li>
+                  ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {open?.kind === "expenses" && (
+        <RecurringExpenseSheet
+          key={open.id ?? "new"}
+          rec={open.id ? recExp?.find((r) => r.id === open.id) : undefined}
+          onOpenChange={close}
+        />
+      )}
+      {open?.kind === "incomes" && (
+        <RecurringIncomeSheet
+          key={open.id ?? "new"}
+          rec={open.id ? recInc?.find((r) => r.id === open.id) : undefined}
+          onOpenChange={close}
+        />
       )}
     </div>
   );
 }
 
 function frequencyLabel(r: { frequency: string; dayOfMonth?: number | null; dayOfWeek?: number | null; monthOfYear?: number | null }) {
-  if (r.frequency === "weekly") {
-    return `Cada ${WEEKDAY_LABELS_SHORT[r.dayOfWeek ?? 1]}`;
-  }
-  if (r.frequency === "monthly") return `Día ${r.dayOfMonth ?? 1} del mes`;
-  if (r.frequency === "yearly") {
-    return `${r.dayOfMonth ?? 1} de ${MONTH_LABELS_SHORT[(r.monthOfYear ?? 1) - 1]}`;
-  }
+  if (r.frequency === "weekly") return `Cada ${WEEKDAY_LABELS_SHORT[r.dayOfWeek ?? 1]}`;
+  if (r.frequency === "monthly") return `Día ${r.dayOfMonth ?? 1}`;
+  if (r.frequency === "yearly") return `${r.dayOfMonth ?? 1} de ${MONTH_LABELS_SHORT[(r.monthOfYear ?? 1) - 1]}`;
   return FREQUENCY_LABELS[r.frequency as RecurringFrequency] ?? r.frequency;
 }
 
-function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onChanged: () => void }) {
-  const { data: categories } = useCategories();
-  const { data: paymentMethods } = usePaymentMethods();
-  const [editing, setEditing] = useState(false);
-  const [showStats, setShowStats] = useState(false);
-  const [busy, setBusy] = useState(false);
+// ---------- Sheets ----------------------------------------------------------
 
-  const cat = categories?.find((c) => c.id === rec.categoryId);
-  const pm = paymentMethods?.find((p) => p.id === rec.paymentMethodId);
+/** The sheet's actions under the form: pause or resume, and delete. */
+function SeriesActions({
+  active,
+  busy,
+  onToggle,
+  onDelete,
+  deleteLabel,
+  extra,
+}: {
+  active: boolean;
+  busy: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+  deleteLabel: string;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {extra}
+      <Button variant="secondary" className="w-full" onClick={onToggle} disabled={busy}>
+        {active ? "Pausar" : "Activar"}
+      </Button>
+      <Button
+        variant="ghost"
+        className="text-negative hover:bg-negative-soft hover:text-negative"
+        onClick={onDelete}
+        disabled={busy}
+      >
+        {deleteLabel}
+      </Button>
+    </div>
+  );
+}
+
+function RecurringExpenseSheet({ rec, onOpenChange }: { rec?: RecurringExpense; onOpenChange: (v: boolean) => void }) {
+  // Edit reads the series fresh: the list may lag behind the last generation.
+  const { data, isLoading } = useRecurringExpense(rec?.id ?? null);
+  const initial = rec ? (data ?? rec) : undefined;
+  const [busy, setBusy] = useState(false);
+  const [stats, setStats] = useState(false);
 
   async function onToggle() {
+    if (!rec) return;
     setBusy(true);
     try {
       await toggleRecurringExpense(rec.id, !rec.isActive);
-      onChanged();
+      refresh();
+      toast.success(rec.isActive ? "Gasto fijo pausado" : "Gasto fijo activado");
+      onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Error");
-    } finally {
+      toast.error(e instanceof ApiError ? e.message : "No se pudo cambiar");
       setBusy(false);
     }
   }
 
   async function onDelete() {
+    if (!rec) return;
     const ok = await confirm({
       title: "¿Eliminar este gasto fijo?",
-      description: "Los gastos ya generados no se eliminan.",
+      description: "Los gastos que ya generó no se eliminan.",
       confirmLabel: "Eliminar",
       destructive: true,
     });
@@ -206,103 +332,76 @@ function RecurringExpenseCard({ rec, onChanged }: { rec: RecurringExpense; onCha
     setBusy(true);
     try {
       await deleteRecurringExpense(rec.id);
-      onChanged();
+      refresh();
+      onOpenChange(false);
     } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "No se pudo eliminar");
       setBusy(false);
-      toast.error(e instanceof ApiError ? e.message : "Error");
     }
   }
 
-  if (editing) {
-    return (
-      <RecurringExpenseEditForm
-        id={rec.id}
-        fallback={rec}
-        onDone={() => { setEditing(false); onChanged(); }}
-        onCancel={() => setEditing(false)}
-      />
-    );
-  }
-
-  // Para series variables, el monto "actual" más útil es el último confirmado
-  // (lo que realmente pagaste el mes pasado), no el estimado de la plantilla.
-  const displayAmount = rec.amountIsVariable && rec.lastAmount != null ? rec.lastAmount : rec.amount;
-
   return (
-    <Card className={cn("rounded-2xl border-0 shadow-card", !rec.isActive && "opacity-60")}>
-      <CardContent className="p-4 space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="truncate text-sm font-bold">{rec.description}</span>
-              <Badge variant="secondary" className="gap-0.5 text-xs">
-                <Repeat className="size-2.5" />
-              </Badge>
-              {rec.amountIsVariable && (
-                <Badge variant="outline" className="text-xs">Variable</Badge>
-              )}
-              {!rec.isActive && <Badge variant="outline" className="text-xs">Pausado</Badge>}
-            </div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {cat?.name ?? "Sin categoría"} · {pm?.name ?? "—"} · {frequencyLabel(rec)}
-            </div>
-          </div>
-          <div className="shrink-0 text-right font-mono text-sm font-bold">
-            <Money amount={displayAmount} currency={rec.currency} />
-            {rec.amountIsVariable && (
-              <div className="text-xs text-muted-foreground">
-                {rec.lastAmount != null ? "último" : "estimado"}
-              </div>
-            )}
-            {!rec.amountIsVariable && rec.installments > 1 && (
-              <div className="text-xs text-muted-foreground">en {rec.installments}c</div>
-            )}
-          </div>
-        </div>
-        <div className="flex gap-1.5 pt-2 border-t border-border">
-          <Button variant="outline" size="sm" onClick={() => setShowStats(true)} disabled={busy} className="flex-1">
-            <LineChart className="size-3" /> Histórico
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)} disabled={busy} className="flex-1">
-            <Edit3 className="size-3" /> Editar
-          </Button>
-          <Button variant="outline" size="sm" onClick={onToggle} disabled={busy}>
-            {rec.isActive ? <Pause className="size-3" /> : <Play className="size-3" />}
-          </Button>
-          <Button variant="destructive" size="sm" onClick={onDelete} disabled={busy}>
-            <Trash2 className="size-3" />
-          </Button>
-        </div>
-      </CardContent>
-
-      <SeriesStatsDialog
-        recurring={rec}
-        open={showStats}
-        onClose={() => setShowStats(false)}
-      />
-    </Card>
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{rec ? "Editar gasto fijo" : "Nuevo gasto fijo"}</DialogTitle>
+        </DialogHeader>
+        {rec && isLoading && !data ? (
+          <Skeleton className="h-72 w-full rounded-xl" />
+        ) : (
+          <RecurringExpenseForm
+            key={initial?.lastGenerated ?? initial?.id ?? "new"}
+            initial={initial}
+            onDone={() => {
+              refresh();
+              onOpenChange(false);
+            }}
+          />
+        )}
+        {rec && (
+          <SeriesActions
+            active={rec.isActive}
+            busy={busy}
+            onToggle={onToggle}
+            onDelete={onDelete}
+            deleteLabel="Eliminar gasto fijo"
+            extra={
+              <Button variant="secondary" className="w-full" onClick={() => setStats(true)} disabled={busy}>
+                Ver histórico
+              </Button>
+            }
+          />
+        )}
+        {rec && <SeriesStatsDialog recurring={rec} open={stats} onClose={() => setStats(false)} />}
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function RecurringIncomeCard({ rec, onChanged }: { rec: RecurringIncome; onChanged: () => void }) {
-  const [editing, setEditing] = useState(false);
+function RecurringIncomeSheet({ rec, onOpenChange }: { rec?: RecurringIncome; onOpenChange: (v: boolean) => void }) {
+  const { data, isLoading } = useRecurringIncome(rec?.id ?? null);
+  const initial = rec ? (data ?? rec) : undefined;
   const [busy, setBusy] = useState(false);
 
   async function onToggle() {
+    if (!rec) return;
     setBusy(true);
     try {
       await toggleRecurringIncome(rec.id, !rec.isActive);
-      onChanged();
+      refresh();
+      toast.success(rec.isActive ? "Ingreso fijo pausado" : "Ingreso fijo activado");
+      onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Error");
-    } finally {
+      toast.error(e instanceof ApiError ? e.message : "No se pudo cambiar");
       setBusy(false);
     }
   }
 
   async function onDelete() {
+    if (!rec) return;
     const ok = await confirm({
       title: "¿Eliminar este ingreso fijo?",
+      description: "Los ingresos que ya generó no se eliminan.",
       confirmLabel: "Eliminar",
       destructive: true,
     });
@@ -310,58 +409,83 @@ function RecurringIncomeCard({ rec, onChanged }: { rec: RecurringIncome; onChang
     setBusy(true);
     try {
       await deleteRecurringIncome(rec.id);
-      onChanged();
+      refresh();
+      onOpenChange(false);
     } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "No se pudo eliminar");
       setBusy(false);
-      toast.error(e instanceof ApiError ? e.message : "Error");
     }
   }
 
-  if (editing) {
-    return (
-      <RecurringIncomeEditForm
-        id={rec.id}
-        fallback={rec}
-        onDone={() => { setEditing(false); onChanged(); }}
-        onCancel={() => setEditing(false)}
-      />
-    );
-  }
-
   return (
-    <Card className={cn("rounded-2xl border-0 shadow-card", !rec.isActive && "opacity-60")}>
-      <CardContent className="p-4 space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="truncate text-sm font-bold">{rec.description || rec.source}</span>
-              {!rec.isActive && <Badge variant="outline" className="text-xs">Pausado</Badge>}
-            </div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {incomeSourceLabel(rec.source)} · {frequencyLabel(rec)}
-            </div>
-          </div>
-          <div className="shrink-0 text-right font-mono text-sm font-bold text-positive">
-            <Money amount={rec.amount} currency={rec.currency} income />
-          </div>
-        </div>
-        <div className="flex gap-1.5 pt-2 border-t border-border">
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)} disabled={busy} className="flex-1">
-            <Edit3 className="size-3" /> Editar
-          </Button>
-          <Button variant="outline" size="sm" onClick={onToggle} disabled={busy} className="flex-1">
-            {rec.isActive ? <><Pause className="size-3" /> Pausar</> : <><Play className="size-3" /> Activar</>}
-          </Button>
-          <Button variant="destructive" size="sm" onClick={onDelete} disabled={busy}>
-            <Trash2 className="size-3" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{rec ? "Editar ingreso fijo" : "Nuevo ingreso fijo"}</DialogTitle>
+        </DialogHeader>
+        {rec && isLoading && !data ? (
+          <Skeleton className="h-72 w-full rounded-xl" />
+        ) : (
+          <RecurringIncomeForm
+            key={initial?.lastGenerated ?? initial?.id ?? "new"}
+            initial={initial}
+            onDone={() => {
+              refresh();
+              onOpenChange(false);
+            }}
+          />
+        )}
+        {rec && (
+          <SeriesActions active={rec.isActive} busy={busy} onToggle={onToggle} onDelete={onDelete} deleteLabel="Eliminar ingreso fijo" />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
 // ---------- Forms (create + edit) ----------------------------------------
+
+function Field({ label, htmlFor, id, children }: { label: string; htmlFor?: string; id?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={htmlFor} id={id}>
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+function AmountField({
+  label,
+  amount,
+  setAmount,
+  currency,
+  setCurrency,
+}: {
+  label: string;
+  amount: string;
+  setAmount: (v: string) => void;
+  currency: Currency;
+  setCurrency: (v: Currency) => void;
+}) {
+  return (
+    <Field label={label} htmlFor="rec-amount">
+      <div className="flex items-center gap-2">
+        <Input
+          id="rec-amount"
+          inputMode="decimal"
+          autoComplete="off"
+          placeholder="0"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="min-w-0 flex-1 tabular-nums"
+        />
+        <Segmented aria-label="Moneda" value={currency} onValueChange={setCurrency} options={CURRENCIES} className="w-auto shrink-0" />
+      </div>
+    </Field>
+  );
+}
 
 function FrequencyFields({
   frequency,
@@ -373,8 +497,8 @@ function FrequencyFields({
   monthOfYear,
   setMonthOfYear,
 }: {
-  frequency: "weekly" | "monthly" | "yearly";
-  setFrequency: (v: "weekly" | "monthly" | "yearly") => void;
+  frequency: Frequency;
+  setFrequency: (v: Frequency) => void;
   dayOfMonth: number | null;
   setDayOfMonth: (v: number | null) => void;
   dayOfWeek: number | null;
@@ -383,161 +507,99 @@ function FrequencyFields({
   setMonthOfYear: (v: number | null) => void;
 }) {
   return (
-    <div className="space-y-2">
-      <Label>Frecuencia</Label>
-      <div className="grid grid-cols-3 gap-1">
-        {(["weekly", "monthly", "yearly"] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFrequency(f)}
-            className={cn(
-              "cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
-              frequency === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-            )}
-          >
-            {f === "weekly" ? "Semanal" : f === "monthly" ? "Mensual" : "Anual"}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col gap-2">
+      <Label id="rec-frequency">Frecuencia</Label>
+      <Segmented aria-labelledby="rec-frequency" value={frequency} onValueChange={setFrequency} options={FREQUENCIES} />
 
       {frequency === "weekly" && (
-        <div className="space-y-1.5">
-          <Label className="text-xs font-normal text-muted-foreground">Día de la semana</Label>
-          <Select value={String(dayOfWeek ?? 1)} onValueChange={(v) => setDayOfWeek(Number(v))}>
-            <SelectTrigger>
-              <SelectValue>
-                {(v: string | null) => (v != null ? WEEKDAY_LABELS[Number(v)] : "")}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {WEEKDAY_LABELS.map((d, i) => (
-                <SelectItem key={i} value={String(i)}>{d}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={String(dayOfWeek ?? 1)} onValueChange={(v) => setDayOfWeek(Number(v))}>
+          <SelectTrigger aria-label="Día de la semana" className="w-full">
+            <SelectValue>{(v: string | null) => (v != null ? `Cada ${WEEKDAY_LABELS[Number(v)].toLowerCase()}` : "")}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {WEEKDAY_LABELS.map((d, i) => (
+              <SelectItem key={i} value={String(i)}>
+                {d}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
 
       {frequency === "monthly" && (
-        <p className="text-xs text-muted-foreground">
-          Se cobrará el día{" "}
-          <span className="font-semibold text-foreground">{dayOfMonth ?? 1}</span>{" "}
-          de cada mes, según la fecha de inicio que elijas abajo.
+        <p className="text-caption text-ink-muted">
+          Se carga el día <span className="font-semibold text-ink">{dayOfMonth ?? 1}</span> de cada mes, según la fecha de
+          inicio.
         </p>
       )}
 
       {frequency === "yearly" && (
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-normal text-muted-foreground">Mes</Label>
-            <Select value={String(monthOfYear ?? 1)} onValueChange={(v) => setMonthOfYear(Number(v))}>
-              <SelectTrigger>
-                <SelectValue>
-                  {(v: string | null) => (v != null ? MONTH_LABELS[Number(v) - 1] : "")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {MONTH_LABELS.map((m, i) => (
-                  <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-normal text-muted-foreground">Día</Label>
-            <Input
-              type="number"
-              min={1}
-              max={31}
-              value={dayOfMonth ?? 1}
-              onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
-              className="h-9"
-            />
-          </div>
+        <div className="grid grid-cols-[1fr_6rem] gap-2">
+          <Select value={String(monthOfYear ?? 1)} onValueChange={(v) => setMonthOfYear(Number(v))}>
+            <SelectTrigger aria-label="Mes" className="w-full">
+              <SelectValue>{(v: string | null) => (v != null ? MONTH_LABELS[Number(v) - 1] : "")}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {MONTH_LABELS.map((m, i) => (
+                <SelectItem key={i} value={String(i + 1)}>
+                  {m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            aria-label="Día"
+            inputMode="numeric"
+            value={dayOfMonth ?? 1}
+            onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
+          />
         </div>
       )}
     </div>
   );
 }
 
-function RecurringExpenseEditForm({
-  id,
-  fallback,
-  onDone,
-  onCancel,
+function DateFields({
+  frequency,
+  startsAt,
+  setStartsAt,
+  endsAt,
+  setEndsAt,
+  editing,
 }: {
-  id: string;
-  fallback: RecurringExpense;
-  onDone: () => void;
-  onCancel?: () => void;
+  frequency: Frequency;
+  startsAt: string;
+  setStartsAt: (v: string) => void;
+  endsAt: string;
+  setEndsAt: (v: string) => void;
+  editing: boolean;
 }) {
-  const { data, isLoading } = useRecurringExpense(id);
-  if (isLoading && !data) {
-    return (
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4">
-          <Skeleton className="h-48 w-full rounded-md" />
-        </CardContent>
-      </Card>
-    );
-  }
   return (
-    <RecurringExpenseForm
-      key={(data ?? fallback).lastGenerated ?? id}
-      initial={data ?? fallback}
-      onDone={onDone}
-      onCancel={onCancel}
-    />
+    <div className="grid grid-cols-2 gap-2">
+      <Field label={frequency === "monthly" ? "Arranca el" : "Desde"}>
+        <DatePicker value={startsAt} onChange={setStartsAt} minDate={editing ? undefined : firstOfCurrentMonth()} disabled={editing} />
+        {editing && <p className="text-caption text-ink-muted">No se puede cambiar.</p>}
+      </Field>
+      <Field label="Hasta">
+        <DatePicker value={endsAt} onChange={setEndsAt} placeholder="Sin fin" />
+      </Field>
+    </div>
   );
 }
 
-function RecurringIncomeEditForm({
-  id,
-  fallback,
-  onDone,
-  onCancel,
-}: {
-  id: string;
-  fallback: RecurringIncome;
-  onDone: () => void;
-  onCancel?: () => void;
-}) {
-  const { data, isLoading } = useRecurringIncome(id);
-  if (isLoading && !data) {
-    return (
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4">
-          <Skeleton className="h-48 w-full rounded-md" />
-        </CardContent>
-      </Card>
-    );
-  }
+function FormError({ err }: { err: string | null }) {
+  if (!err) return null;
   return (
-    <RecurringIncomeForm
-      key={(data ?? fallback).lastGenerated ?? id}
-      initial={data ?? fallback}
-      onDone={onDone}
-      onCancel={onCancel}
-    />
+    <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
+      {err}
+    </p>
   );
 }
 
-function RecurringExpenseForm({
-  initial,
-  onDone,
-  onCancel,
-}: {
-  initial?: RecurringExpense;
-  onDone: () => void;
-  onCancel?: () => void;
-}) {
+function RecurringExpenseForm({ initial, onDone }: { initial?: RecurringExpense; onDone: () => void }) {
   const { data: categories } = useCategories();
   const { data: paymentMethods } = usePaymentMethods();
-  const currentHouseholdId = useHouseholdStore((s) => s.currentId);
-  const { data: households } = useHouseholds();
-  const household = households?.find((h) => h.id === currentHouseholdId) ?? households?.[0];
-  const baseCurrency = (household?.baseCurrency ?? "ARS") as Currency;
+  const baseCurrency = useBaseCurrency();
 
   const [description, setDescription] = useState(initial?.description ?? "");
   const [amountStr, setAmountStr] = useState(initial ? String(initial.amount) : "");
@@ -545,49 +607,43 @@ function RecurringExpenseForm({
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
   const [paymentMethodId, setPaymentMethodId] = useState(initial?.paymentMethodId ?? "");
   const [installments, setInstallments] = useState(initial?.installments ?? 1);
-  const [frequency, setFrequency] = useState<"weekly" | "monthly" | "yearly">(initial?.frequency ?? "monthly");
+  const [frequency, setFrequency] = useState<Frequency>(initial?.frequency ?? "monthly");
   const [dayOfMonth, setDayOfMonth] = useState<number | null>(initial?.dayOfMonth ?? 1);
   const [dayOfWeek, setDayOfWeek] = useState<number | null>(initial?.dayOfWeek ?? 1);
   const [monthOfYear, setMonthOfYear] = useState<number | null>(initial?.monthOfYear ?? 1);
   const [startsAt, setStartsAt] = useState(initial?.startsAt ?? isoToday());
   const [endsAt, setEndsAt] = useState(initial?.endsAt ?? "");
-  // amountIsVariable: para servicios donde el monto cambia mes a mes
-  // (luz/expensas/wifi). Cuando está activo, el monto cargado funciona como
-  // estimado y cada mes generamos un gasto en estado "pendiente de
-  // confirmar". Forzamos cuotas=1 porque no podemos repartir un monto
-  // que todavía no conocemos.
+  // A variable bill (power, expensas, wifi): the amount is an estimate and
+  // each month's charge waits for the real one. Always 1 installment, since
+  // an unknown amount can't be split.
   const [amountIsVariable, setAmountIsVariable] = useState(initial?.amountIsVariable ?? false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Mensual al crear: el día de cobro lo define la fecha de inicio (no se pide
-  // aparte), así que lo derivamos en render. En edición/anual usamos el estado
-  // (la fecha de inicio es inmutable y preservamos el día original de
-  // plantillas viejas). Lo comparten el hint y el body — sin efectos.
+  // Creating a monthly series: its day comes from the start date. Editing (the
+  // start date is fixed) or yearly: the stored day, which keeps old templates'.
   const dayOfMonthToSend = frequency === "monthly" && !initial ? dayFromIso(startsAt) : dayOfMonth;
+  const pm = paymentMethods?.find((p) => p.id === paymentMethodId);
 
-  async function save() {
-    setBusy(true);
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setErr(null);
     const amount = Number(amountStr.replace(",", "."));
     if (!description.trim() || !(amount > 0) || !paymentMethodId) {
-      setErr("Completá descripción, monto y método de pago");
-      setBusy(false);
+      setErr("Completá descripción, monto y con qué pagás");
       return;
     }
-    const pm = paymentMethods?.find((p) => p.id === paymentMethodId);
+    setBusy(true);
+    // Variable or a method without installments: always 1, even if installments
+    // were set with a credit card and the method changed afterwards.
     const effectiveInstallments = amountIsVariable || !pm?.allowsInstallments ? 1 : installments;
-    // startsAt va aparte: solo se manda al crear. El backend no acepta cambiar
-    // la fecha de inicio en el PATCH (es inmutable), así que en edición no la
-    // incluimos para no romper la request.
+    // startsAt only goes on create: the API rejects changing it.
     const base: Omit<RecurringExpenseInput, "startsAt"> = {
       categoryId: categoryId || null,
       paymentMethodId,
       amount,
       currency,
       description: description.trim(),
-      // Variable o método sin cuotas → siempre 1. Evita mandar cuotas>1
-      // si el usuario seteó cuotas con crédito y después cambió a débito.
       installments: effectiveInstallments,
       isShared: false,
       frequency,
@@ -602,161 +658,96 @@ function RecurringExpenseForm({
       else await createRecurringExpense({ ...base, startsAt });
       onDone();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Error");
+      setErr(e instanceof ApiError ? e.message : "No se pudo guardar");
       setBusy(false);
     }
   }
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold">{initial ? "Editar gasto fijo" : "Nuevo gasto fijo"}</h3>
-          {onCancel && (
-            <Button variant="ghost" size="sm" onClick={onCancel}>
-              <X className="size-3" />
-            </Button>
-          )}
-        </div>
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      <Field label="Descripción" htmlFor="rec-description">
+        <Input id="rec-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ej: Netflix" />
+      </Field>
 
-        <div className="space-y-1.5">
-          <Label>Descripción</Label>
-          <Input value={description} onChange={(e) => setDescription(e.target.value)} className="h-9" placeholder="Netflix" />
-        </div>
+      <AmountField
+        label={amountIsVariable ? "Monto estimado" : "Monto"}
+        amount={amountStr}
+        setAmount={setAmountStr}
+        currency={currency}
+        setCurrency={setCurrency}
+      />
 
-        <div className="grid grid-cols-[1fr_auto] gap-2">
-          <div className="space-y-1.5">
-            <Label>{amountIsVariable ? "Monto estimado" : "Monto"}</Label>
-            <Input inputMode="decimal" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} className="h-9 font-mono" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Moneda</Label>
-            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="flex items-start justify-between gap-3 rounded-xl bg-surface-2 p-4">
+        <div className="flex-1">
+          <Label htmlFor="amountIsVariable" className="font-semibold">
+            Importe variable
+          </Label>
+          <p className="mt-0.5 text-caption text-ink-muted">Si cambia cada mes (luz, expensas, wifi). Cada mes confirmás la factura real.</p>
         </div>
+        <Switch id="amountIsVariable" checked={amountIsVariable} onCheckedChange={setAmountIsVariable} />
+      </div>
 
-        <div className="flex items-start justify-between gap-3 rounded-xl border bg-muted/40 p-3">
-          <div className="flex-1">
-            <Label htmlFor="amountIsVariable" className="text-[13px] font-medium">
-              Importe variable
-            </Label>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Activá esto si el monto cambia mes a mes (luz, expensas, wifi).
-              Cada mes vas a confirmar la factura real.
-            </p>
-          </div>
-          <Switch
-            id="amountIsVariable"
-            checked={amountIsVariable}
-            onCheckedChange={setAmountIsVariable}
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Categoría">
+          <CategorySelect value={categoryId} onValueChange={setCategoryId} categories={categories} emptyLabel="Sin categoría" className="w-full" />
+        </Field>
+        <Field label="Pago" htmlFor="rec-payment">
+          <Select value={paymentMethodId} onValueChange={(v) => setPaymentMethodId(v ?? "")}>
+            <SelectTrigger id="rec-payment" className="w-full">
+              <SelectValue placeholder="Elegí">
+                {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Elegí") : "Elegí")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {paymentMethods
+                ?.filter((p) => p.isActive)
+                .map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </Field>
+      </div>
+
+      {!amountIsVariable && pm?.allowsInstallments && (
+        <Field label="Cuotas por cargo" htmlFor="rec-installments">
+          <Input
+            id="rec-installments"
+            inputMode="numeric"
+            value={installments}
+            onChange={(e) => setInstallments(Math.max(1, Number(e.target.value) || 1))}
+            className="w-24"
           />
-        </div>
+          <p className="text-caption text-ink-muted">Cada cargo se divide en esas cuotas.</p>
+        </Field>
+      )}
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <Label>Categoría</Label>
-            <CategorySelect value={categoryId} onValueChange={setCategoryId} categories={categories} emptyLabel="Sin categoría" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Método de pago</Label>
-            <Select value={paymentMethodId} onValueChange={(v) => setPaymentMethodId(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Elegir">
-                  {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Elegir") : "Elegir")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Elegir</SelectItem>
-                {paymentMethods?.filter((p) => p.isActive).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+      <FrequencyFields
+        frequency={frequency}
+        setFrequency={setFrequency}
+        dayOfMonth={dayOfMonthToSend}
+        setDayOfMonth={setDayOfMonth}
+        dayOfWeek={dayOfWeek}
+        setDayOfWeek={setDayOfWeek}
+        monthOfYear={monthOfYear}
+        setMonthOfYear={setMonthOfYear}
+      />
 
-        {!amountIsVariable
-          && paymentMethods?.find((p) => p.id === paymentMethodId)?.allowsInstallments && (
-          <div className="space-y-1.5">
-            <Label>Cuotas por cargo</Label>
-            <Input
-              type="number"
-              min={1}
-              value={installments}
-              onChange={(e) => setInstallments(Math.max(1, Number(e.target.value) || 1))}
-              className="h-9 w-24"
-            />
-            <p className="text-xs text-muted-foreground">
-              Cada vez que se genere el gasto se divide en N cuotas (solo crédito).
-            </p>
-          </div>
-        )}
+      <DateFields frequency={frequency} startsAt={startsAt} setStartsAt={setStartsAt} endsAt={endsAt} setEndsAt={setEndsAt} editing={!!initial} />
 
-        <FrequencyFields
-          frequency={frequency}
-          setFrequency={setFrequency}
-          dayOfMonth={dayOfMonthToSend}
-          setDayOfMonth={setDayOfMonth}
-          dayOfWeek={dayOfWeek}
-          setDayOfWeek={setDayOfWeek}
-          monthOfYear={monthOfYear}
-          setMonthOfYear={setMonthOfYear}
-        />
+      <FormError err={err} />
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <Label>{frequency === "monthly" ? "Arranca el" : "Desde"}</Label>
-            <DatePicker
-              value={startsAt}
-              onChange={setStartsAt}
-              minDate={initial ? undefined : firstOfCurrentMonth()}
-              disabled={!!initial}
-            />
-            {initial && (
-              <p className="text-xs text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Hasta (opcional)</Label>
-            <DatePicker value={endsAt} onChange={setEndsAt} placeholder="Sin fecha fin" />
-          </div>
-        </div>
-
-        {err && <p className="text-xs text-destructive">{err}</p>}
-
-        <div className="flex gap-2 pt-2">
-          {onCancel && (
-            <Button variant="outline" onClick={onCancel} size="sm" className="flex-1" disabled={busy}>
-              Cancelar
-            </Button>
-          )}
-          <Button onClick={save} size="sm" className="flex-1" disabled={busy}>
-            {busy ? "Guardando…" : initial ? "Guardar cambios" : "Crear"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+        {busy ? "Guardando…" : initial ? "Guardar" : "Crear gasto fijo"}
+      </Button>
+    </form>
   );
 }
 
-function RecurringIncomeForm({
-  initial,
-  onDone,
-  onCancel,
-}: {
-  initial?: RecurringIncome;
-  onDone: () => void;
-  onCancel?: () => void;
-}) {
-  const currentHouseholdId = useHouseholdStore((s) => s.currentId);
-  const { data: households } = useHouseholds();
-  const household = households?.find((h) => h.id === currentHouseholdId) ?? households?.[0];
-  const baseCurrency = (household?.baseCurrency ?? "ARS") as Currency;
+function RecurringIncomeForm({ initial, onDone }: { initial?: RecurringIncome; onDone: () => void }) {
+  const baseCurrency = useBaseCurrency();
   const { data: paymentMethods } = usePaymentMethods();
 
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -764,7 +755,7 @@ function RecurringIncomeForm({
   const [amountStr, setAmountStr] = useState(initial ? String(initial.amount) : "");
   const [currency, setCurrency] = useState<Currency>((initial?.currency as Currency) ?? baseCurrency);
   const [paymentMethodId, setPaymentMethodId] = useState(initial?.paymentMethodId ?? "");
-  const [frequency, setFrequency] = useState<"weekly" | "monthly" | "yearly">(initial?.frequency ?? "monthly");
+  const [frequency, setFrequency] = useState<Frequency>(initial?.frequency ?? "monthly");
   const [dayOfMonth, setDayOfMonth] = useState<number | null>(initial?.dayOfMonth ?? 1);
   const [dayOfWeek, setDayOfWeek] = useState<number | null>(initial?.dayOfWeek ?? 1);
   const [monthOfYear, setMonthOfYear] = useState<number | null>(initial?.monthOfYear ?? 1);
@@ -773,20 +764,17 @@ function RecurringIncomeForm({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Mensual al crear: el día de cobro deriva de la fecha de inicio (ver
-  // RecurringExpenseForm para el detalle). Sin efectos: se deriva en render.
   const dayOfMonthToSend = frequency === "monthly" && !initial ? dayFromIso(startsAt) : dayOfMonth;
 
-  async function save() {
-    setBusy(true);
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setErr(null);
     const amount = Number(amountStr.replace(",", "."));
     if (!(amount > 0) || !source.trim()) {
       setErr("Completá monto y fuente");
-      setBusy(false);
       return;
     }
-    // startsAt va aparte: solo al crear (el backend no lo acepta en el PATCH).
+    setBusy(true);
     const base: Omit<RecurringIncomeInput, "startsAt"> = {
       paymentMethodId: paymentMethodId || null,
       amount,
@@ -804,124 +792,76 @@ function RecurringIncomeForm({
       else await createRecurringIncome({ ...base, startsAt });
       onDone();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Error");
+      setErr(e instanceof ApiError ? e.message : "No se pudo guardar");
       setBusy(false);
     }
   }
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold">{initial ? "Editar ingreso fijo" : "Nuevo ingreso fijo"}</h3>
-          {onCancel && (
-            <Button variant="ghost" size="sm" onClick={onCancel}>
-              <X className="size-3" />
-            </Button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <Label>Fuente</Label>
-            <Select
-              value={(INCOME_SOURCES as readonly string[]).includes(source) ? source : "other"}
-              onValueChange={(v) => setSource(v || "other")}
-            >
-              <SelectTrigger>
-                <SelectValue>
-                  {(v: string | null) => (v ? incomeSourceLabel(v) : "")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {INCOME_SOURCES.map((s) => (
-                  <SelectItem key={s} value={s}>{incomeSourceLabel(s)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Descripción</Label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} className="h-9" placeholder="Sueldo" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-[1fr_auto] gap-2">
-          <div className="space-y-1.5">
-            <Label>Monto</Label>
-            <Input inputMode="decimal" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} className="h-9 font-mono" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Moneda</Label>
-            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Cuenta destino (opcional)</Label>
-          <Select value={paymentMethodId} onValueChange={(v) => setPaymentMethodId(v ?? "")}>
-            <SelectTrigger>
-              <SelectValue placeholder="Sin especificar">
-                {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Sin especificar") : "Sin especificar")}
-              </SelectValue>
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Fuente" htmlFor="rec-source">
+          <Select
+            value={(INCOME_SOURCES as readonly string[]).includes(source) ? source : "other"}
+            onValueChange={(v) => setSource(v || "other")}
+          >
+            <SelectTrigger id="rec-source" className="w-full">
+              <SelectValue>{(v: string | null) => (v ? incomeSourceLabel(v) : "")}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Sin especificar</SelectItem>
-              {paymentMethods?.filter((p) => p.isActive).map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+              {INCOME_SOURCES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {incomeSourceLabel(s)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-        </div>
+        </Field>
+        <Field label="Descripción" htmlFor="rec-description">
+          <Input id="rec-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ej: Sueldo" />
+        </Field>
+      </div>
 
-        <FrequencyFields
-          frequency={frequency}
-          setFrequency={setFrequency}
-          dayOfMonth={dayOfMonthToSend}
-          setDayOfMonth={setDayOfMonth}
-          dayOfWeek={dayOfWeek}
-          setDayOfWeek={setDayOfWeek}
-          monthOfYear={monthOfYear}
-          setMonthOfYear={setMonthOfYear}
-        />
+      <AmountField label="Monto" amount={amountStr} setAmount={setAmountStr} currency={currency} setCurrency={setCurrency} />
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1.5">
-            <Label>{frequency === "monthly" ? "Arranca el" : "Desde"}</Label>
-            <DatePicker
-              value={startsAt}
-              onChange={setStartsAt}
-              minDate={initial ? undefined : firstOfCurrentMonth()}
-              disabled={!!initial}
-            />
-            {initial && (
-              <p className="text-xs text-muted-foreground">La fecha de inicio no se puede cambiar.</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Hasta (opcional)</Label>
-            <DatePicker value={endsAt} onChange={setEndsAt} placeholder="Sin fecha fin" />
-          </div>
-        </div>
+      <Field label="Cuenta" htmlFor="rec-account">
+        <Select value={paymentMethodId} onValueChange={(v) => setPaymentMethodId(v ?? "")}>
+          <SelectTrigger id="rec-account" className="w-full">
+            <SelectValue placeholder="Sin especificar">
+              {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Sin especificar") : "Sin especificar")}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Sin especificar</SelectItem>
+            {paymentMethods
+              ?.filter((p) => p.isActive && p.kind !== "credit")
+              .map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+      </Field>
 
-        {err && <p className="text-xs text-destructive">{err}</p>}
+      <FrequencyFields
+        frequency={frequency}
+        setFrequency={setFrequency}
+        dayOfMonth={dayOfMonthToSend}
+        setDayOfMonth={setDayOfMonth}
+        dayOfWeek={dayOfWeek}
+        setDayOfWeek={setDayOfWeek}
+        monthOfYear={monthOfYear}
+        setMonthOfYear={setMonthOfYear}
+      />
 
-        <div className="flex gap-2 pt-2">
-          {onCancel && (
-            <Button variant="outline" onClick={onCancel} size="sm" className="flex-1" disabled={busy}>
-              Cancelar
-            </Button>
-          )}
-          <Button onClick={save} size="sm" className="flex-1" disabled={busy}>
-            {busy ? "Guardando…" : initial ? "Guardar cambios" : "Crear"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <DateFields frequency={frequency} startsAt={startsAt} setStartsAt={setStartsAt} endsAt={endsAt} setEndsAt={setEndsAt} editing={!!initial} />
+
+      <FormError err={err} />
+
+      <Button type="submit" size="lg" className="w-full" disabled={busy}>
+        {busy ? "Guardando…" : initial ? "Guardar" : "Crear ingreso fijo"}
+      </Button>
+    </form>
   );
 }

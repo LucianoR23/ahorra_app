@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { PASSWORD, addMember, cardClosedYesterday, cashOf, createIncome, createExpense, createHousehold, localDate, loginUI, personalSpaceOf, register } from "./helpers";
+import { PASSWORD, addMember, cardClosedYesterday, cashOf, createGoal, createIncome, createExpense, createHousehold, createRecurringExpense, createRecurringIncome, localDate, loginUI, personalSpaceOf, register } from "./helpers";
 
 // Screenshot harness (plan 1.10a): every screen in light and dark, mobile and
 // desktop, saved under test-results/screens for review (CI uploads them as
@@ -89,6 +89,13 @@ async function shoot(
   await expect(page.getByText("Gastaron juntos", { exact: false }).first()).toBeVisible();
   await settle(page);
   await page.screenshot({ path: `test-results/screens/inicio-hogar.${suffix}.png`, fullPage: true });
+  // The create sheet (bottom sheet on phones, dialog on desktop), back in Yo.
+  await page.getByRole("tab", { name: "Yo" }).first().click();
+  await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/objetivos"));
+  await page.waitForURL((u) => u.pathname === "/objetivos");
+  await page.getByRole("button", { name: "Nuevo objetivo" }).click();
+  await expect(page.getByRole("dialog", { name: "Nuevo objetivo" })).toBeVisible();
+  await page.screenshot({ path: `test-results/screens/objetivo-nuevo.${suffix}.png` });
   await context.close();
 }
 
@@ -107,6 +114,10 @@ test("screens in light and dark, mobile and desktop", async ({ browser }) => {
   // Installments in progress for Comprometido (plan 4.2).
   const heladera = await createExpense(user, space, { paymentMethodId: card, amount: 1079880, description: "Heladera", spentAt: localDate(0), installments: 12 });
   const sueldo = await createIncome(user, space, { amount: 1151143, description: "Sueldo", receivedAt: localDate(0) });
+  // Recurrentes and Presupuestos y objetivos (plan 1.10b).
+  await createRecurringExpense(user, space, { paymentMethodId: card, amount: 12999, description: "Netflix", dayOfMonth: Number(localDate(0).slice(8)) });
+  await createRecurringIncome(user, space, { amount: 250000, description: "Diseño web", source: "freelance", dayOfMonth: Number(localDate(0).slice(8)) });
+  await createGoal(user, space, { goalType: "total_limit", targetAmount: 2000000 });
   const screens = [
     ...SCREENS,
     { name: "ingreso", path: `/ingresos/${sueldo}` },

@@ -8,7 +8,8 @@ const rowClass =
 
 /**
  * A movement-like row (design "Filas de lista"): leading icon, title,
- * subtitle and a trailing amount. With `href` the whole row is a link.
+ * subtitle and a trailing amount. With `href` the whole row is a link;
+ * with `onClick` it is a button (it opens a sheet, say).
  * Rows in a list are separated by the list (divide-y), not by the row.
  */
 function ListRow({
@@ -17,6 +18,8 @@ function ListRow({
   subtitle,
   trailing,
   href,
+  onClick,
+  "aria-label": ariaLabel,
   className,
 }: {
   leading?: React.ReactNode
@@ -24,16 +27,18 @@ function ListRow({
   subtitle?: React.ReactNode
   trailing?: React.ReactNode
   href?: string
+  onClick?: () => void
+  "aria-label"?: string
   className?: string
 }) {
   const content = (
     <>
       {leading}
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-body font-semibold text-ink">{title}</div>
-        {subtitle ? <div className="mt-0.5 truncate text-caption text-ink-muted">{subtitle}</div> : null}
-      </div>
-      {trailing ? <div className="shrink-0 text-right text-body font-semibold text-ink">{trailing}</div> : null}
+      <span className="block min-w-0 flex-1">
+        <span className="block truncate text-body font-semibold text-ink">{title}</span>
+        {subtitle ? <span className="mt-0.5 block truncate text-caption text-ink-muted">{subtitle}</span> : null}
+      </span>
+      {trailing ? <span className="block shrink-0 text-right text-body font-semibold text-ink">{trailing}</span> : null}
     </>
   )
   if (href) {
@@ -41,6 +46,19 @@ function ListRow({
       <Link data-slot="list-row" href={href} className={cn(rowClass, "rounded-sm", className)}>
         {content}
       </Link>
+    )
+  }
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        data-slot="list-row"
+        aria-label={ariaLabel}
+        onClick={onClick}
+        className={cn(rowClass, "cursor-pointer rounded-sm", className)}
+      >
+        {content}
+      </button>
     )
   }
   return (

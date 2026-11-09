@@ -115,6 +115,33 @@ export async function cashOf(user: User): Promise<string> {
   return list.find((p) => p.kind === "cash")!.id;
 }
 
+/** Creates a recurring expense (plan 1.10b screens). */
+export async function createRecurringExpense(user: User, householdId: string, body: Record<string, unknown>) {
+  await call("POST", "/recurring-expenses", {
+    token: user.token,
+    household: householdId,
+    body: { currency: "ARS", installments: 1, frequency: "monthly", startsAt: localDate(0), ...body },
+  });
+}
+
+/** Creates a recurring income (plan 1.10b screens). */
+export async function createRecurringIncome(user: User, householdId: string, body: Record<string, unknown>) {
+  await call("POST", "/recurring-incomes", {
+    token: user.token,
+    household: householdId,
+    body: { currency: "ARS", source: "salary", frequency: "monthly", startsAt: localDate(0), ...body },
+  });
+}
+
+/** Creates a goal (plan 1.10b screens). */
+export async function createGoal(user: User, householdId: string, body: Record<string, unknown>) {
+  await call("POST", "/goals", {
+    token: user.token,
+    household: householdId,
+    body: { scope: "household", currency: "ARS", period: "monthly", ...body },
+  });
+}
+
 /** A variable-amount monthly bill due today: creating it books today's draft. */
 export async function variableBillDueToday(user: User, householdId: string, description: string, amount: number) {
   await call("POST", "/recurring-expenses", {

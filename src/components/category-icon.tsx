@@ -16,12 +16,12 @@ export function CategoryIcon({
 }) {
   const { icon: Icon } = categoryIcon(icon);
   return (
-    <div
+    <span
       style={{ width: size, height: size }}
       className={cn("grid shrink-0 place-items-center rounded-full bg-surface-2 text-ink", className)}
       aria-hidden
     >
       <Icon style={{ width: size / 2, height: size / 2 }} strokeWidth={1.75} />
-    </div>
+    </span>
   );
 }
