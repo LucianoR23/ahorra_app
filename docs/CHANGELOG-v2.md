@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Ajustes y Seguridad
+- Ajustes and Seguridad follow the grouped list of Más. Ajustes: "Perfil" (name and email as rows that open the profile sheet, a pending email change as the group's note) and "Apariencia". Seguridad, now titled "Seguridad y privacidad" like in Más: "Acceso" (Cambiar contraseña opens its sheet, Cerrar sesión en todos los dispositivos), "Privacidad en este dispositivo" (the two switches), "Dispositivos con notificaciones", "Actividad reciente" and "Cuenta" (Eliminar mi cuenta, a destructive row that opens the confirmation). A back button to Más on both.
+- `ui/menu-list` gains `MenuRow` (a row with its own content) and a `footer` note per group; a long detail now truncates instead of covering the label.
+- Tests for the profile sheet (including a taken email), the password sheet and deleting the account.
+
 ### 1.10b Reportes
 - Reportes uses the page header and the Mensual · Tendencias · Exportar IA tabs from the components sheet.
 - Mensual: the month navigator ("Gastaste $ X", no future months), Gastado, Facturado and A pagar as rows that say which date each one counts by, "Por categoría" as bars (the biggest in `accent`, the rest in `ink-muted`, with each one's share) and "Fijo y variable" as one split bar. These replace the recharts bar and donut, so recharts only loads for Tendencias. A month with nothing by category no longer breaks (the API sends `null`).

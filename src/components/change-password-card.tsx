@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Lock, Save } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Lock } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MenuItem } from "@/components/ui/menu-list";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -15,7 +16,28 @@ import { useAuthStore } from "@/stores/auth";
 import { ApiError } from "@/lib/api/errors";
 import { toast, toastError } from "@/lib/toast";
 
-export function ChangePasswordCard() {
+/** "Cambiar contraseña" row in Seguridad; the form opens in the sheet. */
+export function ChangePasswordItem() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <MenuItem icon={Lock} label="Cambiar contraseña" onClick={() => setOpen(true)} />
+      {open && (
+        <Dialog open onOpenChange={setOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Cambiar contraseña</DialogTitle>
+              <DialogDescription>Usá una contraseña única, que no uses en otro lado.</DialogDescription>
+            </DialogHeader>
+            <ChangePasswordForm onDone={() => setOpen(false)} />
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+}
+
+function ChangePasswordForm({ onDone }: { onDone: () => void }) {
   const token = useAuthStore((s) => s.accessToken);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -50,10 +72,8 @@ export function ChangePasswordCard() {
     setBusy(true);
     try {
       await changePassword(token, current, next);
-      setCurrent("");
-      setNext("");
-      setConfirm("");
       toast.success("Contraseña actualizada");
+      onDone();
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === "rate_limited") {
@@ -74,22 +94,8 @@ export function ChangePasswordCard() {
   }
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
-            <Lock className="size-3.5" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold">Cambiar contraseña</h2>
-            <p className="text-xs text-muted-foreground">
-              Usá una contraseña única y fuerte.
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="current-password">Contraseña actual</Label>
             <PasswordInput
               id="current-password"
@@ -100,11 +106,11 @@ export function ChangePasswordCard() {
               aria-invalid={!!errors.current}
             />
             {errors.current && (
-              <p className="mt-1 text-xs text-destructive">{errors.current}</p>
+              <p className="text-caption text-negative">{errors.current}</p>
             )}
           </div>
 
-          <div>
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="new-password">Nueva contraseña</Label>
             <PasswordInput
               id="new-password"
@@ -115,10 +121,10 @@ export function ChangePasswordCard() {
               aria-invalid={!!errors.next}
             />
             <PasswordStrengthMeter password={next} className="pt-2" />
-            {errors.next && <p className="mt-1 text-xs text-destructive">{errors.next}</p>}
+            {errors.next && <p className="text-caption text-negative">{errors.next}</p>}
           </div>
 
-          <div>
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="confirm-password">Confirmar nueva contraseña</Label>
             <PasswordInput
               id="confirm-password"
@@ -129,32 +135,24 @@ export function ChangePasswordCard() {
               aria-invalid={!!errors.confirm || !passwordsMatch}
             />
             {!passwordsMatch && (
-              <p className="mt-1 text-xs text-destructive">Las contraseñas no coinciden</p>
+              <p className="text-caption text-negative">Las contraseñas no coinciden</p>
             )}
           </div>
 
           {errors.form && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
               {errors.form}
-            </div>
+            </p>
           )}
 
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={busy || !current || !passwordOk || !passwordsMatch || sameAsCurrent}
-            >
-              {busy ? (
-                <Loader2 className="mr-1 size-3.5 animate-spin" />
-              ) : (
-                <Save className="mr-1 size-3.5" />
-              )}
-              Guardar
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={busy || !current || !passwordOk || !passwordsMatch || sameAsCurrent}
+          >
+            {busy ? "Guardando…" : "Cambiar contraseña"}
+          </Button>
         </form>
-      </CardContent>
-    </Card>
   );
 }

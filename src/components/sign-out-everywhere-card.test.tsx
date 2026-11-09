@@ -6,7 +6,7 @@ import { confirm } from "@/lib/confirm";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import { API, requests, resetRequests, server, signIn } from "@/test/msw";
-import { SignOutEverywhereCard } from "./sign-out-everywhere-card";
+import { SignOutEverywhereItem } from "./sign-out-everywhere-card";
 
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
@@ -15,7 +15,7 @@ vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 // The dialog itself is covered in ui-helpers.test.tsx; here only the card's logic.
 vi.mock("@/lib/confirm", () => ({ confirm: vi.fn() }));
 
-const renderCard = () => render(<SignOutEverywhereCard />);
+const renderCard = () => render(<SignOutEverywhereItem />);
 
 beforeEach(() => {
   signIn({ token: "tk" });
@@ -24,7 +24,7 @@ beforeEach(() => {
   vi.mocked(confirm).mockClear();
 });
 
-describe("SignOutEverywhereCard", () => {
+describe("SignOutEverywhereItem", () => {
   it("after confirming, ends every session and signs out here", async () => {
     server.use(http.post(`${API}/auth/logout-all`, () => new HttpResponse(null, { status: 204 })));
     vi.mocked(confirm).mockResolvedValue(true);

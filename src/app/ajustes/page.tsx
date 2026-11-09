@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 const AJUSTES_HELP: InfoHelpContent = {
   titulo: "Ajustes",
   acciones: [
-    "Editá tu perfil: nombre, apellido y email de la cuenta.",
+    "Tocá tu nombre o tu email para editarlos.",
     "Elegí el tema: por defecto sigue el de tu dispositivo.",
   ],
   consideraciones: [
@@ -23,13 +23,14 @@ const AJUSTES_HELP: InfoHelpContent = {
 export default function Page() {
   return (
     <AppShell>
-      <PageHeader
-        title="Ajustes"
-        description="Tu perfil y cómo se ve la app."
-        back={{ href: "/mas", label: "Volver a Más" }}
-        action={<InfoHelp content={AJUSTES_HELP} size="icon" />}
-      />
-      <div className="flex flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-4">
+        <PageHeader
+          title="Ajustes"
+          description="Tu perfil y cómo se ve la app."
+          back={{ href: "/mas", label: "Volver a Más" }}
+          action={<InfoHelp content={AJUSTES_HELP} size="icon" />}
+          className="mb-0"
+        />
         <ProfileConfig />
         <AppearanceCard />
       </div>

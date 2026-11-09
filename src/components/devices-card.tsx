@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { mutate as swrMutate } from "swr";
 import { Loader2, Smartphone, Monitor, Trash2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MenuGroup, MenuRow } from "@/components/ui/menu-list";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePushSubscriptions } from "@/lib/api/hooks";
@@ -30,7 +31,7 @@ function parseUserAgent(ua?: string): { label: string; isMobile: boolean } {
   else if (/Linux/.test(ua)) os = "Linux";
 
   return {
-    label: os ? `${browser} • ${os}` : browser,
+    label: os ? `${browser} en ${os}` : browser,
     isMobile,
   };
 }
@@ -100,74 +101,42 @@ export function DevicesCard() {
   }
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4">
-        <div className="mb-4">
-          <h2 className="text-sm font-bold">Mis dispositivos</h2>
-          <p className="text-xs text-muted-foreground">
-            Dispositivos con notificaciones push activas.
-          </p>
-        </div>
-
-        {isLoading ? (
-          <Skeleton className="h-20 w-full rounded-md" />
-        ) : !subs || subs.length === 0 ? (
-          <p className="py-6 text-center text-xs text-muted-foreground">
-            No hay dispositivos suscriptos. Activá las notificaciones para ver tus dispositivos
-            acá.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {subs.map((s) => {
-              const { label, isMobile } = parseUserAgent(s.userAgent);
-              const isCurrent = !!currentEndpoint && s.endpoint === currentEndpoint;
-              return (
-                <li
-                  key={s.id}
-                  className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2"
-                >
-                  <div className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
-                    {isMobile ? (
-                      <Smartphone className="size-4" />
-                    ) : (
-                      <Monitor className="size-4" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <p className="truncate text-xs font-semibold">{label}</p>
-                      {isCurrent && (
-                        <Badge
-                          variant="outline"
-                          className="h-4 border-primary/30 bg-primary/10 px-1.5 text-xs text-primary"
-                        >
-                          Este dispositivo
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Último uso: {formatRelative(s.lastSeenAt)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRevoke(s.id)}
-                    disabled={revokingId === s.id}
-                    aria-label="Desconectar dispositivo"
-                    className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {revokingId === s.id ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="size-3.5" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+    <MenuGroup title="Dispositivos con notificaciones">
+      {isLoading ? (
+        <MenuRow>
+          <Skeleton className="h-10 w-full" />
+        </MenuRow>
+      ) : !subs || subs.length === 0 ? (
+        <MenuRow className="text-ink-muted">Ninguno todavía. Activá las notificaciones y este dispositivo aparece acá.</MenuRow>
+      ) : (
+        subs.map((s) => {
+          const { label, isMobile } = parseUserAgent(s.userAgent);
+          const isCurrent = !!currentEndpoint && s.endpoint === currentEndpoint;
+          const Icon = isMobile ? Smartphone : Monitor;
+          return (
+            <MenuRow key={s.id}>
+              <Icon aria-hidden className="size-5 shrink-0" strokeWidth={1.75} />
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-2">
+                  <span className="truncate">{label}</span>
+                  {isCurrent && <Badge variant="secondary">Este dispositivo</Badge>}
+                </p>
+                <p className="text-caption text-ink-muted">Último uso: {formatRelative(s.lastSeenAt)}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleRevoke(s.id)}
+                disabled={revokingId === s.id}
+                aria-label={`Desconectar ${label}`}
+                className="text-ink-muted hover:bg-negative-soft hover:text-negative"
+              >
+                {revokingId === s.id ? <Loader2 aria-hidden className="animate-spin" /> : <Trash2 aria-hidden strokeWidth={1.75} />}
+              </Button>
+            </MenuRow>
+          );
+        })
+      )}
+    </MenuGroup>
   );
 }

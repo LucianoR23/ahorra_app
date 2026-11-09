@@ -2,7 +2,7 @@
 
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MenuGroup, MenuRow } from "@/components/ui/menu-list";
 import { Segmented, type SegmentedOption } from "@/components/ui/segmented";
 import { useIsClient } from "@/lib/hooks";
 
@@ -26,19 +26,10 @@ export function AppearanceCard() {
   const value: ThemeChoice = mounted && isThemeChoice(theme) ? theme : "system";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle id="appearance-title">Apariencia</CardTitle>
-        <CardDescription>Por defecto sigue el tema de tu dispositivo.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Segmented
-          aria-labelledby="appearance-title"
-          value={value}
-          onValueChange={setTheme}
-          options={OPTIONS}
-        />
-      </CardContent>
-    </Card>
+    <MenuGroup title="Apariencia" footer="Por defecto sigue el tema de tu dispositivo.">
+      <MenuRow>
+        <Segmented aria-label="Apariencia" value={value} onValueChange={setTheme} options={OPTIONS} />
+      </MenuRow>
+    </MenuGroup>
   );
 }
