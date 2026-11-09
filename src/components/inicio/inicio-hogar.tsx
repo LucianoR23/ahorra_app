@@ -10,6 +10,7 @@ import { PendingDraftsCard } from "@/components/pending-drafts-card";
 import { PushProvider } from "@/components/push-provider";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { CategoryBars } from "@/components/category-bars";
 import { Card, CardContent } from "@/components/ui/card";
 import { DateLabel } from "@/components/ui/date-label";
 import { ListRow, ListRowSkeleton } from "@/components/ui/list-row";
@@ -230,31 +231,15 @@ export function topCategories(byCategory: MonthlyReport["byCategory"]) {
 function WhereItWent() {
   const { data: report, isLoading } = useMonthlyReport();
   if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />;
-  if (!report || report.byCategory.length === 0) return null;
-  const rows = topCategories(report.byCategory);
-  const max = Math.max(...rows.map((r) => r.total), 0);
+  const byCategory = report?.byCategory ?? [];
+  if (!report || byCategory.length === 0) return null;
+  const rows = topCategories(byCategory);
 
   return (
     <Card>
       <CardContent className="flex flex-col gap-4">
         <h2 className="text-heading font-semibold">En qué se fue</h2>
-        <ul className="flex flex-col gap-4">
-          {rows.map((r, i) => (
-            <li key={r.name} className="flex flex-col gap-2">
-              <div className="flex items-baseline justify-between gap-3 text-body">
-                <span className="truncate">{r.name}</span>
-                <Money amount={r.total} currency={report.baseCurrency} className="shrink-0" />
-              </div>
-              <div aria-hidden className="h-2 overflow-hidden rounded-full bg-border">
-                <div
-                  data-testid="category-bar"
-                  className={cn("h-full rounded-full", i === 0 ? "bg-brand" : "bg-ink-muted")}
-                  style={{ width: `${max > 0 ? Math.max((r.total / max) * 100, 2) : 0}%` }}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <CategoryBars rows={rows} currency={report.baseCurrency} />
       </CardContent>
     </Card>
   );
