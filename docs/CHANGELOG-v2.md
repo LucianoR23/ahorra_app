@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 4.2 (app part): the new Inicio · Yo
+- Inicio in Mi plata follows the designs `Main` and `DesktopInicio`: greeting with the date and the discreet mode button; "Gastaste en noviembre" with what came in and what is left (or how much it went over; without incomes, an invitation to add them; on desktop also the share of the income spent); "Comprometido" across every card, "Diciembre ya tiene $ 214.800 en cuotas." with six bars; "Tarjetas que vencen" with each closed statement still to pay; the latest notification ("Tu semana" for the weekly review); pending drafts; "Últimos movimientos" as a list on mobile and a table on desktop. Desktop lays the cards out in the design's grid.
+- The four stat cards, the coach bubble, the income card and the forecast ring are gone from Inicio · Yo. The hogar keeps the previous dashboard until its own design is built (1.10b).
+- Not yet: "tu parte" of Hogar expenses inside Yo (the design shows it; today Yo is Mi plata only).
+
 ### 4.2 (app part): Comprometido and installments in progress in Tarjetas
 - Below the statements, "Comprometido en esta tarjeta": the picked card's next six statements as bars, from its open period, in pesos with the compact amount on top (`$ 235k`). Dollars go in a line below ("Más US$ 12 en dólares (dic)."). In discreet mode the amounts go and the bars stay; screen readers get the list of months and amounts.
 - "Cuotas en curso": the card's purchases in installments still being billed, with the monthly amount, the pill bar ("4 de 6") and when it ends ("termina en febrero", with the year when it is not this one).
