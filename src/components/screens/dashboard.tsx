@@ -15,6 +15,8 @@ import { Money } from "@/components/ui/money";
 import { DiscreetToggle } from "@/components/discreet-toggle";
 import { useMaskText } from "@/stores/discreet";
 import { cn } from "@/lib/utils";
+import { InicioYo } from "@/components/inicio/inicio-yo";
+import { useSpaces } from "@/lib/spaces";
 import { useIsClient } from "@/lib/hooks";
 import { useAuthStore } from "@/stores/auth";
 import {
@@ -26,7 +28,17 @@ import {
 } from "@/lib/api/hooks";
 import type { Category, MonthlyReport, Expense, Insight } from "@/lib/api/schemas";
 
+/**
+ * Inicio: the new Inicio · Yo in Mi plata (plan 4.2); the hogar keeps the
+ * previous dashboard until its own design lands (1.10b).
+ */
 export function Dashboard() {
+  const { inHogar, isLoading } = useSpaces();
+  if (isLoading) return <Skeleton className="h-96 w-full rounded-xl" />;
+  return inHogar ? <HogarDashboard /> : <InicioYo />;
+}
+
+function HogarDashboard() {
   const { data: report, isLoading: loadingReport } = useMonthlyReport();
   const { data: expensesResp, isLoading: loadingExpenses } = useRecentExpenses(5);
   const { data: insights, isLoading: loadingInsight } = useLatestInsight();
