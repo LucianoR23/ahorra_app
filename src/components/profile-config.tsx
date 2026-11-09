@@ -1,39 +1,61 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Save, User as UserIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Mail, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MenuGroup, MenuItem } from "@/components/ui/menu-list";
 import { patchMe } from "@/lib/api/mutations";
-import { useAuthStore } from "@/stores/auth";
 import { ApiError } from "@/lib/api/errors";
 import { toast, toastError } from "@/lib/toast";
+import type { User } from "@/lib/api/schemas";
+import { useAuthStore } from "@/stores/auth";
 
-type Draft = { firstName?: string; lastName?: string; email?: string };
-
+/**
+ * "Perfil" in Ajustes (plan 1.10b, the grouped list): name and email as
+ * rows; each opens the sheet to edit them.
+ */
 export function ProfileConfig() {
   const user = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
+  const [open, setOpen] = useState(false);
+  if (!user) return null;
 
-  const [draft, setDraft] = useState<Draft>({});
+  return (
+    <>
+      <MenuGroup
+        title="Perfil"
+        footer={
+          user.pendingEmail ? (
+            <>
+              Cambio pendiente a <span className="font-semibold text-ink">{user.pendingEmail}</span>: confirmalo con el link que
+              te mandamos a esa casilla.
+            </>
+          ) : undefined
+        }
+      >
+        <MenuItem icon={UserIcon} label="Nombre" detail={`${user.firstName} ${user.lastName}`.trim()} onClick={() => setOpen(true)} />
+        <MenuItem icon={Mail} label="Email" detail={user.email} onClick={() => setOpen(true)} />
+      </MenuGroup>
+      {open && <ProfileSheet user={user} onOpenChange={setOpen} />}
+    </>
+  );
+}
+
+function ProfileSheet({ user, onOpenChange }: { user: User; onOpenChange: (v: boolean) => void }) {
+  const setUser = useAuthStore((s) => s.setUser);
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
+  const [email, setEmail] = useState(user.email);
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  if (!user) return null;
+  const dirty = firstName.trim() !== user.firstName || lastName.trim() !== user.lastName || email.trim() !== user.email;
 
-  const firstName = draft.firstName ?? user.firstName;
-  const lastName = draft.lastName ?? user.lastName;
-  const email = draft.email ?? user.email;
-
-  const dirty =
-    firstName.trim() !== user.firstName ||
-    lastName.trim() !== user.lastName ||
-    email.trim() !== user.email;
-
-  async function handleSave() {
-    if (!user || !dirty) return;
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!dirty) return;
     setBusy(true);
     setErrors({});
     try {
@@ -43,7 +65,6 @@ export function ProfileConfig() {
       if (email.trim() !== user.email) input.email = email.trim();
       const updated = await patchMe(input);
       setUser(updated);
-      setDraft({});
       if (input.email && updated.pendingEmail) {
         toast.success("Revisá tu nuevo email", {
           description: `Te mandamos un link a ${updated.pendingEmail}. El cambio se aplica cuando lo confirmes.`,
@@ -51,101 +72,53 @@ export function ProfileConfig() {
       } else {
         toast.success("Perfil actualizado");
       }
+      onOpenChange(false);
     } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.code === "conflict") {
-          setErrors({ email: "Ese email ya está en uso" });
-        } else if (err.field) {
-          setErrors({ [err.field]: err.message });
-        } else {
-          toastError(err);
-        }
-      } else {
-        toastError(err);
-      }
-    } finally {
+      if (err instanceof ApiError && err.code === "conflict") setErrors({ email: "Ese email ya está en uso" });
+      else if (err instanceof ApiError && err.field) setErrors({ [err.field]: err.message });
+      else toastError(err);
       setBusy(false);
     }
   }
 
+  const field = (id: string, label: string, value: string, set: (v: string) => void, key: string, type = "text") => (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => set(e.target.value)}
+        disabled={busy}
+        aria-invalid={!!errors[key]}
+        aria-describedby={errors[key] ? `${id}-error` : undefined}
+      />
+      {errors[key] && (
+        <p id={`${id}-error`} className="text-caption text-negative">
+          {errors[key]}
+        </p>
+      )}
+    </div>
+  );
+
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary">
-            <UserIcon className="size-3.5" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold">Mi perfil</h2>
-            <p className="text-xs text-muted-foreground">
-              Nombre, apellido y email de tu cuenta.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Tu perfil</DialogTitle>
+          <DialogDescription>Si cambiás el email, te mandamos un link para confirmarlo.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="profile-first-name">Nombre</Label>
-              <Input
-                id="profile-first-name"
-                value={firstName}
-                onChange={(e) => setDraft((d) => ({ ...d, firstName: e.target.value }))}
-                disabled={busy}
-                aria-invalid={!!errors.firstName}
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-xs text-destructive">{errors.firstName}</p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="profile-last-name">Apellido</Label>
-              <Input
-                id="profile-last-name"
-                value={lastName}
-                onChange={(e) => setDraft((d) => ({ ...d, lastName: e.target.value }))}
-                disabled={busy}
-                aria-invalid={!!errors.lastName}
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-xs text-destructive">{errors.lastName}</p>
-              )}
-            </div>
+            {field("profile-first-name", "Nombre", firstName, setFirstName, "firstName")}
+            {field("profile-last-name", "Apellido", lastName, setLastName, "lastName")}
           </div>
-
-          <div>
-            <Label htmlFor="profile-email">Email</Label>
-            <Input
-              id="profile-email"
-              type="email"
-              value={email}
-              onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-              disabled={busy}
-              aria-invalid={!!errors.email}
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-destructive">{errors.email}</p>
-            )}
-            {user.pendingEmail && !errors.email && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Cambio pendiente a <span className="font-medium text-foreground">{user.pendingEmail}</span>:
-                confirmalo con el link que te mandamos a esa casilla.
-              </p>
-            )}
-          </div>
-
-          <div className="flex justify-end">
-            <Button size="sm" onClick={handleSave} disabled={!dirty || busy}>
-              {busy ? (
-                <Loader2 className="mr-1 size-3.5 animate-spin" />
-              ) : (
-                <Save className="mr-1 size-3.5" />
-              )}
-              Guardar
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          {field("profile-email", "Email", email, setEmail, "email", "email")}
+          <Button type="submit" size="lg" className="w-full" disabled={!dirty || busy}>
+            {busy ? "Guardando…" : "Guardar"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
