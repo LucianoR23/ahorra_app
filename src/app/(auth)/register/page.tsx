@@ -208,9 +208,7 @@ function RegisterInner() {
       {!inviteToken && (
         <>
           <AuthDivider />
-          <div className="flex justify-center">
-            <GoogleSignInButton />
-          </div>
+          <GoogleSignInButton />
         </>
       )}
 
