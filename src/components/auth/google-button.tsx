@@ -24,52 +24,57 @@ export function GoogleSignInButton() {
   const setSession = useAuthStore((s) => s.setSession);
   const setHouseholdId = useHouseholdStore((s) => s.setCurrentId);
 
+  // Fixed height: Google draws the button late (or not at all without a
+  // client id), so the screen below does not jump. The slot also lets the
+  // visual tests mask it, since it comes from Google's servers.
   return (
-    <GoogleLogin
-      theme="outline"
-        size="large"
-        shape="pill"
-        text="continue_with"
-        logo_alignment="left"
-        // width en px; el componente clamp a 400 max y centra el contenido.
-        width="320"
-        onSuccess={async (cred) => {
-        if (!cred.credential) {
-          toastError(new Error("No se recibió token de Google"));
-          return;
-        }
-        try {
-          const res = await loginWithGoogle(cred.credential);
-          setSession({
-            user: res.user,
-            accessToken: res.accessToken,
-            accessExpiresAt: res.accessExpiresAt,
-          });
-
-          // Pre-load the spaces before redirecting, so AuthGate doesn't see a
-          // user without a household for a frame. New users too: everyone
-          // starts in "Mi plata" (plan 1.2), listed first.
+    <div data-slot="google-signin" className="flex min-h-11 justify-center">
+      <GoogleLogin
+        theme="outline"
+          size="large"
+          shape="pill"
+          text="continue_with"
+          logo_alignment="left"
+          // width en px; el componente clamp a 400 max y centra el contenido.
+          width="320"
+          onSuccess={async (cred) => {
+          if (!cred.credential) {
+            toastError(new Error("No se recibió token de Google"));
+            return;
+          }
           try {
-            const households = await apiFetch<Household[]>({
-              path: "/households",
-              token: res.accessToken,
+            const res = await loginWithGoogle(cred.credential);
+            setSession({
+              user: res.user,
+              accessToken: res.accessToken,
+              accessExpiresAt: res.accessExpiresAt,
             });
-            setHouseholdId(households.length > 0 ? households[0].id : null);
-          } catch {
-            // Si falla, AuthBootstrap reintenta y AuthGate decide igual.
+  
+            // Pre-load the spaces before redirecting, so AuthGate doesn't see a
+            // user without a household for a frame. New users too: everyone
+            // starts in "Mi plata" (plan 1.2), listed first.
+            try {
+              const households = await apiFetch<Household[]>({
+                path: "/households",
+                token: res.accessToken,
+              });
+              setHouseholdId(households.length > 0 ? households[0].id : null);
+            } catch {
+              // Si falla, AuthBootstrap reintenta y AuthGate decide igual.
+            }
+            router.replace("/");
+          } catch (err) {
+            if (err instanceof ApiError) {
+              toastError(err);
+            } else {
+              toastError(new Error("No se pudo iniciar sesión con Google"));
+            }
           }
-          router.replace("/");
-        } catch (err) {
-          if (err instanceof ApiError) {
-            toastError(err);
-          } else {
-            toastError(new Error("No se pudo iniciar sesión con Google"));
-          }
-        }
-      }}
-      onError={() => {
-        toastError(new Error("Error al iniciar sesión con Google"));
-      }}
-    />
+        }}
+        onError={() => {
+          toastError(new Error("Error al iniciar sesión con Google"));
+        }}
+      />
+    </div>
   );
 }
