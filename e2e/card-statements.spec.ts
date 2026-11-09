@@ -12,6 +12,12 @@ test("the card statement to pay is marked paid from Tarjetas", async ({ page }) 
   await expect(page.getByText("Resumen a pagar")).toBeVisible();
   await expect(page.getByText("$ 300", { exact: true }).first()).toBeVisible(); // first of 3 installments
 
+  // Comprometido and installments in progress (plan 4.2): two installments left.
+  await expect(page.getByText("Comprometido en esta tarjeta")).toBeVisible();
+  const plans = page.getByRole("region", { name: "Cuotas en curso" });
+  await expect(plans.getByText("Heladera E2E")).toBeVisible();
+  await expect(plans.getByText(/2 de 3/)).toBeVisible();
+
   await page.getByRole("button", { name: "Marcar como pagado" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Marcar como pagado" }).click();
   await expect(page.getByText("Último resumen")).toBeVisible();

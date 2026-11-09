@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 4.2 (app part): Comprometido and installments in progress in Tarjetas
+- Below the statements, "Comprometido en esta tarjeta": the picked card's next six statements as bars, from its open period, in pesos with the compact amount on top (`$ 235k`). Dollars go in a line below ("Más US$ 12 en dólares (dic)."). In discreet mode the amounts go and the bars stay; screen readers get the list of months and amounts.
+- "Cuotas en curso": the card's purchases in installments still being billed, with the monthly amount, the pill bar ("4 de 6") and when it ends ("termina en febrero", with the year when it is not this one).
+- Paying a statement, or any statement change, also refreshes Comprometido and the installments in progress.
+
 ### 4.1 (app part): credit card statements
 - Tarjetas starts with the statements (design `Tarjetas`): a card picker when there is more than one credit card, "Resumen a pagar" (the period before the open one) with its total per currency, closing and due dates, status, "Marcar como pagado" and "Ver detalle", and "Próximo resumen" with what it has so far. Without credit cards it invites to add one.
 - New `/tarjetas/[id]/resumen/[ym]`: month navigator, total, minimum payment (in pesos), pay or unmark the payment, the installments with the space they belong to (Mi plata or the Hogar), and the adjustments (interest, taxes, fees, credits, other) to add, edit or delete.

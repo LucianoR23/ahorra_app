@@ -5,13 +5,14 @@ import { PaymentMethodsConfig } from "@/components/payment-methods-config";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 import { PageHeader } from "@/components/ui/page-header";
 
-// Design `Tarjetas`: statements on top (4.1), the card setup below (1.10a).
-// "Comprometido" and installments in progress arrive with 4.2.
+// Design `Tarjetas`: statements, Comprometido and installments in progress on
+// top (4.1, 4.2), the card setup below (1.10a).
 
 const TARJETAS_HELP: InfoHelpContent = {
   titulo: "Tarjetas",
   acciones: [
     "Mirá el resumen a pagar de cada tarjeta y lo que lleva el próximo, y marcalo como pagado.",
+    "Mirá cuánto tenés comprometido en los próximos resúmenes y las compras en cuotas que siguen.",
     "Cargá tus tarjetas y medios de pago, con el día de cierre y de vencimiento de cada tarjeta de crédito.",
     "Agregá los bancos que usás para agrupar tus tarjetas.",
   ],

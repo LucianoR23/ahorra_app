@@ -4,6 +4,8 @@ import useSWR from "swr";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type {
+  Committed,
+  InstallmentPlanList,
   MonthlyReport,
   ExpenseListResponse,
   ExpenseDetail,
@@ -304,6 +306,22 @@ export function useCardStatement(paymentMethodId: string | null | undefined, ym:
   return useSWR<CardStatementDetail>(
     token && paymentMethodId && ym
       ? ([`/payment-methods/${paymentMethodId}/credit-card/statements/${ym}`, { householdScoped: false }] as const)
+      : null,
+  );
+}
+
+/** "Comprometido" across the user's cards (plan 4.2), 1 to 12 months. */
+export function useCommitted(months = 6) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<Committed>(token ? ([`/credit-cards/committed?months=${months}`, { householdScoped: false }] as const) : null);
+}
+
+/** A card's "Cuotas en curso" (plan 4.2). */
+export function useInstallmentPlans(paymentMethodId: string | null | undefined) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<InstallmentPlanList>(
+    token && paymentMethodId
+      ? ([`/payment-methods/${paymentMethodId}/credit-card/installment-plans`, { householdScoped: false }] as const)
       : null,
   );
 }
