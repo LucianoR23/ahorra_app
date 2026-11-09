@@ -97,8 +97,12 @@ test("screens in light and dark, mobile and desktop", async ({ browser }) => {
   const space = await personalSpaceOf(user);
   await createExpense(user, space, { paymentMethodId: card, amount: 435000, description: "Notebook", spentAt: localDate(-1), installments: 3 });
   // Installments in progress for Comprometido (plan 4.2).
-  await createExpense(user, space, { paymentMethodId: card, amount: 1079880, description: "Heladera", spentAt: localDate(0), installments: 12 });
-  const screens = [...SCREENS, { name: "tarjetas-resumen", path: `/tarjetas/${card}/resumen/${localDate(-1).slice(0, 7)}` }];
+  const heladera = await createExpense(user, space, { paymentMethodId: card, amount: 1079880, description: "Heladera", spentAt: localDate(0), installments: 12 });
+  const screens = [
+    ...SCREENS,
+    { name: "tarjetas-resumen", path: `/tarjetas/${card}/resumen/${localDate(-1).slice(0, 7)}` },
+    { name: "detalle", path: `/movimientos/${heladera}` },
+  ];
 
   for (const theme of THEMES) {
     for (const vp of Object.keys(VIEWPORTS) as (keyof typeof VIEWPORTS)[]) {

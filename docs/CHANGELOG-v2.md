@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Detalle
+- The expense detail follows the `Detalle` design: back and edit (pencil) buttons, the category icon, description and amount centered with "12 cuotas de $ 89.990" (and "≈ $" for dollars), a data card (Categoría, Pago, Fecha de compra, Espacio and "Gasto fijo" when a recurring expense made it), and "Eliminar gasto" at the end.
+- "Cuotas": "3 de 12 · faltan $ 809.910", the segment bar, and the schedule folded to four rows around the current installment ("Ahora", in the statement to pay or the open one), with "Ver las 12 cuotas". Tapping an installment opens a dialog to mark it paid or unpaid or fix its dates. A credit card purchase in one payment shows its single installment; cash in one payment shows none.
+- "Cómo se divide" shows each member's part of a hogar expense (from the expense's own space, not the one open).
+- Editing description, date and category moved to a dialog.
+- The "Compartido" switch of the design (moving an expense between Mi plata and the hogar) needs the API and is part of 9.1; meanwhile the space is shown read-only.
+
 ### 1.10b Movimientos
 - Movimientos follows its design: the month navigator says "Gastaste $ 486.320 · 38 gastos" (the whole filtered list, from the API's new `totalAmountBase`), filter chips replace the selects (Todos, Fijos, Variables, Categoría and Pago menus), and expenses come grouped by day ("Hoy", "Ayer", "Lun 2") with each day's total and the category icon. A dollar expense shows its dollars and "≈ $" in pesos. Search moved behind the magnifier button. "Cargar más" (50 at a time, up to 200) replaces the page buttons, and the "Agregar gasto" button left (the + in the nav does it).
 - New `ui/chip` primitive (44 px filter chip, ink fill when pressed).
