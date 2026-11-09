@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories, useExpenses, usePaymentMethods } from "@/lib/api/hooks";
 import type { Category, Expense } from "@/lib/api/schemas";
 import { currentMonth, dayLabel, monthEnd, monthStart } from "@/lib/format";
+import { groupByDay as groupByDayOf } from "@/lib/group-by-day";
 import { useSpaces } from "@/lib/spaces";
 
 /** Rows per "Cargar más"; the API returns at most MAX_ROWS at once. */
@@ -38,19 +39,8 @@ const KINDS: { value: Kind; label: string }[] = [
 ];
 
 /** Expenses grouped by day, newest first, with each day's total in the base currency. */
-export function groupByDay(items: Expense[]): { day: string; total: number; items: Expense[] }[] {
-  const groups: { day: string; total: number; items: Expense[] }[] = [];
-  for (const e of items) {
-    const day = e.spentAt.slice(0, 10);
-    const last = groups.at(-1);
-    if (last?.day === day) {
-      last.items.push(e);
-      last.total += e.amountBase;
-    } else {
-      groups.push({ day, total: e.amountBase, items: [e] });
-    }
-  }
-  return groups;
+export function groupByDay(items: Expense[]) {
+  return groupByDayOf(items, (e) => e.spentAt, (e) => e.amountBase);
 }
 
 /**

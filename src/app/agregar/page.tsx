@@ -2,7 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { ExpenseForm } from "@/components/expense-form";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 import { PageHeader } from "@/components/ui/page-header";
-import { CloseButton } from "./close-button";
+import { CloseButton } from "@/components/close-button";
 
 const AGREGAR_HELP: InfoHelpContent = {
   titulo: "Cargar gasto",

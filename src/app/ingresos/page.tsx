@@ -12,7 +12,7 @@ const INGRESOS_HELP: InfoHelpContent = {
   ],
   consideraciones: [
     "Los ingresos fijos (sueldo, etc.) se generan solos desde Recurrentes; acá ves todos, los automáticos y los manuales.",
-    "Los montos se muestran en tu moneda base; si el ingreso fue en otra moneda, debajo ves el monto original.",
+    "Cada ingreso muestra su monto original; si fue en otra moneda, al lado ves cuánto es en tu moneda base. Los totales van en tu moneda base.",
   ],
   relacionado: [
     { label: "Nuevo ingreso", href: "/ingresos/nuevo" },
@@ -24,14 +24,7 @@ const INGRESOS_HELP: InfoHelpContent = {
 export default function Page() {
   return (
     <AppShell>
-      <div className="mb-4">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-2xl font-bold tracking-tight">Ingresos</h1>
-          <InfoHelp content={INGRESOS_HELP} size="icon" />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">Sueldo, freelance, regalos — todo lo que entra al hogar.</p>
-      </div>
-      <IncomesList />
+      <IncomesList help={<InfoHelp content={INGRESOS_HELP} size="icon" />} />
     </AppShell>
   );
 }

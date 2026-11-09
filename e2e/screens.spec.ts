@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { PASSWORD, addMember, cardClosedYesterday, cashOf, createExpense, createHousehold, localDate, loginUI, personalSpaceOf, register } from "./helpers";
+import { PASSWORD, addMember, cardClosedYesterday, cashOf, createIncome, createExpense, createHousehold, localDate, loginUI, personalSpaceOf, register } from "./helpers";
 
 // Screenshot harness (plan 1.10a): every screen in light and dark, mobile and
 // desktop, saved under test-results/screens for review (CI uploads them as
@@ -60,6 +60,13 @@ async function shoot(
   const context = await browser.newContext({ viewport: VIEWPORTS[vp], colorScheme: theme, reducedMotion: "reduce" });
   const page = await context.newPage();
   const suffix = `${theme}.${vp}`;
+  // Errors in the browser show in the log (Next's "Issues" badge in dev).
+  page.on("console", async (m) => {
+    if (m.type() !== "error") return;
+    const args = await Promise.all(m.args().map((a) => a.jsonValue().catch(() => "?")));
+    console.log(`[console] ${new URL(page.url()).pathname}: ${args.map(String).join(" | ").slice(0, 400)}`);
+  });
+  page.on("pageerror", (e) => console.log(`[pageerror] ${new URL(page.url()).pathname}: ${e.message.slice(0, 300)}`));
 
   await page.goto("/login");
   await page.screenshot({ path: `test-results/screens/login.${suffix}.png`, fullPage: true });
@@ -99,8 +106,11 @@ test("screens in light and dark, mobile and desktop", async ({ browser }) => {
   await createExpense(user, space, { paymentMethodId: card, amount: 435000, description: "Notebook", spentAt: localDate(-1), installments: 3 });
   // Installments in progress for Comprometido (plan 4.2).
   const heladera = await createExpense(user, space, { paymentMethodId: card, amount: 1079880, description: "Heladera", spentAt: localDate(0), installments: 12 });
+  const sueldo = await createIncome(user, space, { amount: 1151143, description: "Sueldo", receivedAt: localDate(0) });
   const screens = [
     ...SCREENS,
+    { name: "ingreso", path: `/ingresos/${sueldo}` },
+    { name: "ingreso-nuevo", path: "/ingresos/nuevo" },
     { name: "tarjetas-resumen", path: `/tarjetas/${card}/resumen/${localDate(-1).slice(0, 7)}` },
     { name: "detalle", path: `/movimientos/${heladera}` },
   ];

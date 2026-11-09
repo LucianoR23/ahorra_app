@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Ingresos
+- Ingresos follows the Movimientos pattern (no design of its own): "Entraron + $ 1.151.143 · 1 ingreso" in the month navigator (the month's real total; before, it added up only the page shown), incomes grouped by day with the day's total, "Cargar más", and the + button for a new one. An empty month invites to add one.
+- The income detail follows the Detalle pattern: centered amount, data rows (Fuente, Fecha, Lo recibió, Cuenta, Espacio), editing in a dialog (with "Otro" for a source of its own), "Eliminar ingreso" at the end.
+- Nuevo ingreso follows the Cargar gasto layout, full screen on phones. "Lo recibió" shows only with others in the space; "Cuenta" no longer lists credit cards.
+- Shared pieces: `ui/form-row` (rows of Cargar gasto and Nuevo ingreso), `lib/group-by-day`, `components/close-button`.
+- Fix: the month navigator's summary was a `<p>` that got a `<div>` skeleton while loading (invalid HTML, a hydration warning in Movimientos). The "$" before a big amount no longer wraps.
+- The screenshot harness logs browser errors and shoots an income, its detail and Nuevo ingreso.
+
 ### 1.10b Más
 - The hogar rows in Más say how many are in the hogar ("2 personas", "Solo vos") and who owes whom ("Ana te debe $ 14.880", "Le debés $ 500", "Al día"), read from the hogar even while Mi plata is open (`useBalancesMe` takes a household). "Tu plan" of the design waits for Phase 3.
 - Cargar gasto: the row labels use the body size, like "Fecha".
