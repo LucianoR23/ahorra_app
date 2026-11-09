@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { PASSWORD, cardClosedYesterday, createExpense, createHousehold, localDate, loginUI, personalSpaceOf, register } from "./helpers";
+import { PASSWORD, addMember, cardClosedYesterday, cashOf, createExpense, createHousehold, localDate, loginUI, personalSpaceOf, register } from "./helpers";
 
 // Screenshot harness (plan 1.10a): every screen in light and dark, mobile and
 // desktop, saved under test-results/screens for review (CI uploads them as
@@ -74,13 +74,24 @@ async function shoot(
     await settle(page);
     await page.screenshot({ path: `test-results/screens/${screen.name}.${suffix}.png`, fullPage: true });
   }
+  // Inicio · Hogar (plan 1.10b): the same "/" with the Hogar tab picked.
+  await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/"));
+  await page.waitForURL((u) => u.pathname === "/");
+  await page.getByRole("tab", { name: "Hogar" }).first().click();
+  await expect(page.getByText("Gastaron juntos", { exact: false }).first()).toBeVisible();
+  await settle(page);
+  await page.screenshot({ path: `test-results/screens/inicio-hogar.${suffix}.png`, fullPage: true });
   await context.close();
 }
 
 test("screens in light and dark, mobile and desktop", async ({ browser }) => {
   test.setTimeout(10 * 60_000);
   const user = await register("screens", "Luciano");
-  await createHousehold(user, "Casa");
+  const hogar = await createHousehold(user, "Casa");
+  // A second member and shared expenses for Inicio · Hogar (plan 1.10b).
+  const ana = await addMember(user, hogar, "Ana");
+  await createExpense(user, hogar, { paymentMethodId: await cashOf(user), amount: 42315, description: "Súper", spentAt: localDate(0), isShared: true });
+  await createExpense(ana, hogar, { paymentMethodId: await cashOf(ana), amount: 38900, description: "Luz", spentAt: localDate(0), isShared: true });
   // A card with a closed statement to pay (plan 4.1).
   const card = await cardClosedYesterday(user, "Visa 4417");
   const space = await personalSpaceOf(user);

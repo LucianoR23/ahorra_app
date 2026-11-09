@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-function invalidateDebts() {
+export function invalidateDebts() {
   swrMutate(
     (k) =>
       Array.isArray(k) &&
@@ -389,13 +389,15 @@ function FilterChip({
   );
 }
 
-function PayDebtDialog({
+/** "Registrar pago" of one debt. `trigger` replaces the small "Pagar" button. */
+export function PayDebtDialog({
   fromUser,
   toUser,
   maxAmount,
   fromLabel,
   toLabel,
   baseCurrency,
+  trigger,
 }: {
   fromUser: string;
   toUser: string;
@@ -403,6 +405,7 @@ function PayDebtDialog({
   fromLabel: string;
   toLabel: string;
   baseCurrency: string;
+  trigger?: React.ReactElement;
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(maxAmount.toFixed(2));
@@ -449,7 +452,11 @@ function PayDebtDialog({
         setErr(null);
       }
     }}>
-      <DialogTrigger render={<Button size="sm" variant="secondary" />}>Pagar</DialogTrigger>
+      {trigger ? (
+        <DialogTrigger render={trigger} />
+      ) : (
+        <DialogTrigger render={<Button size="sm" variant="secondary" />}>Pagar</DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Registrar pago</DialogTitle>

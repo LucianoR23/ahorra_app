@@ -129,6 +129,8 @@ export const monthlyReportSchema = z.object({
     fixedCount: z.number(),
     variableCount: z.number(),
   }),
+  /** What each member paid this month (Inicio · Hogar, plan 1.10b). */
+  byPayer: z.array(z.object({ userId: z.string(), total: z.number() })).default([]),
 });
 export type MonthlyReport = z.infer<typeof monthlyReportSchema>;
 
