@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { SWRConfig } from "swr";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { swrFetcher } from "@/lib/api/swr-fetcher";
 import { API, server, signIn } from "@/test/msw";
 import { InsightsInbox } from "./insights-inbox";
@@ -57,15 +57,53 @@ describe("InsightsInbox", () => {
   it("the Alertas filter asks the API for its goal alerts", async () => {
     renderInbox();
     await screen.findByText("Objetivo al 105%");
-    await userEvent.click(screen.getByRole("tab", { name: "Alertas" }));
+    await userEvent.click(screen.getByRole("button", { name: "Alertas" }));
     expect(await screen.findByText("Objetivo al 105%", {}, { timeout: 1000 })).toBeInTheDocument();
     expect(requestedTypes).toContain("alert");
   });
 
-  it("offers a next page only when totalCount says there is one", async () => {
+  it("offers more only when totalCount says there are more", async () => {
     server.use(http.get(`${API}/insights`, () => HttpResponse.json(page([goalAlert], 30))));
     renderInbox();
     await screen.findByText("Objetivo al 105%");
-    expect(screen.getByRole("button", { name: /siguiente/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Cargar más" })).toBeInTheDocument();
+  });
+
+  it("shows the unread count and marks an unread one", async () => {
+    renderInbox();
+    expect(await screen.findByText("1 sin leer")).toBeInTheDocument();
+    const row = await screen.findByRole("link", { name: /Objetivo al 105%/ });
+    expect(row).toHaveAttribute("href", "/notificaciones/n1");
+    expect(row).toHaveTextContent("Sin leer:");
+    expect(row).toHaveTextContent("Llevás $1050.00");
+  });
+
+  it("marks them all as read from the header", async () => {
+    let marked = false;
+    server.use(
+      http.post(`${API}/insights/mark-all-read`, () => {
+        marked = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    renderInbox();
+    await screen.findByText("1 sin leer");
+    await userEvent.click(screen.getByRole("button", { name: "Marcar todas como leídas" }));
+    await vi.waitFor(() => expect(marked).toBe(true));
+  });
+
+  it("searches behind the magnifier", async () => {
+    const queries: (string | null)[] = [];
+    server.use(
+      http.get(`${API}/insights`, ({ request }) => {
+        queries.push(new URL(request.url).searchParams.get("q"));
+        return HttpResponse.json(page([]));
+      }),
+    );
+    renderInbox();
+    await userEvent.click(await screen.findByRole("button", { name: "Buscar" }));
+    await userEvent.type(screen.getByLabelText("Buscar en notificaciones"), "visa");
+    expect(await screen.findByText("Sin resultados")).toBeInTheDocument();
+    expect(queries).toContain("visa");
   });
 });
