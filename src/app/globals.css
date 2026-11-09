@@ -198,6 +198,13 @@
    Kept short (180ms) so skeletons on slow-loading routes don't flash —
    the fade ends before data-fetched content settles visibly.
    ────────────────────────────────────────────────────────────────────── */
+/* Bars (categories, progress) grow from the left when they appear. Used
+   behind motion-safe, so reduced motion shows them at full size. */
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
 @keyframes vt-fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }

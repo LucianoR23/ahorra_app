@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Reportes
+- Reportes uses the page header and the Mensual · Tendencias · Exportar IA tabs from the components sheet.
+- Mensual: the month navigator ("Gastaste $ X", no future months), Gastado, Facturado and A pagar as rows that say which date each one counts by, "Por categoría" as bars (the biggest in `accent`, the rest in `ink-muted`, with each one's share) and "Fijo y variable" as one split bar. These replace the recharts bar and donut, so recharts only loads for Tendencias. A month with nothing by category no longer breaks (the API sends `null`).
+- Tendencias: 3 · 6 · 12 meses as a segmented control; the line chart in theme colors (Gastado `accent`, Ingresos `positive`, A pagar dashed, Neto `ink`), readable axis labels, a themed tooltip, and the last month's figures as rows.
+- Exportar IA: the month navigator, the month's figures as rows, and the prompt with "Copiar" (it says so if the browser blocks the clipboard). First test for it.
+- `components/category-bars` is shared with Inicio · Hogar ("En qué se fue"). Bars grow in when they appear (`grow-x`, off with reduced motion).
+- The screenshot harness shoots Tendencias.
+
 ### 1.10b Notificaciones
 - Notificaciones follows the Movimientos pattern: "N sin leer" / "Todo al día" under the title, search behind the magnifier, "Marcar todas como leídas" as an icon button, filter chips (Sin leer, Todas, Alertas, Diarias, Semanales, Gastos compartidos, Invitaciones, Pagos) and the notifications grouped by day, each row with its severity icon, title, text, time and an unread dot. "Cargar más" replaces Anterior/Siguiente. The per-row read and delete buttons left: opening a notification marks it read, and it is deleted from its detail.
 - The detail follows the Detalle pattern: back button, the icon, kind, title and date centered, the text in a card, one button to act on it ("Ver resumen", "Ver tarjetas", "Ver objetivos", "Ver recurrentes", "Ver gasto", "Ver cuentas") and "Eliminar notificación" at the end, now behind a confirmation. Severity colors use theme tokens.

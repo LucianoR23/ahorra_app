@@ -1,30 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Check, Copy, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAiExport } from "@/lib/api/hooks";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Money } from "@/components/ui/money";
-
-function isoMonthCurrent() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function monthLabel(ym: string) {
-  const [y, m] = ym.split("-");
-  const names = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-  return `${names[Number(m) - 1]} ${y}`;
-}
-
-function prevMonth(ym: string) {
-  const [y, m] = ym.split("-").map(Number);
-  const d = new Date(y, m - 2, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
+import { MonthNavigator } from "@/components/ui/month-navigator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAiExport } from "@/lib/api/hooks";
+import { currentMonth } from "@/lib/format";
+import { toast } from "@/lib/toast";
 
 function buildSystemPrompt(backendPrompt: string): string {
   const preamble = `Sos un asesor financiero personal especializado. Tu única fuente de información son los datos reales del usuario que se incluyen más abajo.
@@ -47,128 +33,96 @@ DATOS DEL PERÍODO:
   return preamble + backendPrompt;
 }
 
+/**
+ * Reportes · Exportar IA (plan 1.10b): the month in figures and a prompt
+ * with them to paste into Claude or ChatGPT.
+ */
 export function AiExportCard() {
-  const [month, setMonth] = useState(isoMonthCurrent());
+  const [month, setMonth] = useState(currentMonth());
   const { data, isLoading } = useAiExport(month);
   const [copied, setCopied] = useState(false);
 
-  const cur = (data?.baseCurrency as "ARS" | "USD" | "EUR") ?? "ARS";
+  const cur = data?.baseCurrency ?? "ARS";
   const fullPrompt = data ? buildSystemPrompt(data.prompt) : "";
+  const top = (data?.topCategories ?? []).slice(0, 5);
 
   async function handleCopy() {
     if (!fullPrompt) return;
-    await navigator.clipboard.writeText(fullPrompt);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    try {
+      await navigator.clipboard.writeText(fullPrompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast.error("No se pudo copiar. Seleccioná el texto y copialo a mano.");
+    }
   }
-
-  const isCurrentOrFuture = month >= isoMonthCurrent();
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setMonth(prevMonth(month))}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-        >
-          ‹ Anterior
-        </button>
-        <span className="text-sm font-bold">{monthLabel(month)}</span>
-        <button
-          type="button"
-          onClick={() => setMonth(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`)}
-          disabled={isCurrentOrFuture}
-          className="cursor-pointer rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Siguiente ›
-        </button>
-      </div>
+      <MonthNavigator
+        month={month}
+        onMonthChange={setMonth}
+        max={currentMonth()}
+        className="border-0 bg-card shadow-card dark:ring-1 dark:ring-border"
+      />
 
       {isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-24 w-full rounded-2xl" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-        </div>
+        <>
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
+        </>
       ) : !data ? (
-        <Card className="rounded-2xl border-0 shadow-card">
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Sin datos para este mes.
-          </CardContent>
-        </Card>
+        <EmptyState icon={Sparkles} title="Sin datos para este mes" description="Cargá tus gastos y volvé para armar el análisis." />
       ) : (
         <>
-          <Card className="rounded-2xl border-0 shadow-card">
-            <CardContent className="p-4">
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">Resumen del mes</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Gastado</span>
-                  <span className="font-mono font-bold"><Money amount={data.spent} currency={cur} /></span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Facturado</span>
-                  <span className="font-mono font-bold"><Money amount={data.billed} currency={cur} /></span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Fijo</span>
-                  <span className="font-mono font-bold"><Money amount={data.fixedTotal} currency={cur} /> ({data.fixedPct.toFixed(0)}%)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Variable</span>
-                  <span className="font-mono font-bold"><Money amount={data.variableTotal} currency={cur} /></span>
-                </div>
-              </div>
-              {data.topCategories.length > 0 && (
-                <div className="mt-3">
-                  <p className="mb-1 text-xs font-semibold text-muted-foreground">Top categorías</p>
-                  <div className="flex flex-col gap-0.5">
-                    {data.topCategories.slice(0, 5).map((c, i) => (
-                      <div key={i} className="flex items-center justify-between text-xs">
-                        <span>{c.name}</span>
-                        <span className="font-mono font-semibold">{c.pct.toFixed(1)}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+          <Card className="py-1">
+            <CardContent>
+              <dl className="divide-y divide-border text-body">
+                <Row label="Gastado" value={<Money amount={data.spent} currency={cur} />} />
+                <Row label="Facturado" value={<Money amount={data.billed} currency={cur} />} />
+                <Row
+                  label="Fijo"
+                  value={
+                    <>
+                      <span className="mr-2 text-caption font-normal text-ink-muted">{Math.round(data.fixedPct)}%</span>
+                      <Money amount={data.fixedTotal} currency={cur} />
+                    </>
+                  }
+                />
+                <Row label="Variable" value={<Money amount={data.variableTotal} currency={cur} />} />
+                {top.length > 0 && (
+                  <Row label="Más gasto en" value={top.map((c) => `${c.name} ${Math.round(c.pct)}%`).join(" · ")} />
+                )}
+              </dl>
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-0 shadow-card">
-            <CardContent className="p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Image
-                    src="/svg/icon-ai-spark.svg"
-                    alt=""
-                    width={16}
-                    height={16}
-                    aria-hidden="true"
-                    className="size-4"
-                  />
-                  <p className="text-xs font-bold">Prompt para IA financiera</p>
-                </div>
-                <Button size="sm" variant="outline" onClick={handleCopy} disabled={!fullPrompt}>
-                  {copied ? (
-                    <><Check className="mr-1 size-3.5 text-emerald-500" /> Copiado</>
-                  ) : (
-                    <><Copy className="mr-1 size-3.5" /> Copiar</>
-                  )}
+          <Card>
+            <CardContent className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-heading font-semibold">Prompt para tu IA</h2>
+                <Button variant="secondary" onClick={handleCopy} disabled={!fullPrompt}>
+                  {copied ? <Check aria-hidden className="text-positive" strokeWidth={1.75} /> : <Copy aria-hidden strokeWidth={1.75} />}
+                  {copied ? "Copiado" : "Copiar"}
                 </Button>
               </div>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Copiá este prompt y pegalo en Claude o ChatGPT para obtener un análisis detallado de tus finanzas.
-              </p>
-              <div className="max-h-64 overflow-y-auto rounded-lg bg-muted/50 p-3">
-                <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-foreground/80">
-                  {fullPrompt}
-                </pre>
-              </div>
+              <p className="text-caption text-ink-muted">Pegalo en Claude o ChatGPT para que analice tus gastos del mes.</p>
+              <pre className="max-h-64 overflow-y-auto rounded-xl bg-surface-2 p-4 font-mono text-caption leading-relaxed whitespace-pre-wrap text-ink">
+                {fullPrompt}
+              </pre>
             </CardContent>
           </Card>
         </>
       )}
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex min-h-12 items-center justify-between gap-4 py-2">
+      <dt className="shrink-0 text-ink-muted">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-semibold text-ink">{value}</dd>
     </div>
   );
 }

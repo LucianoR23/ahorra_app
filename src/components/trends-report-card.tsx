@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { LineChart } from "lucide-react";
 import { TrendsLineChart } from "@/components/report-charts-lazy";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Money } from "@/components/ui/money";
+import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrendsReport } from "@/lib/api/hooks";
-import { Money } from "@/components/ui/money";
-import { cn } from "@/lib/utils";
+import { fmtMonthLong } from "@/lib/format";
 
-const MONTH_OPTIONS = [3, 6, 12] as const;
+const RANGES = [
+  { value: "3", label: "3 meses" },
+  { value: "6", label: "6 meses" },
+  { value: "12", label: "12 meses" },
+] as const;
 
 function shortMonth(ym: string) {
   const [y, m] = ym.split("-");
@@ -16,84 +23,67 @@ function shortMonth(ym: string) {
   return `${names[Number(m) - 1]} ${y.slice(2)}`;
 }
 
+// Theme colors (README §5): what you spent is the highlighted series.
 const LINES = [
-  { key: "spentTotal", label: "Gastado", color: "#ef4444" },
-  { key: "income", label: "Ingreso", color: "#22c55e" },
-  { key: "dueTotal", label: "A pagar", color: "#f97316" },
-  { key: "net", label: "Neto", color: "#3b82f6" },
+  { key: "spentTotal", label: "Gastado", color: "var(--color-brand)" },
+  { key: "income", label: "Ingresos", color: "var(--color-positive)" },
+  { key: "dueTotal", label: "A pagar", color: "var(--color-ink-muted)", dashed: true },
+  { key: "net", label: "Neto", color: "var(--color-ink)" },
 ] as const;
 
+/** Reportes · Tendencias (plan 1.10b): the last 3, 6 or 12 months. */
 export function TrendsReportCard() {
-  const [months, setMonths] = useState<3 | 6 | 12>(6);
-  const { data, isLoading } = useTrendsReport(months);
-  const cur = (data?.baseCurrency as "ARS" | "USD" | "EUR") ?? "ARS";
-
-  const chartData = data?.points.map((p) => ({
+  const [months, setMonths] = useState<"3" | "6" | "12">("6");
+  const { data, isLoading } = useTrendsReport(Number(months) as 3 | 6 | 12);
+  const cur = data?.baseCurrency ?? "ARS";
+  const points = data?.points ?? [];
+  const chartData = points.map((p) => ({
     month: shortMonth(p.month),
     spentTotal: p.spentTotal,
     income: p.income,
     dueTotal: p.dueTotal,
     net: p.net,
-  })) ?? [];
+  }));
+  const last = points.at(-1);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-1.5">
-        {MONTH_OPTIONS.map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMonths(m)}
-            className={cn(
-              "cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-              months === m
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/70",
-            )}
-          >
-            {m} meses
-          </button>
-        ))}
-      </div>
+      <Segmented aria-label="Período" value={months} onValueChange={setMonths} options={RANGES} />
 
       {isLoading ? (
         <Skeleton className="h-64 w-full rounded-2xl" />
-      ) : !chartData.length ? (
-        <Card className="rounded-2xl border-0 shadow-card">
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Sin datos de tendencias.
-          </CardContent>
-        </Card>
+      ) : chartData.length === 0 ? (
+        <EmptyState icon={LineChart} title="Sin datos todavía" description="Con un par de meses cargados, acá ves cómo vienen tus gastos e ingresos." />
       ) : (
         <>
-          <Card className="rounded-2xl border-0 shadow-card">
-            <CardContent className="p-4">
-              <h3 className="mb-3 text-xs font-bold">Evolución mensual</h3>
-              <TrendsLineChart data={chartData} lines={LINES} currency={cur} />
+          <Card>
+            <CardContent className="flex flex-col gap-3">
+              <h2 className="text-heading font-semibold">Mes a mes</h2>
+              <TrendsLineChart data={chartData} lines={LINES} currency={cur as "ARS" | "USD" | "EUR"} />
             </CardContent>
           </Card>
 
-          {(() => {
-            const last = data?.points.at(-1);
-            if (!last) return null;
-            return (
-              <div className="grid grid-cols-2 gap-3">
-                {LINES.map((l) => (
-                  <Card key={l.key} className="rounded-2xl border-0 shadow-card">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="inline-block size-2 rounded-full" style={{ backgroundColor: l.color }} />
-                        <p className="text-xs text-muted-foreground">{l.label} (último mes)</p>
-                      </div>
-                      <p className="mt-0.5 font-mono text-sm font-bold">
-                        <Money amount={last[l.key]} currency={cur} />
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            );
-          })()}
+          {last && (
+            <Card className="py-1">
+              <CardContent>
+                <h2 className="pt-3 text-caption font-semibold text-ink-muted">{fmtMonthLong(last.month)}</h2>
+                <dl className="divide-y divide-border">
+                  {LINES.map((l) => (
+                    <div key={l.key} className="flex min-h-12 items-center justify-between gap-4 py-2 text-body">
+                      <dt className="flex items-center gap-2">
+                        <span aria-hidden className="size-2.5 rounded-full" style={{ backgroundColor: l.color }} />
+                        {l.label}
+                      </dt>
+                      <dd className="font-semibold">
+                        <Money amount={last[l.key]} currency={cur} income={l.key === "income"} />
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="pb-3 text-caption text-ink-muted">Neto: ingresos menos lo que tenés a pagar.</p>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

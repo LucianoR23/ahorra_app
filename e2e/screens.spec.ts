@@ -89,6 +89,13 @@ async function shoot(
   await expect(page.getByText("Gastaron juntos", { exact: false }).first()).toBeVisible();
   await settle(page);
   await page.screenshot({ path: `test-results/screens/inicio-hogar.${suffix}.png`, fullPage: true });
+  // Reportes · Tendencias (plan 1.10b): the chart in theme colors.
+  await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/reportes"));
+  await page.waitForURL((u) => u.pathname === "/reportes");
+  await page.getByRole("tab", { name: "Tendencias" }).click();
+  await expect(page.locator(".recharts-line").first()).toBeVisible();
+  await settle(page);
+  await page.screenshot({ path: `test-results/screens/reportes-tendencias.${suffix}.png`, fullPage: true });
   // Notificaciones of the hogar: Ana's shared expense told this user (plan 1.10b).
   await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/notificaciones"));
   await page.waitForURL((u) => u.pathname === "/notificaciones");

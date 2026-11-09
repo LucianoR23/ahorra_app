@@ -4,14 +4,14 @@ import { SWRConfig } from "swr";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { swrFetcher } from "@/lib/api/swr-fetcher";
 import { API, server, signIn } from "@/test/msw";
+import userEvent from "@testing-library/user-event";
+import { AiExportCard } from "./ai-export-card";
 import { MonthlyReportCard } from "./monthly-report-card";
 import { TrendsReportCard } from "./trends-report-card";
 
-// The charts load lazily (plan 0.14); here they never arrive, so the test
-// shows the cards don't wait for them.
+// The trends chart loads lazily (plan 0.14); here it never arrives, so the
+// test shows the card doesn't wait for it.
 vi.mock("@/components/report-charts-lazy", () => ({
-  CategoryBarChart: () => <div data-testid="bar-chart" />,
-  DonutChart: () => <div data-testid="donut-chart" />,
   TrendsLineChart: () => <div data-testid="line-chart" />,
 }));
 
@@ -21,7 +21,7 @@ const wrap = (ui: React.ReactNode) =>
 beforeEach(() => signIn());
 
 describe("MonthlyReportCard", () => {
-  it("shows the totals, the category legend and both charts", async () => {
+  it("shows the totals, the categories as bars and fixed vs variable", async () => {
     server.use(
       http.get(`${API}/reports/monthly`, () =>
         HttpResponse.json({
@@ -40,10 +40,11 @@ describe("MonthlyReportCard", () => {
     );
     wrap(<MonthlyReportCard />);
     expect(await screen.findByText("Gastado")).toBeInTheDocument();
+    expect(screen.getByText(/Gastaste/)).toHaveTextContent("Gastaste $ 1.500");
+    expect(screen.getByText("Facturado").closest("div")).toHaveTextContent("$ 1.200");
     expect(screen.getByText("Super")).toBeInTheDocument();
-    expect(screen.getByText("66.7%")).toBeInTheDocument();
-    expect(screen.getByTestId("bar-chart")).toBeInTheDocument();
-    expect(screen.getByTestId("donut-chart")).toBeInTheDocument();
+    expect(screen.getAllByTestId("category-bar")).toHaveLength(1);
+    expect(screen.getByRole("img", { name: "Fijo 33%, variable 67%" })).toBeInTheDocument();
   });
 });
 
@@ -61,6 +62,61 @@ describe("TrendsReportCard", () => {
     );
     wrap(<TrendsReportCard />);
     expect(await screen.findByTestId("line-chart")).toBeInTheDocument();
-    expect(screen.getByText("Neto (último mes)")).toBeInTheDocument();
+    expect(screen.getByText("marzo 2026", { exact: false })).toBeInTheDocument();
+    expect(screen.getByText("Neto").closest("div")).toHaveTextContent("$ 2.100");
+    expect(screen.getByText("Ingresos").closest("div")).toHaveTextContent("+ $ 3.000");
+  });
+});
+
+describe("MonthlyReportCard with nothing by category", () => {
+  it("survives the API's null list and hides the empty sections", async () => {
+    server.use(
+      http.get(`${API}/reports/monthly`, () =>
+        HttpResponse.json({
+          householdId: "h1",
+          baseCurrency: "ARS",
+          month: "2026-03",
+          from: "2026-03-01",
+          to: "2026-03-31",
+          spentThisMonth: 0,
+          billedThisMonth: 0,
+          dueThisMonth: 0,
+          byCategory: null,
+          fixedVariable: { fixedTotal: 0, variableTotal: 0, fixedPct: 0, variablePct: 0, fixedCount: 0, variableCount: 0 },
+        }),
+      ),
+    );
+    wrap(<MonthlyReportCard />);
+    expect(await screen.findByText("Gastado")).toBeInTheDocument();
+    expect(screen.queryByText("Por categoría")).not.toBeInTheDocument();
+    expect(screen.queryByText("Fijo y variable")).not.toBeInTheDocument();
+  });
+});
+
+describe("AiExportCard", () => {
+  it("shows the month's figures and copies the prompt with its data", async () => {
+    server.use(
+      http.get(`${API}/reports/ai-export`, () =>
+        HttpResponse.json({
+          householdName: "Mi plata",
+          baseCurrency: "ARS",
+          month: "2026-03",
+          spent: 1500,
+          billed: 1200,
+          fixedTotal: 500,
+          variableTotal: 1000,
+          fixedPct: 33.3,
+          topCategories: [{ name: "Super", total: 1500, pct: 100, txCount: 3 }],
+          prompt: "Gastado: 1500 ARS",
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    wrap(<AiExportCard />);
+    expect(await screen.findByText("Más gasto en")).toBeInTheDocument();
+    expect(screen.getByText("Super 100%")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Copiar" }));
+    expect(await screen.findByRole("button", { name: "Copiado" })).toBeInTheDocument();
+    expect(await navigator.clipboard.readText()).toContain("Gastado: 1500 ARS");
   });
 });
