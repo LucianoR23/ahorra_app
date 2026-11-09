@@ -139,10 +139,10 @@ jobs:
 
       # Plan 1.10a: every screen in light/dark, mobile/desktop, for review.
       # Its own run so it gets a fresh API (sign-up rate limit). Plan 1.10b:
-      # each shot is compared with its baseline; a screen without one writes
-      # it and passes. By hand, every baseline is rewritten.
+      # each shot is compared with its baseline in e2e/__screenshots__, and a
+      # missing one fails too. By hand, every baseline is rewritten.
       - name: Screenshots and visual regression (Playwright)
-        run: pnpm test:screens --update-snapshots=${{ github.event_name == 'workflow_dispatch' && 'all' || 'missing' }}
+        run: pnpm test:screens --update-snapshots=${{ github.event_name == 'workflow_dispatch' && 'all' || 'none' }}
 
       - name: Upload screenshots
         if: always()
