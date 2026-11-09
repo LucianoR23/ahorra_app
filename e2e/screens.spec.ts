@@ -89,6 +89,17 @@ async function shoot(
   await expect(page.getByText("Gastaron juntos", { exact: false }).first()).toBeVisible();
   await settle(page);
   await page.screenshot({ path: `test-results/screens/inicio-hogar.${suffix}.png`, fullPage: true });
+  // Notificaciones of the hogar: Ana's shared expense told this user (plan 1.10b).
+  await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/notificaciones"));
+  await page.waitForURL((u) => u.pathname === "/notificaciones");
+  await expect(page.getByRole("link", { name: /Nuevo gasto compartido/ }).first()).toBeVisible();
+  await settle(page);
+  await page.screenshot({ path: `test-results/screens/notificaciones-hogar.${suffix}.png`, fullPage: true });
+  await page.getByRole("link", { name: /Nuevo gasto compartido/ }).first().click();
+  await page.waitForURL((u) => u.pathname.startsWith("/notificaciones/"));
+  await expect(page.getByRole("button", { name: "Eliminar notificación" })).toBeVisible();
+  await settle(page);
+  await page.screenshot({ path: `test-results/screens/notificacion.${suffix}.png`, fullPage: true });
   // The create sheet (bottom sheet on phones, dialog on desktop), back in Yo.
   await page.getByRole("tab", { name: "Yo" }).first().click();
   await page.evaluate(() => (window as unknown as { next: { router: { push: (p: string) => void } } }).next.router.push("/objetivos"));

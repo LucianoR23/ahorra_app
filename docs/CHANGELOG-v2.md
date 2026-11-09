@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Notificaciones
+- Notificaciones follows the Movimientos pattern: "N sin leer" / "Todo al día" under the title, search behind the magnifier, "Marcar todas como leídas" as an icon button, filter chips (Sin leer, Todas, Alertas, Diarias, Semanales, Gastos compartidos, Invitaciones, Pagos) and the notifications grouped by day, each row with its severity icon, title, text, time and an unread dot. "Cargar más" replaces Anterior/Siguiente. The per-row read and delete buttons left: opening a notification marks it read, and it is deleted from its detail.
+- The detail follows the Detalle pattern: back button, the icon, kind, title and date centered, the text in a card, one button to act on it ("Ver resumen", "Ver tarjetas", "Ver objetivos", "Ver recurrentes", "Ver gasto", "Ver cuentas") and "Eliminar notificación" at the end, now behind a confirmation. Severity colors use theme tokens.
+- `lib/insights` holds the labels and links the two share (a goal alert now leads to Objetivos, a shared expense to the expense).
+- The screenshot harness shoots the hogar's notifications and one notification.
+
 ### 1.10b Recurrentes, Categorías, Presupuestos y objetivos
 - Create and edit dialogs open as a bottom sheet on phones (with a grabber, sliding up unless reduced motion is on) and stay a centered dialog from `sm` up, as the design's components sheet asks. Confirmations stay centered everywhere (`DialogContent layout="center"`). This applies to every create/edit dialog in the app.
 - `ListRow` takes `onClick` (the row is one button that opens a sheet); its inner markup is spans so it is valid inside a button.

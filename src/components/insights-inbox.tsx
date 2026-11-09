@@ -1,195 +1,112 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { mutate as swrMutate } from "swr";
-import {
-  AlertTriangle,
-  Info,
-  Sparkles,
-  Check,
-  CheckCheck,
-  Trash2,
-  Loader2,
-  Inbox,
-  Filter,
-  ChevronRight,
-  ChevronLeft,
-  Search,
-  X,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { AlertTriangle, Bell, CheckCheck, Info, Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListRow, ListRowSkeleton } from "@/components/ui/list-row";
+import { PageHeader } from "@/components/ui/page-header";
 import { useInsights, useInsightsUnreadCount } from "@/lib/api/hooks";
-import {
-  markInsightRead,
-  markAllInsightsRead,
-  deleteInsight,
-} from "@/lib/api/mutations";
+import { markAllInsightsRead } from "@/lib/api/mutations";
 import type { Insight } from "@/lib/api/schemas";
+import { dayLabel } from "@/lib/format";
+import { relativeTime } from "@/lib/insights";
 import { toast, toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useMaskText } from "@/stores/discreet";
 
-const PAGE_SIZE = 25;
+const PAGE = 50;
+const MAX_ROWS = 200;
 
-const TYPE_LABELS: Record<string, string> = {
-  daily_summary: "Resumen diario",
-  weekly_review: "Resumen semanal",
-  card_closing_soon: "Cierre de tarjeta",
-  card_due_soon: "Vencimiento de tarjeta",
-  alert: "Alerta",
-  tip: "Consejo",
-  shared_expense: "Gasto compartido",
-  invite: "Invitación a hogar",
-  settlement: "Pago registrado",
-  credit_period_reminder: "Cierre de tarjeta",
-  recurring_spike: "Aumento de un gasto fijo",
-};
+const TYPES = [
+  { value: "all", label: "Todas" },
+  { value: "alert", label: "Alertas" },
+  { value: "daily_summary", label: "Diarias" },
+  { value: "weekly_review", label: "Semanales" },
+  { value: "shared_expense", label: "Gastos compartidos" },
+  { value: "invite", label: "Invitaciones" },
+  { value: "settlement", label: "Pagos" },
+] as const;
 
-type TypeFilter =
-  | "all"
-  | "daily_summary"
-  | "weekly_review"
-  | "alert"
-  | "shared_expense"
-  | "invite"
-  | "settlement";
+type TypeFilter = (typeof TYPES)[number]["value"];
 
-function invalidateInsights() {
-  swrMutate(
-    (k) =>
-      Array.isArray(k) &&
-      typeof k[0] === "string" &&
-      k[0].startsWith("/insights"),
-    undefined,
-    { revalidate: true },
+export function invalidateInsights() {
+  swrMutate((k) => Array.isArray(k) && typeof k[0] === "string" && k[0].startsWith("/insights"), undefined, { revalidate: true });
+}
+
+/** The round icon a notification leads with, by severity. */
+export function InsightIcon({ severity, size = 40 }: { severity: Insight["severity"]; size?: number }) {
+  const { Icon, tone } =
+    severity === "critical"
+      ? { Icon: AlertTriangle, tone: "bg-negative-soft text-negative" }
+      : severity === "warning"
+        ? { Icon: Info, tone: "bg-warn/12 text-warn" }
+        : { Icon: Sparkles, tone: "bg-surface-2 text-ink" };
+  return (
+    <span aria-hidden style={{ width: size, height: size }} className={cn("grid shrink-0 place-items-center rounded-full", tone)}>
+      <Icon style={{ width: size / 2, height: size / 2 }} strokeWidth={1.75} />
+    </span>
   );
 }
 
-function severityVisual(sev: Insight["severity"]) {
-  if (sev === "critical") {
-    return {
-      Icon: AlertTriangle,
-      dot: "bg-destructive",
-      ring: "ring-destructive/30",
-      badge: "bg-destructive/15 text-destructive",
-      iconBg: "bg-destructive/10 text-destructive",
-    };
-  }
-  if (sev === "warning") {
-    return {
-      Icon: Info,
-      dot: "bg-amber-500",
-      ring: "ring-amber-500/30",
-      badge: "bg-amber-500/15 text-amber-500",
-      iconBg: "bg-amber-500/10 text-amber-500",
-    };
-  }
-  return {
-    Icon: Sparkles,
-    dot: "bg-primary",
-    ring: "ring-primary/30",
-    badge: "bg-primary/10 text-primary",
-    iconBg: "bg-primary/10 text-primary",
-  };
+/** The day (America/Argentina/Buenos_Aires) a notification belongs to. */
+function localDay(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
 }
 
-function relativeDate(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "ahora";
-  if (mins < 60) return `hace ${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `hace ${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `hace ${days}d`;
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
-}
-
-function dayKey(iso: string): string {
-  const [y, m, d] = iso.split("T")[0]?.split("-") ?? [];
-  return `${y}-${m}-${d}`;
-}
-
-function humanDay(key: string): string {
-  const today = new Date();
-  const ty = today.getFullYear();
-  const tm = String(today.getMonth() + 1).padStart(2, "0");
-  const td = String(today.getDate()).padStart(2, "0");
-  const todayKey = `${ty}-${tm}-${td}`;
-  if (key === todayKey) return "Hoy";
-
-  const [y, m, d] = key.split("-").map(Number);
-  const date = new Date(y, (m ?? 1) - 1, d);
-  const diffDays = Math.floor(
-    (new Date(ty, today.getMonth(), today.getDate()).getTime() - date.getTime()) / 86_400_000,
-  );
-  if (diffDays === 1) return "Ayer";
-  if (diffDays < 7) return "Esta semana";
-  if (diffDays < 30) return "Este mes";
-  return date.toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" });
-}
-
+/**
+ * Notificaciones (plan 1.10b, no design: the `Movimientos` list). Unread
+ * count in the header, search behind the magnifier, filter chips, the
+ * notifications grouped by day. Each opens its detail, which marks it read.
+ */
 export function InsightsInbox() {
+  const mask = useMaskText();
   const [onlyUnread, setOnlyUnread] = useState(false);
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [offset, setOffset] = useState(0);
+  const [type, setType] = useState<TypeFilter>("all");
+  const [rows, setRows] = useState(PAGE);
+  const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [markingAll, setMarkingAll] = useState(false);
 
-  // Debounce 250ms para no pegarle al backend en cada tecla.
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 250);
     return () => clearTimeout(t);
   }, [query]);
 
-  // Reset offset cuando cambia la búsqueda (la página actual ya no aplica).
-  // Patrón render-time (sin useEffect) para evitar el cascading render que
-  // desaconseja react-hooks/set-state-in-effect bajo el React Compiler.
-  const [prevDebouncedQuery, setPrevDebouncedQuery] = useState(debouncedQuery);
-  if (debouncedQuery !== prevDebouncedQuery) {
-    setPrevDebouncedQuery(debouncedQuery);
-    setOffset(0);
+  // A new search starts from the first page (render-time reset, no effect).
+  const [prevQuery, setPrevQuery] = useState(debouncedQuery);
+  if (debouncedQuery !== prevQuery) {
+    setPrevQuery(debouncedQuery);
+    setRows(PAGE);
   }
-
-  const typeQuery = typeFilter === "all" ? undefined : typeFilter;
 
   const { data, isLoading, error } = useInsights({
     unread: onlyUnread || undefined,
-    type: typeQuery,
+    type: type === "all" ? undefined : type,
     q: debouncedQuery || undefined,
-    limit: PAGE_SIZE,
-    offset,
+    limit: rows,
+    offset: 0,
   });
-
   const { data: unreadData } = useInsightsUnreadCount();
-  const unreadTotal = unreadData?.unread ?? 0;
+  const unread = unreadData?.unread ?? 0;
+  const items = data?.items ?? [];
+  const count = data?.totalCount ?? 0;
 
-  // Type and text filters run on the server.
-  const filtered = data?.items ?? [];
-
-  const grouped = (() => {
-    const map = new Map<string, Insight[]>();
-    for (const i of filtered) {
-      const k = dayKey(i.createdAt || i.insightDate);
-      if (!map.has(k)) map.set(k, []);
-      map.get(k)!.push(i);
-    }
-    return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
-  })();
-
-  const hasNextPage = offset + filtered.length < (data?.totalCount ?? 0);
-  const hasPrevPage = offset > 0;
-
-  const [markingAll, setMarkingAll] = useState(false);
+  const groups: { day: string; items: Insight[] }[] = [];
+  for (const i of items) {
+    const day = localDay(i.createdAt || i.insightDate);
+    const last = groups.at(-1);
+    if (last?.day === day) last.items.push(i);
+    else groups.push({ day, items: [i] });
+  }
 
   async function handleMarkAll() {
-    if (unreadTotal === 0 || markingAll) return;
+    if (unread === 0 || markingAll) return;
     setMarkingAll(true);
     try {
       await markAllInsightsRead();
@@ -202,416 +119,161 @@ export function InsightsInbox() {
     }
   }
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div
-          className="flex items-center gap-2 text-sm"
-          aria-live="polite"
-        >
-          <span className="text-muted-foreground">
-            {unreadTotal > 0
-              ? `${unreadTotal} no leída${unreadTotal === 1 ? "" : "s"}`
-              : "Todo al día"}
-          </span>
-          {unreadTotal > 0 && (
-            <span className={cn("inline-block size-1.5 rounded-full bg-primary")} />
-          )}
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleMarkAll}
-          disabled={markingAll || unreadTotal === 0}
-        >
-          {markingAll ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <CheckCheck className="size-3.5" />
-          )}
-          Marcar todas como leídas
-        </Button>
-      </div>
+  function closeSearch() {
+    setSearching(false);
+    setQuery("");
+  }
 
-      <div className="flex flex-col gap-2">
+  return (
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-4">
+      <PageHeader
+        title="Notificaciones"
+        description={<span aria-live="polite">{unread > 0 ? (unread === 1 ? "1 sin leer" : `${unread} sin leer`) : "Todo al día"}</span>}
+        className="mb-0"
+        action={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label={searching ? "Cerrar búsqueda" : "Buscar"}
+              aria-expanded={searching}
+              onClick={() => (searching ? closeSearch() : setSearching(true))}
+            >
+              {searching ? <X aria-hidden strokeWidth={1.75} /> : <Search aria-hidden strokeWidth={1.75} />}
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Marcar todas como leídas"
+              onClick={handleMarkAll}
+              disabled={markingAll || unread === 0}
+            >
+              <CheckCheck aria-hidden strokeWidth={1.75} />
+            </Button>
+          </div>
+        }
+      />
+
+      {searching && (
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-muted" strokeWidth={1.75} />
           <Input
             type="search"
+            autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar en notificaciones"
-            className="pl-9 pr-9"
             aria-label="Buscar en notificaciones"
+            className="pl-10"
           />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
         </div>
+      )}
 
-        <div
-          className="flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          role="tablist"
-          aria-label="Filtros"
+      <div
+        role="group"
+        aria-label="Filtros"
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden"
+      >
+        <Chip
+          pressed={onlyUnread}
+          onClick={() => {
+            setRows(PAGE);
+            setOnlyUnread(!onlyUnread);
+          }}
         >
-          <FilterChip
-            icon={<Filter className="size-3" />}
-            active={onlyUnread}
+          Sin leer
+        </Chip>
+        {TYPES.map((t) => (
+          <Chip
+            key={t.value}
+            pressed={type === t.value}
             onClick={() => {
-              setOnlyUnread((v) => !v);
-              setOffset(0);
+              setRows(PAGE);
+              setType(t.value);
             }}
           >
-            Solo no leídas
-          </FilterChip>
-          <FilterChip
-            active={typeFilter === "all"}
-            onClick={() => {
-              setTypeFilter("all");
-              setOffset(0);
-            }}
-          >
-            Todas
-          </FilterChip>
-          <FilterChip
-            active={typeFilter === "daily_summary"}
-            onClick={() => {
-              setTypeFilter("daily_summary");
-              setOffset(0);
-            }}
-          >
-            Diarias
-          </FilterChip>
-          <FilterChip
-            active={typeFilter === "weekly_review"}
-            onClick={() => {
-              setTypeFilter("weekly_review");
-              setOffset(0);
-            }}
-          >
-            Semanales
-          </FilterChip>
-          <FilterChip
-            active={typeFilter === "alert"}
-            onClick={() => {
-              setTypeFilter("alert");
-              setOffset(0);
-            }}
-          >
-            Alertas
-          </FilterChip>
-          <FilterChip
-            active={typeFilter === "shared_expense"}
-            onClick={() => {
-              setTypeFilter("shared_expense");
-              setOffset(0);
-            }}
-          >
-            Gastos compartidos
-          </FilterChip>
-          <FilterChip
-            active={typeFilter === "invite"}
-            onClick={() => {
-              setTypeFilter("invite");
-              setOffset(0);
-            }}
-          >
-            Invitaciones
-          </FilterChip>
-          <FilterChip
-            active={typeFilter === "settlement"}
-            onClick={() => {
-              setTypeFilter("settlement");
-              setOffset(0);
-            }}
-          >
-            Pagos
-          </FilterChip>
-        </div>
+            {t.label}
+          </Chip>
+        ))}
       </div>
 
       {error && (
-        <Card className="rounded-2xl border-destructive/40 bg-destructive/5 shadow-card">
-          <CardContent className="p-4 text-sm text-destructive">
-            No pudimos cargar las notificaciones. Intentá más tarde.
-          </CardContent>
-        </Card>
+        <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
+          No pudimos cargar las notificaciones. Probá de nuevo en un rato.
+        </p>
       )}
 
       {isLoading ? (
-        <div className="flex flex-col gap-2">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-22 w-full rounded-2xl" />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <EmptyState onlyUnread={onlyUnread} searching={debouncedQuery.length > 0} />
+        <Card className="py-1">
+          <CardContent>
+            {[0, 1, 2].map((i) => (
+              <ListRowSkeleton key={i} />
+            ))}
+          </CardContent>
+        </Card>
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon={debouncedQuery ? Search : Bell}
+          title={debouncedQuery ? "Sin resultados" : onlyUnread ? "Nada sin leer" : "No tenés notificaciones"}
+          description={
+            debouncedQuery
+              ? "Ninguna notificación coincide. Probá con otras palabras."
+              : onlyUnread
+                ? "Ya estás al día."
+                : "Acá te avisamos de cierres de tarjeta, objetivos y movimientos del hogar."
+          }
+        />
       ) : (
-        <div className="flex flex-col gap-4">
-          {grouped.map(([key, items]) => (
-            <section key={key} className="flex flex-col gap-1.5">
-              <h2 className="px-1 text-xs font-bold uppercase tracking-[1px] text-muted-foreground">
-                {humanDay(key)}
-              </h2>
-              <div className="flex flex-col gap-2">
-                {items.map((insight) => (
-                  <InsightRow key={insight.id} insight={insight} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+        groups.map((g) => (
+          <section key={g.day} aria-label={dayLabel(g.day)} className="flex flex-col gap-2">
+            <h2 className="px-1 text-body font-semibold text-ink-muted">{dayLabel(g.day)}</h2>
+            <Card className="py-1">
+              <CardContent>
+                <ul className="divide-y divide-border">
+                  {g.items.map((n) => (
+                    <li key={n.id}>
+                      <ListRow
+                        href={`/notificaciones/${n.id}`}
+                        leading={<InsightIcon severity={n.severity} />}
+                        title={
+                          <span className={cn(n.isRead && "font-normal")}>
+                            {!n.isRead && <span className="sr-only">Sin leer: </span>}
+                            {mask(n.title)}
+                          </span>
+                        }
+                        subtitle={mask(n.body)}
+                        trailing={
+                          <span className="flex flex-col items-end gap-1.5 text-caption font-normal text-ink-muted">
+                            {relativeTime(n.createdAt || n.insightDate)}
+                            {!n.isRead && <span aria-hidden data-slot="unread-dot" className="size-2.5 rounded-full bg-brand" />}
+                          </span>
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </section>
+        ))
       )}
 
-      {(hasPrevPage || hasNextPage) && (
-        <div className="flex items-center justify-between gap-2 pt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!hasPrevPage}
-            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-          >
-            <ChevronLeft className="size-3.5" /> Anterior
+      {items.length < count &&
+        (rows < MAX_ROWS ? (
+          <Button variant="secondary" className="self-center" onClick={() => setRows(Math.min(rows + PAGE, MAX_ROWS))}>
+            Cargar más
           </Button>
-          <span className="text-xs text-muted-foreground">
-            {offset + 1}–{offset + filtered.length}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!hasNextPage}
-            onClick={() => setOffset(offset + PAGE_SIZE)}
-          >
-            Siguiente <ChevronRight className="size-3.5" />
-          </Button>
-        </div>
-      )}
+        ) : (
+          <p className="text-center text-caption text-ink-muted">
+            Ves las últimas {MAX_ROWS} de {count}.
+          </p>
+        ))}
     </div>
   );
 }
 
-function FilterChip({
-  children,
-  active,
-  onClick,
-  icon,
-}: {
-  children: React.ReactNode;
-  active: boolean;
-  onClick: () => void;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      onClick={onClick}
-      className={cn(
-        "inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-        active
-          ? "border-primary/60 bg-primary/10 text-primary"
-          : "border-border bg-card text-muted-foreground hover:bg-muted",
-      )}
-    >
-      {icon}
-      {children}
-    </button>
-  );
-}
-
-function EmptyState({
-  onlyUnread,
-  searching = false,
-}: {
-  onlyUnread: boolean;
-  searching?: boolean;
-}) {
-  let title: string;
-  let body: string;
-  if (searching) {
-    title = "Sin resultados";
-    body = "Ninguna notificación coincide con la búsqueda. Probá con otras palabras.";
-  } else if (onlyUnread) {
-    title = "No hay notificaciones sin leer";
-    body = "Ya estás al día con todo.";
-  } else {
-    title = "No tenés notificaciones";
-    body = "Tu coach te avisará cuando haya novedades en los gastos.";
-  }
-  return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
-        <div className="grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
-          {searching ? <Search className="size-6" /> : <Inbox className="size-6" />}
-        </div>
-        <div>
-          <p className="text-sm font-semibold">{title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{body}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function InsightRow({ insight }: { insight: Insight }) {
-  const mask = useMaskText();
-  const visual = severityVisual(insight.severity);
-  const { Icon } = visual;
-  const [optimisticRead, setOptimisticRead] = useState(insight.isRead);
-  const [removing, setRemoving] = useState(false);
-  const [busyAction, setBusyAction] = useState<"read" | "delete" | null>(null);
-
-  const isRead = optimisticRead;
-  const typeLabel = TYPE_LABELS[insight.insightType] ?? insight.insightType;
-
-  async function handleMarkRead(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isRead || busyAction) return;
-    setBusyAction("read");
-    setOptimisticRead(true);
-    try {
-      await markInsightRead(insight.id);
-      invalidateInsights();
-    } catch (err) {
-      setOptimisticRead(false);
-      toastError(err, "No se pudo marcar como leída");
-    } finally {
-      setBusyAction(null);
-    }
-  }
-
-  async function handleDelete(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (busyAction) return;
-    setBusyAction("delete");
-    setRemoving(true);
-    await new Promise((r) => setTimeout(r, 200));
-    try {
-      await deleteInsight(insight.id);
-      invalidateInsights();
-    } catch (err) {
-      setRemoving(false);
-      setBusyAction(null);
-      toastError(err, "No se pudo eliminar");
-    }
-  }
-
-  return (
-    <Link
-      href={`/notificaciones/${insight.id}`}
-      className={cn(
-        "group relative flex items-start gap-3 rounded-2xl border bg-card p-3.5 text-left shadow-card outline-none transition-all duration-200",
-        "hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring/40",
-        isRead ? "border-border/60 opacity-85" : "border-border",
-        removing && "scale-[0.98] opacity-0",
-      )}
-      aria-label={`Notificación: ${mask(insight.title)}`}
-      onClick={() => {
-        if (!isRead) {
-          setOptimisticRead(true);
-          markInsightRead(insight.id)
-            .then(() => invalidateInsights())
-            .catch(() => setOptimisticRead(false));
-        }
-      }}
-    >
-      <div
-        className={cn(
-          "relative grid size-10 shrink-0 place-items-center rounded-xl",
-          visual.iconBg,
-        )}
-      >
-        <Icon className="size-5" />
-        {!isRead && (
-          <span
-            aria-label="Sin leer"
-            className={cn(
-              "absolute -right-0.5 -top-0.5 size-2.5 rounded-full ring-2 ring-card",
-              visual.dot,
-            )}
-          />
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              "inline-block rounded-full px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide",
-              visual.badge,
-            )}
-          >
-            {typeLabel}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {relativeDate(insight.createdAt || insight.insightDate)}
-          </span>
-        </div>
-        <p
-          className={cn(
-            "mt-1 line-clamp-1 text-sm tracking-tight",
-            isRead ? "font-semibold" : "font-bold",
-          )}
-        >
-          {mask(insight.title)}
-        </p>
-        <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-          {mask(insight.body)}
-        </p>
-      </div>
-
-      <div className="flex shrink-0 flex-col items-center gap-1 sm:flex-row">
-        {!isRead && (
-          <button
-            type="button"
-            onClick={handleMarkRead}
-            aria-label="Marcar como leída"
-            className="grid size-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary active:scale-90"
-          >
-            {busyAction === "read" ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Check className="size-3.5" />
-            )}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={handleDelete}
-          aria-label="Eliminar notificación"
-          className="grid size-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-90"
-        >
-          {busyAction === "delete" ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Trash2 className="size-3.5" />
-          )}
-        </button>
-      </div>
-    </Link>
-  );
-}
-
-export { invalidateInsights };
-
-// Named badge for navs — exported separately to avoid circular dep
-export function InsightsUnreadBadge({
-  className,
-  dotOnly = false,
-}: {
-  className?: string;
-  dotOnly?: boolean;
-}) {
+// Named badge for navs, exported here to avoid a circular import.
+export function InsightsUnreadBadge({ className, dotOnly = false }: { className?: string; dotOnly?: boolean }) {
   const { data } = useInsightsUnreadCount();
   const count = data?.unread ?? 0;
   if (!count) return null;
@@ -619,20 +281,14 @@ export function InsightsUnreadBadge({
     return (
       <span
         aria-label={`${count} notificaciones sin leer`}
-        className={cn(
-          "block size-2 rounded-full bg-destructive ring-2 ring-background",
-          className,
-        )}
+        className={cn("block size-2 rounded-full bg-negative ring-2 ring-background", className)}
       />
     );
   }
   return (
     <span
       aria-label={`${count} notificaciones sin leer`}
-      className={cn(
-        "grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground leading-none h-4",
-        className,
-      )}
+      className={cn("grid h-4 min-w-4 place-items-center rounded-full bg-negative px-1 text-xs leading-none font-bold text-white", className)}
     >
       {count > 99 ? "99+" : count}
     </span>
