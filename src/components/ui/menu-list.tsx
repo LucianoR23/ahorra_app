@@ -61,8 +61,8 @@ function MenuItem({
   const content = (
     <>
       {Icon ? <Icon aria-hidden className="size-5 shrink-0" strokeWidth={1.75} /> : null}
-      <span className="min-w-0 flex-1">{label}</span>
-      {detail ? <span className="max-w-[60%] min-w-0 truncate text-right text-caption text-ink-muted">{detail}</span> : null}
+      <span className={detail ? "shrink-0 grow" : "min-w-0 flex-1"}>{label}</span>
+      {detail ? <span className="line-clamp-2 min-w-0 text-right text-caption text-ink-muted [overflow-wrap:anywhere]">{detail}</span> : null}
       {href ? <ChevronRight aria-hidden className="size-5 shrink-0 text-ink-muted" strokeWidth={1.75} /> : null}
     </>
   )

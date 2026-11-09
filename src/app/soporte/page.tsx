@@ -20,16 +20,7 @@ const SOPORTE_HELP: InfoHelpContent = {
 export default function Page() {
   return (
     <AppShell>
-      <div className="mb-4">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-2xl font-bold tracking-tight">Soporte</h1>
-          <InfoHelp content={SOPORTE_HELP} size="icon" />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Reportá errores o sugerí mejoras. Seguí el estado de tus reportes acá.
-        </p>
-      </div>
-      <SupportList />
+      <SupportList help={<InfoHelp content={SOPORTE_HELP} size="icon" />} />
     </AppShell>
   );
 }

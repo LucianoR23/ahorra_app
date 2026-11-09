@@ -3,16 +3,20 @@
 import { useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
-import { Bug, Lightbulb, ArrowLeft, Loader2, Send, ImageOff } from "lucide-react";
+import { ChevronLeft, ImageOff, Loader2 } from "lucide-react";
 import { addTicketMessage } from "@/lib/api/support";
 import type { Ticket, Attachment, TicketMessage } from "@/lib/api/schemas";
 import { TICKET_TYPE_LABELS } from "@/lib/labels";
 import { ApiError } from "@/lib/api/errors";
 import { toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
+import { TicketIcon } from "./support-list";
 import { SupportStatusBadge } from "./support-status-badge";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 
@@ -37,7 +41,7 @@ const SOPORTE_DETALLE_HELP: InfoHelpContent = {
 };
 
 export function SupportDetail({ id }: { id: string }) {
-  // Polling solo mientras haya adjuntos procesándose (thumbnails/validación).
+  // Polls only while an attachment is still being processed.
   const { data: ticket, error, isLoading, mutate } = useSWR<Ticket>(
     [`/support/tickets/${id}`, { householdScoped: false }] as const,
     {
@@ -71,74 +75,69 @@ export function SupportDetail({ id }: { id: string }) {
 
   if (!ticket) {
     return (
-      <div className="space-y-4">
-        <BackLink />
-        <div className="rounded-2xl border border-dashed border-border bg-card/50 px-6 py-12 text-center">
-          <p className="text-sm font-semibold">
-            {notFound ? "No encontramos este reporte" : "No pudimos cargar el reporte"}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {notFound ? "Puede que no exista o no sea tuyo." : "Revisá tu conexión e intentá de nuevo."}
-          </p>
-          {!notFound && (
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => void mutate()}>
-              Reintentar
-            </Button>
-          )}
-        </div>
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+        <PageHeader title="Reporte" back={{ href: "/soporte", label: "Volver a Soporte" }} className="mb-0" />
+        <Card>
+          <CardContent className="flex flex-col items-center gap-2 text-center">
+            <p className="text-body font-semibold">{notFound ? "No encontramos este reporte" : "No pudimos cargar el reporte"}</p>
+            <p className="text-caption text-ink-muted">
+              {notFound ? "Puede que no exista o que no sea tuyo." : "Revisá tu conexión y probá de nuevo."}
+            </p>
+            {!notFound && (
+              <Button variant="outline" onClick={() => void mutate()}>
+                Reintentar
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const TypeIcon = ticket.type === "bug" ? Bug : Lightbulb;
   const messages = ticket.messages ?? [];
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-5 pb-4">
       <div className="flex items-center justify-between">
-        <BackLink />
-        <InfoHelp content={SOPORTE_DETALLE_HELP} />
+        <Button variant="secondary" size="icon" aria-label="Volver a Soporte" nativeButton={false} render={<Link href="/soporte" />}>
+          <ChevronLeft aria-hidden strokeWidth={1.75} />
+        </Button>
+        <InfoHelp content={SOPORTE_DETALLE_HELP} size="icon" />
       </div>
 
-      {/* Encabezado */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
-        <div className="flex items-start justify-between gap-3">
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            <TypeIcon className="size-3" />
-            {TICKET_TYPE_LABELS[ticket.type]}
-          </span>
-          <SupportStatusBadge status={ticket.status} />
-        </div>
-        {ticket.subject && (
-          <h2 className="mt-2 text-lg font-bold tracking-tight">{ticket.subject}</h2>
-        )}
-        <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/90">{ticket.description}</p>
-        <p className="mt-2 text-xs text-ink-faint">
-          Creado el {new Date(ticket.created_at).toLocaleString("es-AR")}
-        </p>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <TicketIcon type={ticket.type} size={64} />
+        <p className="text-caption font-semibold text-ink-muted">{TICKET_TYPE_LABELS[ticket.type]}</p>
+        {ticket.subject && <h1 className="text-title font-bold text-ink">{ticket.subject}</h1>}
+        <SupportStatusBadge status={ticket.status} />
       </div>
 
-      {/* Adjuntos */}
-      {ticket.attachments.length > 0 && (
-        <section className="space-y-2">
-          <h3 className="text-xs font-semibold text-muted-foreground">Adjuntos</h3>
+      <Card>
+        <CardContent className="flex flex-col gap-2">
+          <p className="text-body whitespace-pre-wrap text-ink">{ticket.description}</p>
+          <p className="text-caption text-ink-muted">Lo enviaste el {fmtDateTime(ticket.created_at)}</p>
+        </CardContent>
+      </Card>
+
+      {(ticket.attachments ?? []).length > 0 && (
+        <section aria-label="Adjuntos" className="flex flex-col gap-2">
+          <h2 className="px-1 text-caption font-semibold text-ink-muted">Adjuntos</h2>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {ticket.attachments.map((a) => (
+            {(ticket.attachments ?? []).map((a) => (
               <AttachmentTile key={a.id} attachment={a} />
             ))}
           </div>
         </section>
       )}
 
-      {/* Hilo */}
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold text-muted-foreground">Conversación</h3>
+      <section aria-label="Conversación" className="flex flex-col gap-2">
+        <h2 className="px-1 text-caption font-semibold text-ink-muted">Conversación</h2>
         {messages.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-card/50 px-4 py-6 text-center text-xs text-muted-foreground">
-            Todavía no hay respuestas. Te avisamos acá cuando el equipo responda.
+          <p className="rounded-xl bg-surface-2 px-4 py-6 text-center text-caption text-ink-muted">
+            Todavía no hay respuestas. Te avisamos cuando el equipo conteste.
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="flex flex-col gap-2">
             {messages.map((m) => (
               <li key={m.id}>
                 <MessageBubble message={m} />
@@ -148,31 +147,24 @@ export function SupportDetail({ id }: { id: string }) {
         )}
       </section>
 
-      {/* Responder */}
-      <form onSubmit={onSend} className="space-y-2">
+      <form onSubmit={onSend} className="flex flex-col gap-2">
+        <Label htmlFor="ticket-reply" className="sr-only">
+          Tu mensaje
+        </Label>
         <Textarea
+          id="ticket-reply"
           value={reply}
           onChange={(e) => setReply(e.target.value)}
           maxLength={MESSAGE_MAX}
           placeholder="Escribí un mensaje…"
           className="min-h-20"
         />
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-ink-faint">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-caption text-ink-muted">
             {reply.length}/{MESSAGE_MAX}
           </span>
-          <Button type="submit" size="sm" disabled={sending || !reply.trim()}>
-            {sending ? (
-              <>
-                <Loader2 data-icon="inline-start" className="animate-spin" />
-                Enviando…
-              </>
-            ) : (
-              <>
-                <Send data-icon="inline-start" />
-                Enviar
-              </>
-            )}
+          <Button type="submit" disabled={sending || !reply.trim()}>
+            {sending ? "Enviando…" : "Enviar"}
           </Button>
         </div>
       </form>
@@ -180,17 +172,29 @@ export function SupportDetail({ id }: { id: string }) {
   );
 }
 
+/** "9/11, 13:57" */
+function fmtDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("es-AR", {
+    day: "numeric",
+    month: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "America/Argentina/Buenos_Aires",
+  });
+}
+
 function AttachmentTile({ attachment: a }: { attachment: Attachment }) {
   if (a.processing_status === "pending") {
     return (
-      <div className="grid aspect-square place-items-center rounded-xl border border-border bg-secondary">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      <div className="grid aspect-square place-items-center rounded-xl bg-surface-2">
+        <Loader2 className="size-5 animate-spin text-ink-muted" />
       </div>
     );
   }
   if (a.processing_status === "failed") {
     return (
-      <div className="grid aspect-square place-items-center gap-1 rounded-xl border border-border bg-secondary text-muted-foreground">
+      <div className="grid aspect-square place-items-center gap-1 rounded-xl bg-surface-2 text-ink-muted">
         <ImageOff className="size-5" />
         <span className="text-xs">No disponible</span>
       </div>
@@ -202,7 +206,7 @@ function AttachmentTile({ attachment: a }: { attachment: Attachment }) {
       <video
         src={a.url}
         controls
-        className="aspect-square w-full rounded-xl border border-border bg-black object-cover"
+        className="aspect-square w-full rounded-xl bg-surface-2 object-cover"
       />
     );
   }
@@ -211,7 +215,7 @@ function AttachmentTile({ attachment: a }: { attachment: Attachment }) {
       href={a.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block overflow-hidden rounded-xl border border-border bg-secondary"
+      className="block overflow-hidden rounded-xl bg-surface-2"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -229,19 +233,19 @@ function MessageBubble({ message: m }: { message: TicketMessage }) {
     <div className={cn("flex", isAdmin ? "justify-start" : "justify-end")}>
       <div
         className={cn(
-          "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+          "max-w-[85%] rounded-2xl px-4 py-2.5 text-body",
           isAdmin
-            ? "rounded-tl-sm bg-secondary text-foreground"
+            ? "rounded-tl-sm bg-surface-2 text-ink"
             : "rounded-tr-sm bg-primary text-primary-foreground",
         )}
       >
         <div
           className={cn(
-            "mb-0.5 text-xs font-medium",
-            isAdmin ? "text-muted-foreground" : "text-primary-foreground/70",
+            "mb-0.5 text-caption font-semibold",
+            isAdmin ? "text-ink-muted" : "text-primary-foreground/70",
           )}
         >
-          {isAdmin ? "Soporte" : "Vos"} · {new Date(m.created_at).toLocaleString("es-AR")}
+          {isAdmin ? "Soporte" : "Vos"} · {fmtDateTime(m.created_at)}
         </div>
         <p className="whitespace-pre-wrap">{m.body}</p>
       </div>
@@ -249,29 +253,12 @@ function MessageBubble({ message: m }: { message: TicketMessage }) {
   );
 }
 
-function BackLink() {
-  return (
-    <Link
-      href="/soporte"
-      className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <ArrowLeft className="size-3.5" />
-      Mis reportes
-    </Link>
-  );
-}
-
 function DetailSkeleton() {
   return (
-    <div className="space-y-5">
-      <Skeleton className="h-4 w-24" />
-      <div className="space-y-2 rounded-2xl border border-border bg-card p-4">
-        <Skeleton className="h-5 w-20" />
-        <Skeleton className="h-6 w-2/3" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
-      </div>
-      <Skeleton className="h-20 w-full rounded-xl" />
+    <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-3">
+      <Skeleton className="size-16 rounded-full" />
+      <Skeleton className="h-6 w-56" />
+      <Skeleton className="h-32 w-full rounded-2xl" />
     </div>
   );
 }
