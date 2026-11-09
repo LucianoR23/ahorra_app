@@ -33,16 +33,13 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { PAYMENT_METHOD_KIND_LABELS } from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
 import { CategorySelect } from "@/components/category-select";
+import { FormRow as Row, rowControl } from "@/components/ui/form-row";
 
 const CURRENCIES = [
   { value: "ARS", label: "ARS" },
   { value: "USD", label: "USD" },
   { value: "EUR", label: "EUR" },
 ] as const;
-
-/** A control inside a data row (design `CargarGasto`): no box, right-aligned, still focusable and visible on hover. */
-const rowControl =
-  "h-11 w-auto min-w-0 max-w-[62%] justify-end gap-2 border-transparent bg-transparent px-2 text-right font-semibold hover:bg-surface-2 aria-invalid:border-negative";
 
 /** Last "Compartido" choice (plan 1.2). The form renders only on the client. */
 function readSharedPref(): boolean {
@@ -204,7 +201,7 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
             Monto
           </Label>
           <div className="flex min-w-0 flex-1 items-baseline gap-1 text-display font-bold">
-            <span aria-hidden className={cn(!amountStr && "text-ink-muted")}>
+            <span aria-hidden className={cn("shrink-0 whitespace-nowrap", !amountStr && "text-ink-muted")}>
               {currency === "USD" ? "US$" : currency === "EUR" ? "€" : "$"}
             </span>
             <Input
@@ -416,37 +413,5 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
         </Button>
       </div>
     </form>
-  );
-}
-
-/** A data row: label on the left, its control on the right, the error under it. */
-function Row({
-  label,
-  htmlFor,
-  error,
-  bare,
-  children,
-}: {
-  label: string;
-  htmlFor?: string;
-  error?: string;
-  /** Inside a block that already has the padding and the divider. */
-  bare?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={cn("flex flex-col", !bare && "py-2")}>
-      <div className="flex min-h-12 items-center justify-between gap-4">
-        {htmlFor ? (
-          <Label htmlFor={htmlFor} className="shrink-0 text-body font-normal text-ink-muted">
-            {label}
-          </Label>
-        ) : (
-          <span className="shrink-0 text-body text-ink-muted">{label}</span>
-        )}
-        {children}
-      </div>
-      {error && <p className="text-right text-caption text-negative">{error}</p>}
-    </div>
   );
 }

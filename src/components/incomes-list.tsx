@@ -2,142 +2,162 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useIncomes, useHouseholdMembers } from "@/lib/api/hooks";
-import { fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ListRow, ListRowSkeleton } from "@/components/ui/list-row";
 import { Money } from "@/components/ui/money";
+import { MonthNavigator } from "@/components/ui/month-navigator";
+import { PageHeader } from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useHouseholdMembers, useIncomes, useTotalIncome } from "@/lib/api/hooks";
+import { currentMonth, dayLabel, monthEnd, monthStart } from "@/lib/format";
+import { groupByDay } from "@/lib/group-by-day";
 import { incomeSourceLabel } from "@/lib/labels";
+import { useSpaces } from "@/lib/spaces";
+import { useAuthStore } from "@/stores/auth";
 
-const PAGE = 20;
+const PAGE = 50;
+const MAX_ROWS = 200;
 
-export function IncomesList() {
+/** The round green arrow every income row leads with. */
+export function IncomeIcon({ size = 40 }: { size?: number }) {
+  return (
+    <span
+      aria-hidden
+      style={{ width: size, height: size }}
+      className="grid shrink-0 place-items-center rounded-full bg-positive/12 text-positive"
+    >
+      <TrendingUp className="size-5" strokeWidth={1.75} />
+    </span>
+  );
+}
+
+/**
+ * Ingresos (plan 1.10b, no design: the `Movimientos` pattern): the month
+ * with what came in, and the incomes grouped by day.
+ */
+export function IncomesList({ help }: { help?: React.ReactNode }) {
   const [month, setMonth] = useState(currentMonth());
-  const [offset, setOffset] = useState(0);
+  const [rows, setRows] = useState(PAGE);
+  const me = useAuthStore((s) => s.user?.id);
+  const { current } = useSpaces();
   const { data: members } = useHouseholdMembers();
-  const { data, isLoading } = useIncomes({
-    from: monthStart(month),
-    to: monthEnd(month),
-    limit: PAGE,
-    offset,
-  });
+  const range = { from: monthStart(month), to: monthEnd(month) };
+  const { data, isLoading } = useIncomes({ ...range, limit: rows, offset: 0 });
+  const { data: total, isLoading: loadingTotal } = useTotalIncome(range);
 
   const items = data?.items ?? [];
-  const total = data?.totalCount ?? 0;
-  const baseCurrency = items[0]?.baseCurrency ?? "ARS";
-  const sum = items.reduce((a, i) => a + i.amountBase, 0);
-
-  const memberName = new Map<string, string>(
-    members?.map((u) => [u.userId, u.firstName.trim() || u.email]) ?? [],
-  );
+  const count = data?.totalCount ?? 0;
+  const baseCurrency = current?.baseCurrency ?? "ARS";
+  const shared = (members?.length ?? 0) > 1;
+  const who = (uid: string) => (uid === me ? "Vos" : (members?.find((m) => m.userId === uid)?.firstName ?? ""));
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => { setOffset(0); setMonth(shiftMonth(month, -1)); }}
-            className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
-            aria-label="Mes anterior"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <div className="text-sm font-bold first-letter:uppercase">{fmtMonthLong(month)}</div>
-          <button
-            type="button"
-            onClick={() => { setOffset(0); setMonth(shiftMonth(month, 1)); }}
-            className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
-            aria-label="Mes siguiente"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </CardContent>
-      </Card>
-
-      {/* Totales */}
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-full bg-positive/20 text-positive">
-              <TrendingUp className="size-5" />
-            </div>
-            <div className="flex-1">
-              <div className="text-xs font-semibold uppercase tracking-[1px] text-muted-foreground">
-                Ingresos del mes
-              </div>
-              <div className="font-mono text-xl font-bold">
-                <Money amount={sum} currency={baseCurrency} income />
-              </div>
-            </div>
-            <Link
-              href="/ingresos/nuevo"
-              className="inline-flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-card hover:bg-primary/90"
-              aria-label="Nuevo ingreso"
-            >
-              <Plus className="size-4" />
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista */}
-      <Card className="rounded-2xl border-0 shadow-card overflow-hidden">
-        {isLoading ? (
-          <div className="flex flex-col gap-2 p-3">
-            {[0, 1, 2].map((i) => <Skeleton key={i} className="h-14 w-full rounded-md" />)}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">
-            Sin ingresos en este mes.
-          </div>
-        ) : (
-          items.map((inc, i) => (
-            <Link
-              key={inc.id}
-              href={`/ingresos/${inc.id}`}
-              className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors ${i === items.length - 1 ? "" : "border-b border-border"}`}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold">
-                  {inc.description || inc.source}
-                </div>
-                <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {incomeSourceLabel(inc.source)} · {memberName.get(inc.receivedBy) ?? "—"} · {fmtDateShort(inc.receivedAt)}
-                </div>
-              </div>
-              <div className="shrink-0 text-right">
-                <div className="font-mono text-sm font-semibold text-positive">
-                  <Money amount={inc.amountBase} currency={inc.baseCurrency} income />
-                </div>
-                {inc.currency !== inc.baseCurrency && (
-                  <div className="text-xs text-muted-foreground">
-                    <Money amount={inc.amount} currency={inc.currency} />
-                  </div>
-                )}
-              </div>
-            </Link>
-          ))
-        )}
-      </Card>
-
-      {total > PAGE && (
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">
-            {offset + 1}–{Math.min(offset + items.length, total)} de {total}
-          </span>
-          <div className="flex gap-1">
-            <Button variant="outline" size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}>
-              ‹
-            </Button>
-            <Button variant="outline" size="sm" disabled={offset + PAGE >= total} onClick={() => setOffset(offset + PAGE)}>
-              ›
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-4">
+      <PageHeader
+        title="Ingresos"
+        className="mb-0 items-center"
+        action={
+          <div className="flex items-center gap-2">
+            {help}
+            <Button size="icon" aria-label="Nuevo ingreso" nativeButton={false} render={<Link href="/ingresos/nuevo" />}>
+              <Plus aria-hidden strokeWidth={2} />
             </Button>
           </div>
-        </div>
+        }
+      />
+
+      <MonthNavigator
+        month={month}
+        onMonthChange={(m) => {
+          setRows(PAGE);
+          setMonth(m);
+        }}
+        className="border-0 bg-card shadow-card dark:ring-1 dark:ring-border"
+        summary={
+          loadingTotal || isLoading ? (
+            <Skeleton className="mx-auto mt-1 h-4 w-40" />
+          ) : (
+            <>
+              Entraron <Money amount={total?.total ?? 0} currency={baseCurrency} income className="font-semibold" /> ·{" "}
+              {count === 1 ? "1 ingreso" : `${count} ingresos`}
+            </>
+          )
+        }
+      />
+
+      {isLoading ? (
+        <Card className="py-1">
+          <CardContent>
+            {[0, 1, 2].map((i) => (
+              <ListRowSkeleton key={i} />
+            ))}
+          </CardContent>
+        </Card>
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon={TrendingUp}
+          title="Sin ingresos este mes"
+          description="Cargá tu sueldo y lo que te entre para ver cuánto te queda."
+          action={
+            <Button variant="outline" nativeButton={false} render={<Link href="/ingresos/nuevo" />}>
+              Cargar un ingreso
+            </Button>
+          }
+        />
+      ) : (
+        groupByDay(items, (i) => i.receivedAt, (i) => i.amountBase).map((g) => (
+          <section key={g.day} aria-label={dayLabel(g.day)} className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between px-1 text-body text-ink-muted">
+              <h2 className="font-semibold">{dayLabel(g.day)}</h2>
+              <Money amount={g.total} currency={baseCurrency} income />
+            </div>
+            <Card className="py-1">
+              <CardContent>
+                <ul className="divide-y divide-border">
+                  {g.items.map((inc) => {
+                    const foreign = inc.currency !== inc.baseCurrency;
+                    return (
+                      <li key={inc.id}>
+                        <ListRow
+                          href={`/ingresos/${inc.id}`}
+                          leading={<IncomeIcon />}
+                          title={inc.description || incomeSourceLabel(inc.source)}
+                          subtitle={
+                            <>
+                              {[incomeSourceLabel(inc.source), shared ? who(inc.receivedBy) : ""].filter(Boolean).join(" · ")}
+                              {foreign && (
+                                <>
+                                  {" · ≈ "}
+                                  <Money amount={inc.amountBase} currency={inc.baseCurrency} />
+                                </>
+                              )}
+                            </>
+                          }
+                          trailing={<Money amount={inc.amount} currency={inc.currency} income />}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            </Card>
+          </section>
+        ))
       )}
+
+      {items.length < count &&
+        (rows < MAX_ROWS ? (
+          <Button variant="secondary" className="self-center" onClick={() => setRows(Math.min(rows + PAGE, MAX_ROWS))}>
+            Cargar más
+          </Button>
+        ) : (
+          <p className="text-center text-caption text-ink-muted">
+            Ves los últimos {MAX_ROWS} de {count}.
+          </p>
+        ))}
     </div>
   );
 }

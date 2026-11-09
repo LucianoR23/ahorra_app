@@ -100,6 +100,16 @@ export async function createExpense(user: User, householdId: string, body: Recor
   return r.expense.id;
 }
 
+/** Creates an income and returns its id. */
+export async function createIncome(user: User, householdId: string, body: Record<string, unknown>): Promise<string> {
+  const r = await call<{ id: string }>("POST", "/incomes", {
+    token: user.token,
+    household: householdId,
+    body: { currency: "ARS", source: "salary", ...body },
+  });
+  return r.id;
+}
+
 export async function cashOf(user: User): Promise<string> {
   const list = await call<{ id: string; kind: string }[]>("GET", "/payment-methods", { token: user.token });
   return list.find((p) => p.kind === "cash")!.id;
