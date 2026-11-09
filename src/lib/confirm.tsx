@@ -66,7 +66,7 @@ export function ConfirmDialogHost() {
       }}
     >
       {current && (
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent layout="center" className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{current.title}</DialogTitle>
             {current.description && (

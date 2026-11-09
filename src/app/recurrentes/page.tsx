@@ -6,9 +6,9 @@ const RECURRENTES_HELP: InfoHelpContent = {
   titulo: "Recurrentes",
   acciones: [
     "Alterná entre «Gastos fijos» e «Ingresos fijos» con las pestañas.",
-    "Creá un gasto o ingreso fijo con su frecuencia (semanal, mensual o anual) y fecha de inicio.",
+    "Creá un gasto o ingreso fijo con el botón + y elegí su frecuencia (semanal, mensual o anual) y fecha de inicio.",
     "Marcá un gasto como «Importe variable» (luz, expensas, wifi): el monto es un estimado y cada mes confirmás la factura real.",
-    "Editá, pausá o activá, y eliminá cada serie; en los gastos fijos podés ver su histórico.",
+    "Tocá una serie para editarla, pausarla o eliminarla; en los gastos fijos también ves su histórico.",
   ],
   consideraciones: [
     "Las series se materializan solas cada mes a las 00:30: no tenés que cargarlas a mano.",
@@ -28,16 +28,7 @@ const RECURRENTES_HELP: InfoHelpContent = {
 export default function Page() {
   return (
     <AppShell>
-      <div className="mb-4">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-2xl font-bold tracking-tight">Recurrentes</h1>
-          <InfoHelp content={RECURRENTES_HELP} size="icon" />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Gastos e ingresos que se generan solos cada mes a las 00:30.
-        </p>
-      </div>
-      <RecurringManager />
+      <RecurringManager help={<InfoHelp content={RECURRENTES_HELP} size="icon" />} />
     </AppShell>
   );
 }

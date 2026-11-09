@@ -1,10 +1,13 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CategoriesManager } from "./categories-manager";
 import { API, requests, server, signIn } from "@/test/msw";
+import { confirm } from "@/lib/confirm";
 import { personalSpace, WithSWR } from "@/test/spaces";
+
+vi.mock("@/lib/confirm", () => ({ confirm: vi.fn() }));
 
 const cat = (id: string, name: string, icon: string, parentId: string | null = null) => ({
   id,
@@ -52,7 +55,7 @@ describe("CategoriesManager", () => {
     const rows = [...container.querySelectorAll("[data-depth]")].map(
       (el) => `${el.getAttribute("data-depth")}:${el.textContent}`,
     );
-    expect(rows).toEqual(["0:Comida", "0:Servicios", "1:Gas", "1:Luz"]);
+    expect(rows).toEqual(["0:Comida", "0:Servicios2 subcategorías", "1:Gas", "1:Luz"]);
   });
 
   it("edits the icon with the picker and saves its key", async () => {
@@ -70,7 +73,7 @@ describe("CategoriesManager", () => {
 
   it("creates a subcategory inside a top-level category", async () => {
     render(<CategoriesManager />, { wrapper: WithSWR });
-    await userEvent.click(await screen.findByRole("button", { name: /nueva categoría/i }));
+    await userEvent.click(await screen.findByRole("button", { name: "Nueva categoría" }));
     const dialog = await screen.findByRole("dialog");
     await userEvent.type(within(dialog).getByLabelText("Nombre"), "Agua");
 
@@ -79,7 +82,7 @@ describe("CategoriesManager", () => {
     // Only top-level categories can be parents.
     expect(options).toEqual(["Ninguna (es principal)", "Comida", "Servicios"]);
     await userEvent.click(screen.getByRole("option", { name: "Servicios" }));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Crear" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Crear categoría" }));
 
     await waitFor(() => expect(lastBody("POST")).toMatchObject({ name: "Agua", parentId: "serv" }));
   });
@@ -101,5 +104,22 @@ describe("CategoriesManager", () => {
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText(/tiene subcategorías/i)).toBeInTheDocument();
     expect(within(dialog).queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("deletes from the sheet after confirming", async () => {
+    vi.mocked(confirm).mockResolvedValue(true);
+    server.use(http.delete(`${API}/categories/:id`, () => new HttpResponse(null, { status: 204 })));
+    render(<CategoriesManager />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("button", { name: "Editar Servicios" }));
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Eliminar categoría" }));
+    expect(vi.mocked(confirm).mock.calls[0][0].description).toMatch(/subcategorías quedan como categorías comunes/);
+    await waitFor(() => expect(requests().some((r) => r.method === "DELETE" && r.path.endsWith("/categories/serv"))).toBe(true));
+  });
+
+  it("invites to create one when there are none", async () => {
+    server.use(http.get(`${API}/categories`, () => HttpResponse.json([])));
+    render(<CategoriesManager />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("button", { name: "Crear categoría" }));
+    expect(await screen.findByRole("dialog", { name: "Nueva categoría" })).toBeInTheDocument();
   });
 });

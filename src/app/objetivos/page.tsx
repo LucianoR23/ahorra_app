@@ -3,13 +3,12 @@ import { GoalsManager } from "@/components/goals-manager";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 
 const OBJETIVOS_HELP: InfoHelpContent = {
-  titulo: "Objetivos",
+  titulo: "Presupuestos y objetivos",
   acciones: [
     "Creá un objetivo: límite total, límite por categoría o meta de ahorro.",
-    "Elegí alcance (todo el hogar o un miembro), monto, moneda y período (mensual o anual).",
-    "Seguí el progreso en vivo con su estado: en camino, atención, excedido o logrado.",
-    "Abrí «Detalle» para ver el progreso a una fecha puntual.",
-    "Pausá o activá, editá y eliminá cada objetivo.",
+    "Elegí el monto, la moneda y el período (mensual o semanal). En un hogar, también si es de todos o de una persona.",
+    "Seguí el avance con su estado: en camino, atención o excedido.",
+    "Tocá un objetivo para editarlo, ver cómo iba a una fecha, pausarlo o eliminarlo.",
   ],
   consideraciones: [
     "El progreso se calcula solo a partir de tus gastos (e ingresos, en las metas de ahorro): no se actualiza a mano.",
@@ -28,16 +27,7 @@ const OBJETIVOS_HELP: InfoHelpContent = {
 export default function Page() {
   return (
     <AppShell>
-      <div className="mb-4">
-        <div className="flex items-center gap-1.5">
-          <h1 className="text-2xl font-bold tracking-tight">Objetivos</h1>
-          <InfoHelp content={OBJETIVOS_HELP} size="icon" />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Límites de gasto y metas de ahorro con progreso en vivo.
-        </p>
-      </div>
-      <GoalsManager />
+      <GoalsManager help={<InfoHelp content={OBJETIVOS_HELP} size="icon" />} />
     </AppShell>
   );
 }

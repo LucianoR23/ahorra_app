@@ -1,10 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { SWRConfig } from "swr";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { swrFetcher } from "@/lib/api/swr-fetcher";
-import { API, server, signIn } from "@/test/msw";
+import { API, requests, server, signIn } from "@/test/msw";
+import { confirm } from "@/lib/confirm";
 import { GoalsManager } from "./goals-manager";
+
+vi.mock("@/lib/confirm", () => ({ confirm: vi.fn() }));
 
 const goal = (over: Record<string, unknown>) => ({
   id: "g1",
@@ -79,4 +83,74 @@ describe("GoalsManager", () => {
     expect(screen.getByText(/Semanal/)).toBeInTheDocument();
     expect(screen.getAllByText(/Calculado con la cotización de hoy/)).toHaveLength(1);
   });
+
+  it("edits a goal from its sheet", async () => {
+    server.use(http.patch(`${API}/goals/g2`, () => HttpResponse.json(weeklyArsGoal.goal)));
+    renderGoals();
+    await userEvent.click((await screen.findAllByRole("button", { name: "Editar Límite total" }))[1]);
+    const sheet = await screen.findByRole("dialog");
+    const amount = within(sheet).getByLabelText("Monto");
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "80000");
+    await userEvent.click(within(sheet).getByRole("radio", { name: "Mensual" }));
+    await userEvent.click(within(sheet).getByRole("button", { name: "Guardar" }));
+    await waitFor(() => expect(body("PATCH")).toMatchObject({ targetAmount: 80000, currency: "ARS", period: "monthly" }));
+  });
+
+  it("pauses and deletes from the sheet", async () => {
+    server.use(
+      http.patch(`${API}/goals/g1/active`, () => new HttpResponse(null, { status: 204 })),
+      http.delete(`${API}/goals/g1`, () => new HttpResponse(null, { status: 204 })),
+    );
+    vi.mocked(confirm).mockResolvedValue(true);
+    renderGoals();
+    await userEvent.click((await screen.findAllByRole("button", { name: "Editar Límite total" }))[0]);
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Pausar objetivo" }));
+    await waitFor(() => expect(requests().some((r) => r.method === "PATCH" && r.path === "/goals/g1/active")).toBe(true));
+
+    await userEvent.click((await screen.findAllByRole("button", { name: "Editar Límite total" }))[0]);
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Eliminar objetivo" }));
+    await waitFor(() => expect(requests().some((r) => r.method === "DELETE" && r.path === "/goals/g1")).toBe(true));
+  });
+
+  it("creates a goal for one person of the hogar", async () => {
+    server.use(
+      http.get(`${API}/households/h1/members`, () =>
+        HttpResponse.json([
+          { userId: "u1", email: "", firstName: "Ana", lastName: "T", role: "owner", joinedAt: "" },
+          { userId: "u2", email: "", firstName: "Luis", lastName: "R", role: "member", joinedAt: "" },
+        ]),
+      ),
+      http.post(`${API}/goals`, () => HttpResponse.json(goal({ id: "new" }), { status: 201 })),
+    );
+    renderGoals();
+    await userEvent.click(await screen.findByRole("button", { name: "Nuevo objetivo" }));
+    const sheet = await screen.findByRole("dialog", { name: "Nuevo objetivo" });
+    await userEvent.click(within(sheet).getByRole("radio", { name: "Una persona" }));
+    await userEvent.click(within(sheet).getByLabelText("Persona"));
+    await userEvent.click(await screen.findByRole("option", { name: "Luis R" }));
+    await userEvent.type(within(sheet).getByLabelText("Monto"), "300000");
+    await userEvent.click(within(sheet).getByRole("button", { name: "Crear objetivo" }));
+    await waitFor(() =>
+      expect(body("POST")).toMatchObject({ scope: "user", userId: "u2", goalType: "total_limit", targetAmount: 300000, currency: "ARS", period: "monthly" }),
+    );
+  });
+
+  it("only asks who it is for inside a hogar", async () => {
+    renderGoals();
+    await userEvent.click(await screen.findByRole("button", { name: "Nuevo objetivo" }));
+    const sheet = await screen.findByRole("dialog", { name: "Nuevo objetivo" });
+    expect(within(sheet).queryByRole("radio", { name: "Una persona" })).not.toBeInTheDocument();
+  });
+
+  it("invites to create one when there are none", async () => {
+    server.use(http.get(`${API}/goals/progress`, () => HttpResponse.json([])));
+    renderGoals();
+    expect(await screen.findByText("Todavía no tenés objetivos")).toBeInTheDocument();
+  });
 });
+
+function body(method: string) {
+  const req = requests().filter((r) => r.method === method).at(-1);
+  return req ? JSON.parse(req.body) : undefined;
+}
