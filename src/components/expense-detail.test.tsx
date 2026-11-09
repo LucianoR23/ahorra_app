@@ -34,7 +34,8 @@ function installment(n: number, over: Partial<Installment> = {}): Installment {
   };
 }
 
-const twelve = Array.from({ length: 12 }, (_, i) => installment(i + 1, { isPaid: i < 2 }));
+// The API sends `shares: null` when the expense is not shared (regression: it crashed the page).
+const twelve = Array.from({ length: 12 }, (_, i) => installment(i + 1, { isPaid: i < 2, shares: null as unknown as Installment["shares"] }));
 
 const expense = {
   id: "e1",

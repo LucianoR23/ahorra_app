@@ -330,7 +330,8 @@ function Split({ householdId, installments, currency }: { householdId: string; i
   // The expense's space, which may not be the one open.
   const { data: members } = useHouseholdMembers(householdId);
   const parts = new Map<string, number>();
-  for (const i of installments) for (const s of i.shares) parts.set(s.userId, (parts.get(s.userId) ?? 0) + s.amountBaseOwed);
+  // The fetcher does not run the zod schemas: `shares` comes null when the expense is not shared.
+  for (const i of installments) for (const s of i.shares ?? []) parts.set(s.userId, (parts.get(s.userId) ?? 0) + s.amountBaseOwed);
   if (parts.size === 0) return null;
   const name = (uid: string) => members?.find((m) => m.userId === uid)?.firstName || "Un ex miembro";
 
