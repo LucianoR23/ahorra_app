@@ -19,10 +19,14 @@ import { brand } from "@/config/brand";
 // App shell (plan 1.10a, design README §1 and `DesktopInicio`): bottom nav
 // on mobile, sidebar from md up. Content is capped at 1120 px.
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+/**
+ * `focus`: full screen on phones, without the top bar and the bottom nav
+ * (Cargar gasto, design `CargarGasto`). Desktop keeps the sidebar.
+ */
+export function AppShell({ children, focus = false }: { children: React.ReactNode; focus?: boolean }) {
   return (
     <AuthGate>
-      <AppShellInner>{children}</AppShellInner>
+      <AppShellInner focus={focus}>{children}</AppShellInner>
     </AuthGate>
   );
 }
@@ -45,7 +49,7 @@ function NotificationsLink({ className }: { className?: string }) {
   );
 }
 
-function AppShellInner({ children }: { children: React.ReactNode }) {
+function AppShellInner({ children, focus }: { children: React.ReactNode; focus: boolean }) {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const { hogar } = useSpaces();
@@ -105,13 +109,13 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="safe-top sticky top-0 z-40 flex items-center gap-3 bg-background/90 px-4 py-2 backdrop-blur-xl md:static md:mx-auto md:w-full md:max-w-[1120px] md:justify-end md:bg-transparent md:px-10 md:pt-6 md:backdrop-blur-none">
+        <header className={cn("safe-top sticky top-0 z-40 flex items-center gap-3 bg-background/90 px-4 py-2 backdrop-blur-xl md:static md:mx-auto md:w-full md:max-w-[1120px] md:justify-end md:bg-transparent md:px-10 md:pt-6 md:backdrop-blur-none", focus && "max-md:hidden")}>
           <div className="min-w-0 flex-1 md:max-w-56 md:flex-none">
             <SpaceTabs />
           </div>
           <NotificationsLink />
         </header>
-        <main className="flex-1 overflow-x-hidden pb-28 md:pb-10">
+        <main className={cn("flex-1 overflow-x-hidden md:pb-10", focus ? "safe-top pb-0" : "pb-28")}>
           <div
             key={pathname}
             className="mx-auto w-full max-w-[1120px] px-4 pt-2 animate-in fade-in slide-in-from-bottom-1 duration-(--duration-base) motion-reduce:animate-none md:px-10 md:pt-2"
@@ -120,7 +124,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
           </div>
         </main>
 
-        <BottomNav pathname={pathname} />
+        {!focus && <BottomNav pathname={pathname} />}
       </div>
     </div>
   );

@@ -38,7 +38,8 @@ const THEMES = ["light", "dark"] as const;
 async function settle(page: Page) {
   // The insights stream keeps a connection open, so "networkidle" never
   // comes: wait for the shell and for skeletons to go away instead.
-  await expect(page.getByRole("navigation", { name: "Navegación principal" }).first()).toBeAttached();
+  // The app's <main>: Cargar gasto has no bottom nav on phones (plan 1.10b).
+  await expect(page.getByRole("main")).toBeAttached();
   await page
     .waitForFunction(() => !document.querySelector('[data-slot="skeleton"]'), undefined, { timeout: 5_000 })
     .catch(() => {});

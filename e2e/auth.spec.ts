@@ -30,9 +30,9 @@ test("sign up, onboard, land in Mi plata, create a hogar, keep the session on re
   await expect(page.getByRole("heading", { name: "Cargá tu primer gasto" })).toBeVisible();
   await page.getByLabel("Monto").fill("1500");
   await page.getByLabel("Descripción").fill("Café");
-  await page.getByLabel("Método de pago").click();
+  await page.getByLabel("Pago", { exact: true }).click();
   await page.getByRole("option", { name: /Visa Galicia/ }).click();
-  await page.getByRole("button", { name: "Crear gasto" }).click();
+  await page.getByRole("button", { name: "Guardar gasto" }).click();
   // Push and install come after and can be declined; then home.
   for (let i = 0; i < 2 && !/\/$/.test(new URL(page.url()).pathname); i++) {
     const notNow = page.getByRole("button", { name: "Ahora no" });

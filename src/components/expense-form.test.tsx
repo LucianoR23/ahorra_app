@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -45,9 +45,9 @@ function api(households: unknown[]) {
 async function fillAndSubmit() {
   await userEvent.type(screen.getByLabelText("Monto"), "1500");
   await userEvent.type(screen.getByLabelText("Descripción"), "Café");
-  await userEvent.click(screen.getByLabelText("Método de pago"));
+  await userEvent.click(screen.getByLabelText("Pago"));
   await userEvent.click(await screen.findByRole("option", { name: /Efectivo/ }));
-  await userEvent.click(screen.getByRole("button", { name: "Crear gasto" }));
+  await userEvent.click(screen.getByRole("button", { name: "Guardar gasto" }));
 }
 
 const expensePost = () => requests().find((r) => r.method === "POST" && r.path === "/expenses");
@@ -78,7 +78,7 @@ describe("ExpenseForm spaces (plan 1.2)", () => {
     render(<ExpenseForm />, { wrapper: WithSWR });
     const toggle = await screen.findByRole("switch", { name: "Compartido" });
     expect(toggle).not.toBeChecked();
-    expect(screen.getByText("Va a Mi plata: solo lo ves vos.")).toBeInTheDocument();
+    expect(screen.getByText("Va a Mi plata. Activalo para sumarlo al Hogar.")).toBeInTheDocument();
 
     await userEvent.click(toggle);
     expect(screen.getByText(/Va a Casa y se divide/)).toBeInTheDocument();
@@ -102,5 +102,69 @@ describe("ExpenseForm spaces (plan 1.2)", () => {
     api([personalSpace, hogarSpace]);
     render(<ExpenseForm />, { wrapper: WithSWR });
     expect(await screen.findByRole("switch", { name: "Compartido" })).toBeChecked();
+  });
+});
+
+describe("ExpenseForm layout (design CargarGasto, plan 1.10b)", () => {
+  const visa = {
+    id: "visa", ownerUserId: "u1", name: "Visa", kind: "credit",
+    allowsInstallments: true, isActive: true, createdAt: "2026-01-01T00:00:00Z",
+  };
+
+  function withCard(periods: unknown[]) {
+    api([personalSpace]);
+    server.use(
+      http.get(`${API}/payment-methods`, () => HttpResponse.json([cash, visa])),
+      http.get(`${API}/payment-methods/visa/credit-card`, () =>
+        HttpResponse.json({ paymentMethodId: "visa", bankId: null, network: "visa", alias: "Visa", lastFour: "4417", defaultClosingDay: 28, defaultDueDay: 8, debitPaymentMethodId: null }),
+      ),
+      http.get(`${API}/payment-methods/visa/credit-card/periods`, () => HttpResponse.json(periods)),
+    );
+  }
+
+  it("sends the currency picked next to the amount", async () => {
+    api([personalSpace]);
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("radio", { name: "USD" }));
+    await fillAndSubmit();
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(JSON.parse(expensePost()!.body || "{}")).toMatchObject({ currency: "USD", amount: 1500, description: "Café" });
+  });
+
+  it("says which statement the first installment lands in", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-09T12:00:00-03:00"));
+    withCard([{ periodYm: "2026-11", closingDate: "2026-11-28", dueDate: "2026-12-08" }]);
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await screen.findByLabelText("Monto"), "120000");
+    await userEvent.click(screen.getByLabelText("Pago"));
+    await userEvent.click(await screen.findByRole("option", { name: /Visa/ }));
+    const n = await screen.findByLabelText("Cuotas");
+    // Clearing would leave 1 (the minimum) and typing would make it 16.
+    fireEvent.change(n, { target: { value: "6" } });
+    expect(await screen.findByText(/La primera entra/)).toHaveTextContent("La primera entra en el resumen que cierra el 28/11 y vence el 8/12.");
+    expect(screen.getAllByText((_, el) => el?.tagName === "SPAN" && el.textContent?.replace(/\s+/g, " ") === "de $ 20.000")[0]).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("names the month when its dates are not loaded", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true, toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-09T12:00:00-03:00"));
+    withCard([]);
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByLabelText("Pago"));
+    await userEvent.click(await screen.findByRole("option", { name: /Visa/ }));
+    expect(await screen.findByText(/Entra en el resumen/)).toHaveTextContent("Entra en el resumen de noviembre.");
+    vi.useRealTimers();
+  });
+
+  it("says what is missing", async () => {
+    api([personalSpace]);
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("button", { name: "Guardar gasto" }));
+    expect(screen.getByText("Ingresá un monto mayor a 0")).toBeInTheDocument();
+    expect(screen.getByText("Contá qué compraste")).toBeInTheDocument();
+    expect(screen.getByText("Elegí con qué pagaste")).toBeInTheDocument();
+    expect(expensePost()).toBeUndefined();
   });
 });

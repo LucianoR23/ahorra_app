@@ -60,9 +60,9 @@ async function loadFirstExpense(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole("heading", { name: "Cargá tu primer gasto" });
   await user.type(screen.getByLabelText("Monto"), "1500");
   await user.type(screen.getByLabelText("Descripción"), "Café");
-  await user.click(screen.getByLabelText("Método de pago"));
+  await user.click(screen.getByLabelText("Pago"));
   await user.click(await screen.findByRole("option", { name: /Efectivo/ }));
-  await user.click(screen.getByRole("button", { name: "Crear gasto" }));
+  await user.click(screen.getByRole("button", { name: "Guardar gasto" }));
 }
 
 const posts = (path: string) =>

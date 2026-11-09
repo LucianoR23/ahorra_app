@@ -272,7 +272,8 @@ function Schedule({ expense, installments }: { expense: Expense; installments: I
         )}
         <ul className="divide-y divide-border border-t border-border">
           {rows.map((i) => {
-            const date = i.dueDate ?? i.billingDate;
+            // Without a due date the closing date is all there is.
+            const date = i.dueDate ? `Vence ${dayMonth(i.dueDate)}` : i.billingDate ? `Cierra ${dayMonth(i.billingDate)}` : "Sin fecha";
             const now = i === current;
             return (
               <li key={i.id}>
@@ -285,7 +286,7 @@ function Schedule({ expense, installments }: { expense: Expense; installments: I
                   <span className="w-6 shrink-0 text-ink-muted">{i.installmentNumber}</span>
                   <span className="min-w-0 flex-1">
                     <span className={cn("block", now ? "font-semibold text-ink" : "text-ink-muted")}>
-                      {date ? `Vence ${dayMonth(date)}` : "Sin fecha"}
+                      {date}
                     </span>
                     {now && i.billingDate && (
                       <span className="block text-caption text-ink-muted">

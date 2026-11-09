@@ -127,6 +127,14 @@ describe("ExpenseDetailView", () => {
     expect(screen.getAllByRole("button", { name: /^Cuota \d+$/ })).toHaveLength(12);
   });
 
+  it("says Cierra when the installment has no due date", async () => {
+    const noDue = twelve.map((i) => (i.installmentNumber === 4 ? { ...i, dueDate: null } : i));
+    handlers({ expense, installments: noDue });
+    render(<ExpenseDetailView id="e1" />, { wrapper: WithSWR });
+    expect(await screen.findByRole("button", { name: "Cuota 4" })).toHaveTextContent("Cierra 24/1");
+    expect(screen.getByRole("button", { name: "Cuota 3" })).toHaveTextContent("Vence 28/12");
+  });
+
   it("marks an installment paid", async () => {
     handlers();
     render(<ExpenseDetailView id="e1" />, { wrapper: WithSWR });
