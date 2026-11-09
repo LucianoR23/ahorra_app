@@ -12,12 +12,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCardStatements, useCreditCard, usePaymentMethods } from "@/lib/api/hooks";
 import type { CardStatement, PaymentMethod } from "@/lib/api/schemas";
 import { currentStatements, dayMonth, statementDates } from "@/lib/statements";
+import { CardCommittedSection } from "@/components/committed/card-committed";
 import { PayStatementDialog } from "./pay-statement-dialog";
 import { StatementStatusBadge, StatementTotal } from "./statement-total";
 
 /**
- * Top of Tarjetas (design `Tarjetas`, plan 4.1): pick a credit card, see the
- * statement to pay and what the next one has so far.
+ * Top of Tarjetas (design `Tarjetas`, plans 4.1 and 4.2): pick a credit card,
+ * see the statement to pay, what the next one has so far, what is committed
+ * in the next statements and the installments in progress.
  */
 export function CardStatementsSummary() {
   const { data: methods, isLoading } = usePaymentMethods();
@@ -48,6 +50,7 @@ export function CardStatementsSummary() {
         </Tabs>
       )}
       <Statements method={selected} />
+      <CardCommittedSection paymentMethodId={selected.id} />
     </div>
   );
 }

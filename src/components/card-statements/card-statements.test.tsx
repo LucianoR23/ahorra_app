@@ -99,6 +99,8 @@ beforeEach(() => {
     http.post(`${API}/payment-methods/:id/credit-card/statements/:ym/unpay`, () => HttpResponse.json(detail())),
     http.get(`${API}/payment-methods/visa/credit-card/statements/2026-11`, () => HttpResponse.json(detail())),
     http.get(`${API}/households`, () => HttpResponse.json([personalSpace])),
+    http.get(`${API}/credit-cards/committed`, () => HttpResponse.json({ months: [], cards: [] })),
+    http.get(`${API}/payment-methods/:id/credit-card/installment-plans`, () => HttpResponse.json({ plans: [] })),
   );
 });
 

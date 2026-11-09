@@ -64,8 +64,13 @@ export function totalIn(s: Pick<CardStatement, "totals">, currency: string): num
   return s.totals.find((t) => t.currency === currency)?.amount ?? 0;
 }
 
-/** Refetches every statement of a card (list and details) after a change. */
+/**
+ * Refetches every statement of a card (list and details) after a change,
+ * plus what is computed from them: Comprometido and installment plans.
+ */
 export function invalidateStatements(paymentMethodId: string) {
-  const prefix = `/payment-methods/${paymentMethodId}/credit-card/statements`;
-  return mutate((key) => Array.isArray(key) && typeof key[0] === "string" && key[0].startsWith(prefix));
+  const prefixes = [`/payment-methods/${paymentMethodId}/credit-card/`, "/credit-cards/committed"];
+  return mutate(
+    (key) => Array.isArray(key) && typeof key[0] === "string" && prefixes.some((p) => (key[0] as string).startsWith(p)),
+  );
 }

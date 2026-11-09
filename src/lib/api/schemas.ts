@@ -641,6 +641,49 @@ export const cardStatementListSchema = z.object({
 });
 export type CardStatementList = z.infer<typeof cardStatementListSchema>;
 
+/** One closing month and its total per currency (plan 4.2). */
+export const periodTotalsSchema = z.object({ periodYm: z.string(), totals: z.array(currencyAmountSchema) });
+export type PeriodTotals = z.infer<typeof periodTotalsSchema>;
+
+export const cardCommittedSchema = z.object({
+  paymentMethodId: z.string(),
+  name: z.string(),
+  alias: z.string(),
+  network: z.string().nullable(),
+  lastFour: z.string().nullable(),
+  /** The period open today; months before it are empty for this card. */
+  openPeriodYm: z.string(),
+  /** The closed statement still to pay: unpaid and not empty. */
+  toPay: cardStatementSchema.nullable(),
+  months: z.array(periodTotalsSchema),
+});
+export type CardCommitted = z.infer<typeof cardCommittedSchema>;
+
+/** "Comprometido" (plan 4.2): months start at the earliest open period. */
+export const committedSchema = z.object({
+  months: z.array(periodTotalsSchema),
+  cards: z.array(cardCommittedSchema),
+});
+export type Committed = z.infer<typeof committedSchema>;
+
+/** "Cuotas en curso" (plan 4.2). */
+export const installmentPlanSchema = z.object({
+  expenseId: z.string(),
+  householdId: z.string(),
+  categoryId: z.string().nullable(),
+  description: z.string(),
+  currency: currencySchema,
+  totalInstallments: z.number(),
+  /** The installment billed in the open period (or the next one billed). */
+  nextInstallmentNumber: z.number(),
+  nextInstallmentAmount: z.number(),
+  /** Closing month of the last installment. */
+  lastPeriodYm: z.string(),
+});
+export type InstallmentPlan = z.infer<typeof installmentPlanSchema>;
+export const installmentPlanListSchema = z.object({ plans: z.array(installmentPlanSchema) });
+export type InstallmentPlanList = z.infer<typeof installmentPlanListSchema>;
+
 export const adjustmentKindSchema = z.enum(["interest", "tax", "fee", "credit", "other"]);
 export type AdjustmentKind = z.infer<typeof adjustmentKindSchema>;
 
