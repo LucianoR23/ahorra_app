@@ -528,6 +528,8 @@ export const creditCardPeriodStatusSchema = z.object({
   noPeriodsLoaded: z.boolean(),
   dueDatePassed: z.boolean(),
   latestPeriod: creditCardPeriodSchema.nullable().optional(),
+  /** The period open today (plan 4.3); loaded is false when its dates come from the card's default days. */
+  openPeriod: z.object({ periodYm: z.string(), closingDate: z.string(), dueDate: z.string(), loaded: z.boolean() }),
 });
 export type CreditCardPeriodStatus = z.infer<typeof creditCardPeriodStatusSchema>;
 

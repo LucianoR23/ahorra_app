@@ -1,5 +1,6 @@
 "use client";
 
+import { CardPeriodNudge } from "@/components/card-statements/period-nudge";
 import { Check, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -295,6 +296,8 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
             </Select>
             {errors.paymentMethodId && <p className="text-xs text-destructive">{errors.paymentMethodId}</p>}
           </div>
+
+          {isCredit && paymentMethod && <CardPeriodNudge paymentMethodId={paymentMethod.id} cardName={paymentMethod.name} />}
 
           {allowsInstallments && (
             <div className="space-y-1.5">

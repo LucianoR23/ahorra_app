@@ -38,6 +38,8 @@ const PAGE_SIZE = 25;
 const TYPE_LABELS: Record<string, string> = {
   daily_summary: "Resumen diario",
   weekly_review: "Resumen semanal",
+  card_closing_soon: "Cierre de tarjeta",
+  card_due_soon: "Vencimiento de tarjeta",
   alert: "Alerta",
   tip: "Consejo",
   shared_expense: "Gasto compartido",

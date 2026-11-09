@@ -27,6 +27,8 @@ import { useMaskText } from "@/stores/discreet";
 const TYPE_LABELS: Record<string, string> = {
   daily_summary: "Resumen diario",
   weekly_review: "Resumen semanal",
+  card_closing_soon: "Cierre de tarjeta",
+  card_due_soon: "Vencimiento de tarjeta",
   alert_goal_warning: "Alerta de meta",
   alert_goal_exceeded: "Meta excedida",
 };
@@ -51,6 +53,17 @@ function severityVisual(sev: "info" | "warning" | "critical") {
     iconBg: "bg-primary/10 text-primary",
     badge: "bg-primary/10 text-primary",
   };
+}
+
+/** Where a card reminder (plan 4.3) leads: the statement, or Tarjetas. */
+function cardLink(insight: { insightType: string; metadata?: Record<string, unknown> }): string | undefined {
+  const pm = insight.metadata?.payment_method_id;
+  const ym = insight.metadata?.period_ym;
+  if (insight.insightType === "card_due_soon" && typeof pm === "string" && typeof ym === "string") {
+    return `/tarjetas/${pm}/resumen/${ym}`;
+  }
+  if (insight.insightType === "card_closing_soon") return "/tarjetas";
+  return undefined;
 }
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -173,6 +186,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-3">
+              {cardLink(data) && (
+                <Button size="sm" variant="outline" nativeButton={false} render={<Link href={cardLink(data)!} />}>
+                  {data.insightType === "card_due_soon" ? "Ver resumen" : "Ver tarjetas"}
+                </Button>
+              )}
               {!data.isRead && (
                 <Button
                   size="sm"

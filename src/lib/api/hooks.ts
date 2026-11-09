@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type {
+  CreditCardPeriodStatus,
   Committed,
   InstallmentPlanList,
   MonthlyReport,
@@ -306,6 +307,16 @@ export function useCardStatement(paymentMethodId: string | null | undefined, ym:
   return useSWR<CardStatementDetail>(
     token && paymentMethodId && ym
       ? ([`/payment-methods/${paymentMethodId}/credit-card/statements/${ym}`, { householdScoped: false }] as const)
+      : null,
+  );
+}
+
+/** Whether a card's open period has its dates loaded (plan 4.3). */
+export function useCardPeriodStatus(paymentMethodId: string | null | undefined) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<CreditCardPeriodStatus>(
+    token && paymentMethodId
+      ? ([`/payment-methods/${paymentMethodId}/credit-card/periods/status`, { householdScoped: false }] as const)
       : null,
   );
 }
