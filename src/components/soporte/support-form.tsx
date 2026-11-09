@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bug, Lightbulb, Paperclip, X, ImageIcon, Video, Loader2 } from "lucide-react";
+import { Bug, ImageIcon, Lightbulb, Paperclip, Video, X } from "lucide-react";
 import { createTicket } from "@/lib/api/support";
 import { captureClientMetadata } from "@/lib/support-metadata";
 import type { TicketType } from "@/lib/api/schemas";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { Segmented } from "@/components/ui/segmented";
 
 const MAX_FILES = 3;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -20,10 +20,10 @@ const ACCEPT = "image/png,image/jpeg,image/webp,video/mp4";
 const SUBJECT_MAX = 200;
 const DESCRIPTION_MAX = 5000;
 
-const TYPES: { value: TicketType; label: string; icon: typeof Bug }[] = [
+const TYPES = [
   { value: "bug", label: "Error", icon: Bug },
   { value: "improvement", label: "Mejora", icon: Lightbulb },
-];
+] as const satisfies readonly { value: TicketType; label: string; icon: typeof Bug }[];
 
 function validateFile(f: File): string | null {
   const isVideo = f.type === "video/mp4";
@@ -51,7 +51,7 @@ export function SupportForm() {
 
   function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files ?? []);
-    e.target.value = ""; // permitir re-elegir el mismo archivo
+    e.target.value = ""; // so the same file can be picked again
     if (!picked.length) return;
 
     setFiles((prev) => {
@@ -92,7 +92,7 @@ export function SupportForm() {
         files,
         metadata: captureClientMetadata(),
       });
-      toast.success("¡Gracias! Tu reporte fue enviado.");
+      toast.success("Gracias, recibimos tu reporte");
       router.push(`/soporte/${ticket.id}`);
     } catch (err) {
       toastError(err, "No se pudo enviar el reporte");
@@ -101,40 +101,17 @@ export function SupportForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      {/* Tipo */}
-      <div className="space-y-1.5">
-        <Label>Tipo</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {TYPES.map((t) => {
-            const Icon = t.icon;
-            const active = type === t.value;
-            return (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setType(t.value)}
-                aria-pressed={active}
-                className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
-                  active
-                    ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-border bg-card text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1.5">
+        <Label id="ticket-type">Tipo</Label>
+        <Segmented aria-labelledby="ticket-type" value={type} onValueChange={setType} options={TYPES} />
       </div>
 
       {/* Asunto */}
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="subject">Asunto</Label>
-          <span className="text-xs text-ink-faint">
+          <span className="text-caption text-ink-muted">
             {subject.length}/{SUBJECT_MAX}
           </span>
         </div>
@@ -145,15 +122,14 @@ export function SupportForm() {
           maxLength={SUBJECT_MAX}
           placeholder="Resumí el problema o la idea"
           required
-          className="h-9"
         />
       </div>
 
       {/* Descripción */}
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="description">Descripción</Label>
-          <span className="text-xs text-ink-faint">
+          <span className="text-caption text-ink-muted">
             {description.length}/{DESCRIPTION_MAX}
           </span>
         </div>
@@ -169,7 +145,7 @@ export function SupportForm() {
       </div>
 
       {/* Adjuntos */}
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label>Adjuntos (opcional)</Label>
         <input
           ref={fileInputRef}
@@ -180,57 +156,40 @@ export function SupportForm() {
           className="hidden"
         />
         {files.length > 0 && (
-          <ul className="space-y-1.5">
+          <ul className="flex flex-col gap-2">
             {files.map((f, i) => {
               const isVideo = f.type === "video/mp4";
               const Icon = isVideo ? Video : ImageIcon;
               return (
                 <li
                   key={`${f.name}-${i}`}
-                  className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2"
+                  className="flex items-center gap-3 rounded-xl bg-surface-2 py-1 pr-1 pl-3"
                 >
-                  <Icon className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate text-xs">{f.name}</span>
-                  <span className="shrink-0 text-xs text-ink-faint">{humanSize(f.size)}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(i)}
-                    aria-label={`Quitar ${f.name}`}
-                    className="grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <X className="size-3.5" />
-                  </button>
+                  <Icon aria-hidden className="size-4 shrink-0 text-ink-muted" strokeWidth={1.75} />
+                  <span className="min-w-0 flex-1 truncate text-body">{f.name}</span>
+                  <span className="shrink-0 text-caption text-ink-muted">{humanSize(f.size)}</span>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeFile(i)} aria-label={`Quitar ${f.name}`}>
+                    <X aria-hidden strokeWidth={1.75} />
+                  </Button>
                 </li>
               );
             })}
           </ul>
         )}
         {files.length < MAX_FILES && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-          >
+          <Button type="button" variant="secondary" className="self-start" onClick={() => fileInputRef.current?.click()}>
             <Paperclip data-icon="inline-start" />
             Agregar archivo
           </Button>
         )}
-        <p className="text-xs text-ink-faint">
+        <p className="text-caption text-ink-muted">
           Hasta 3 archivos · imágenes PNG/JPG/WebP (5 MB) o video MP4 (20 MB).
         </p>
       </div>
 
-      <div className="flex items-center gap-2 pt-1">
-        <Button type="submit" disabled={sending} className="min-w-32">
-          {sending ? (
-            <>
-              <Loader2 data-icon="inline-start" className="animate-spin" />
-              Enviando…
-            </>
-          ) : (
-            "Enviar reporte"
-          )}
+      <div className="safe-bottom sticky bottom-0 -mx-4 border-t border-border bg-background px-4 pt-3 pb-4 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
+        <Button type="submit" size="lg" className="w-full" disabled={sending}>
+          {sending ? "Enviando…" : "Enviar reporte"}
         </Button>
       </div>
     </form>

@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Soporte
+- Soporte follows the Movimientos list: page header with the + for a new report, a "Solo abiertos" chip, the reports as rows (bug or idea icon, subject, date, attachments and replies, status badge on the right), "Cargar más" and an empty state. An empty page from the API (`items: null`) no longer breaks it.
+- Nuevo reporte: page header with back, Error · Mejora as a segmented control, attachments as removable rows, "Enviar reporte" pinned at the bottom on phones.
+- The report follows the Detalle pattern: back button, the icon, kind, subject and status centered, the description in a card with when you sent it, the attachments, the conversation (your messages in ink, the team's in surface) and the reply box with a label.
+- Status badges use theme tokens. First tests for the three screens.
+- Más and settings rows: with a detail, the label keeps its width and the detail takes up to two lines on the right ("Cuentas entre ustedes" no longer wraps into three lines; "Ana te debe $ 1.707,50" and a long email stay whole).
+
 ### 1.10b Ajustes y Seguridad
 - Ajustes and Seguridad follow the grouped list of Más. Ajustes: "Perfil" (name and email as rows that open the profile sheet, a pending email change as the group's note) and "Apariencia". Seguridad, now titled "Seguridad y privacidad" like in Más: "Acceso" (Cambiar contraseña opens its sheet, Cerrar sesión en todos los dispositivos), "Privacidad en este dispositivo" (the two switches), "Dispositivos con notificaciones", "Actividad reciente" and "Cuenta" (Eliminar mi cuenta, a destructive row that opens the confirmation). A back button to Más on both.
 - `ui/menu-list` gains `MenuRow` (a row with its own content) and a `footer` note per group; a long detail now truncates instead of covering the label.
