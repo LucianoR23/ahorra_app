@@ -7,7 +7,8 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 ### 1.10b Visual regression
 - The screenshot harness compares every shot with its baseline when `VISUAL=1` (CI): `toHaveScreenshot`, soft so all changed screens show up, up to 1% of pixels different. Baselines live in `e2e/__screenshots__` and come only from CI's Linux runner.
 - Dates, months, weekdays, times, "día 9", "en 5 días" and emails are masked, and so are the chart's axis labels and the Google button (drawn by Google's servers).
-- CI runs by hand (`workflow_dispatch`) rewrite every baseline and upload them as the `visual-baselines` artifact, to download and commit. On PRs a changed screen uploads its expected, actual and diff images (`visual-diffs`). Until the first baselines are committed, a screen without one writes it and passes.
+- CI runs by hand (`workflow_dispatch`) rewrite every baseline and upload them as the `visual-baselines` artifact, to download and commit. On PRs a changed screen uploads its expected, actual and diff images (`visual-diffs`).
+- First baselines committed (126 shots from the manual run on `next`); PRs now fail on a changed or missing screen.
 - The Google button keeps its height while Google draws it, so the form below no longer jumps.
 
 ### 1.10b Acceso y Superadmin
