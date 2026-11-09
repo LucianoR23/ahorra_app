@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 4.3 (app part): card period nudges
+- "Cargá el cierre de este mes de tu Visa" on Inicio and in the expense form (when the picked method is a credit card), during the week before the closing, when this month's dates come from the card's usual days. "Son esas" saves the estimated dates; "Cambiar fechas" opens a dialog with them filled in. Once saved, the nudge goes and statements, Comprometido and installments refresh.
+- The card reminders from the API ("Mañana cierra tu Visa", "En 3 días vence tu Visa") have their labels in Notificaciones, and their detail links to Tarjetas or to the statement.
+
 ### 4.2 (app part): the new Inicio · Yo
 - Inicio in Mi plata follows the designs `Main` and `DesktopInicio`: greeting with the date and the discreet mode button; "Gastaste en noviembre" with what came in and what is left (or how much it went over; without incomes, an invitation to add them; on desktop also the share of the income spent); "Comprometido" across every card, "Diciembre ya tiene $ 214.800 en cuotas." with six bars; "Tarjetas que vencen" with each closed statement still to pay; the latest notification ("Tu semana" for the weekly review); pending drafts; "Últimos movimientos" as a list on mobile and a table on desktop. Desktop lays the cards out in the design's grid.
 - The four stat cards, the coach bubble, the income card and the forecast ring are gone from Inicio · Yo. The hogar keeps the previous dashboard until its own design is built (1.10b).

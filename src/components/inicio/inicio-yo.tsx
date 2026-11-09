@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { CardsDue, CommittedWidget } from "@/components/committed/committed-widget";
+import { CardPeriodNudges } from "@/components/card-statements/period-nudge";
 import { CategoryIcon } from "@/components/category-icon";
 import { DiscreetToggle } from "@/components/discreet-toggle";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
@@ -57,6 +58,7 @@ export function InicioYo() {
       <InstallPrompt />
       <PushProvider />
       <EmailVerificationBanner />
+      <CardPeriodNudges />
       <div className="grid gap-4 md:grid-cols-[repeat(auto-fit,minmax(420px,1fr))]">
         <MonthHero />
         <CommittedWidget />
