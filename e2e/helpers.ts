@@ -90,8 +90,14 @@ export async function personalSpaceOf(user: User): Promise<string> {
   return list.find((h) => h.kind === "personal")!.id;
 }
 
-export async function createExpense(user: User, householdId: string, body: Record<string, unknown>) {
-  await call("POST", "/expenses", { token: user.token, household: householdId, body: { currency: "ARS", installments: 1, ...body } });
+/** Creates an expense and returns its id. */
+export async function createExpense(user: User, householdId: string, body: Record<string, unknown>): Promise<string> {
+  const r = await call<{ expense: { id: string } }>("POST", "/expenses", {
+    token: user.token,
+    household: householdId,
+    body: { currency: "ARS", installments: 1, ...body },
+  });
+  return r.expense.id;
 }
 
 export async function cashOf(user: User): Promise<string> {
