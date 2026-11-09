@@ -12,6 +12,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 - Dates, months, weekdays, times, "día 9", "en 5 días" and emails are masked, and so are the chart's axis labels and the Google button (drawn by Google's servers).
 - CI runs by hand (`workflow_dispatch`) rewrite every baseline and upload them as the `visual-baselines` artifact, to download and commit. On PRs a changed screen uploads its expected, actual and diff images (`visual-diffs`).
 - First baselines committed (126 shots from the manual run on `next`); PRs now fail on a changed or missing screen.
+- The screenshot data no longer depends on the day: the card purchase that fills the closed statement is from the 15th of last month (it was "yesterday", which on the 1st fell out of this month's lists), and the card's default closing is the 2nd. Baselines of Inicio, Movimientos, Reportes and Ajustes rewritten.
 - The Google button keeps its height while Google draws it, so the form below no longer jumps.
 
 ### 1.10b Acceso y Superadmin

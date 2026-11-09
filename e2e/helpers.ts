@@ -73,11 +73,14 @@ export async function cardClosingToday(owner: User, name: string): Promise<strin
 /** A credit card whose period closed yesterday: its statement is the one to pay (plan 4.1). */
 export async function cardClosedYesterday(owner: User, name: string): Promise<string> {
   const yesterday = localDate(-1);
+  // The closed statement runs from the previous default closing (the 2nd of
+  // the month before yesterday's) to yesterday, so it always holds the 15th
+  // of the previous month, even on the 1st: see midPreviousMonth.
   const pm = await call<{ id: string }>("POST", "/payment-methods", {
     token: owner.token,
     body: {
       name, kind: "credit",
-      creditCard: { alias: name, defaultClosingDay: Number(yesterday.slice(8)), defaultDueDay: 28,
+      creditCard: { alias: name, defaultClosingDay: 2, defaultDueDay: 28,
         currentPeriod: { closingDate: yesterday, dueDate: localDate(9) } },
     },
   });
@@ -158,6 +161,19 @@ export async function listDrafts(user: User, householdId: string) {
 }
 
 /** YYYY-MM-DD in the local timezone (the API and the browser use the same one). */
+/**
+ * The 15th of the month before today's: always in the statement of
+ * cardClosedYesterday and never in this month's lists, whatever today is,
+ * so the screenshot baselines stay the same on the 1st of a month. Not a
+ * month-end day: those make the API skip a statement (plan 1.10d).
+ */
+export function midPreviousMonth() {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-15`;
+}
+
 export function localDate(offsetDays: number) {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
