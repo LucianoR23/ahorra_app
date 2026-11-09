@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Más
+- The hogar rows in Más say how many are in the hogar ("2 personas", "Solo vos") and who owes whom ("Ana te debe $ 14.880", "Le debés $ 500", "Al día"), read from the hogar even while Mi plata is open (`useBalancesMe` takes a household). "Tu plan" of the design waits for Phase 3.
+- Cargar gasto: the row labels use the body size, like "Fecha".
+
 ### 1.10b Cargar gasto
 - Cargar gasto follows the `CargarGasto` layout: full screen on phones (no top bar or bottom nav, "Cargar gasto" with a close button), the amount big on top with ARS · USD · EUR next to it (and "≈ $" in pesos for another currency), the data as rows (Descripción, Categoría, Pago, Cuotas, Fecha), "Compartido" in its own card, and "Guardar gasto" pinned at the bottom. Desktop keeps the sidebar.
 - Cuotas shows "6 de $ 20.000", the segment bar and where the first one lands: "La primera entra en el resumen que cierra el 28/11 y vence el 8/12." (or "en el resumen de noviembre." when that month's dates are not loaded), replacing the per-installment table.
