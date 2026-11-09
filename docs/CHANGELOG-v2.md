@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Cuentas entre ustedes
+- Deudas is now "Cuentas entre ustedes", like in Más, with a back button. Your balance on top ("Te deben", "Debés" or "Tu saldo", big, in `positive` or `negative`); "Lo que se deben" in plain words ("Luis te debe", "Le debés a Ana") with "Pagar" on the ones that involve you; "Pagos" filtered with chips ("Todos", "Con Luis") and a date menu, each payment a row ("Luis te pagó", date and note) that opens its sheet, where it is deleted; "Cargar más"; then "Cómo se dividen los gastos".
+- Registrar pago: one line saying who pays whom and the debt, the amount (no more than the debt), date and note, one "Confirmar pago" button. The settlement id and the "emerald" and "font-mono" leftovers are gone.
+- Empty lists sent as `null` by the API no longer break the screen. First tests for it.
+- The screenshot harness shoots it inside the hogar.
+
 ### 1.10b Hogar y miembros
 - Hogar follows the grouped list of Más, titled "Hogar y miembros" like in Más, with a back button. "Hogar": name and base currency as rows (the owner opens a sheet to change them, with the currency as a segmented control; members see them read-only). "Miembros · 2": avatar, name, email and "Dueño"; the owner gets a menu per member ("Hacer dueño", "Sacar del hogar", both confirmed) and "Invitar a alguien", which opens the invite sheet and then shows the link to copy. "Invitaciones pendientes" with a menu to resend or cancel. "Cómo se dividen los gastos": each member's share, and "Cambiar la división" opens a sheet that only saves when it adds up to 100%. Last, "Eliminar hogar" (typed confirmation) or "Salir del hogar" (confirmed) as a destructive row.
 - Without a hogar, and in Cuentas from Mi plata, an empty state offers to create it or go to it.
