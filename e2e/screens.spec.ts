@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { PASSWORD, addMember, cardClosedYesterday, cashOf, createGoal, createIncome, createExpense, createHousehold, createRecurringExpense, createRecurringIncome, localDate, loginUI, personalSpaceOf, register } from "./helpers";
+import { PASSWORD, addMember, cardClosedYesterday, cashOf, createGoal, createIncome, createExpense, createHousehold, createRecurringExpense, createRecurringIncome, lastDayOfPreviousMonth, localDate, loginUI, personalSpaceOf, register } from "./helpers";
 
 // Screenshot harness (plan 1.10a): every screen in light and dark, mobile and
 // desktop, saved under test-results/screens for review (CI uploads them as
@@ -192,7 +192,9 @@ test("screens in light and dark, mobile and desktop", async ({ browser }) => {
   // A card with a closed statement to pay (plan 4.1).
   const card = await cardClosedYesterday(user, "Visa 4417");
   const space = await personalSpaceOf(user);
-  await createExpense(user, space, { paymentMethodId: card, amount: 435000, description: "Notebook", spentAt: localDate(-1), installments: 3 });
+  // Last month's purchase, so this month's lists look the same every day
+  // (on the 1st, "yesterday" would be last month and drop out of them).
+  await createExpense(user, space, { paymentMethodId: card, amount: 435000, description: "Notebook", spentAt: lastDayOfPreviousMonth(), installments: 3 });
   // Installments in progress for Comprometido (plan 4.2).
   const heladera = await createExpense(user, space, { paymentMethodId: card, amount: 1079880, description: "Heladera", spentAt: localDate(0), installments: 12 });
   const sueldo = await createIncome(user, space, { amount: 1151143, description: "Sueldo", receivedAt: localDate(0) });
