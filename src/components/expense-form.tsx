@@ -438,7 +438,7 @@ function Row({
     <div className={cn("flex flex-col", !bare && "py-2")}>
       <div className="flex min-h-12 items-center justify-between gap-4">
         {htmlFor ? (
-          <Label htmlFor={htmlFor} className="shrink-0 font-normal text-ink-muted">
+          <Label htmlFor={htmlFor} className="shrink-0 text-body font-normal text-ink-muted">
             {label}
           </Label>
         ) : (

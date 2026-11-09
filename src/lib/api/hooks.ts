@@ -343,9 +343,15 @@ export function useBalances() {
   return useSWR<BalancesResponse>(key);
 }
 
-export function useBalancesMe() {
+/** My balances in the current space, or in `household` (Más reads the hogar from Mi plata). */
+export function useBalancesMe(household?: string | null) {
   const { token, householdId } = useReady();
-  const key = token && householdId ? (["/balances/me"] as const) : null;
+  const key =
+    token && (household ?? householdId)
+      ? household
+        ? (["/balances/me", { householdId: household }] as const)
+        : (["/balances/me"] as const)
+      : null;
   return useSWR<BalancesMeResponse>(key);
 }
 

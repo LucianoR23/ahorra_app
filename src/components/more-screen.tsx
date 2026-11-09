@@ -6,6 +6,9 @@ import { DevSignature } from "@/components/dev-signature";
 import { UserAvatar } from "@/components/user-avatar";
 import { MenuGroup, MenuItem } from "@/components/ui/menu-list";
 import { PageHeader } from "@/components/ui/page-header";
+import { Money } from "@/components/ui/money";
+import { useBalancesMe, useHouseholdMembers } from "@/lib/api/hooks";
+import { biggestDebt } from "@/lib/debts";
 import { MORE_GROUPS, visibleFor } from "@/lib/nav";
 import { useSpaces } from "@/lib/spaces";
 import { useLogout } from "@/lib/use-logout";
@@ -17,6 +20,7 @@ export function MoreScreen() {
   const { hogar } = useSpaces();
   const logout = useLogout();
   const ctx = { isAdmin: Boolean(user?.isSuperadmin), hasHogar: Boolean(hogar) };
+  const details = useHogarDetails(hogar?.id, hogar?.baseCurrency ?? "ARS", user?.id ?? "");
 
   return (
     <div className="flex flex-col gap-6 pb-4">
@@ -42,7 +46,7 @@ export function MoreScreen() {
         return (
           <MenuGroup key={group.title} title={group.title}>
             {items.map((item) => (
-              <MenuItem key={item.id} icon={item.icon} label={item.label} href={item.href} />
+              <MenuItem key={item.id} icon={item.icon} label={item.label} href={item.href} detail={details[item.id]} />
             ))}
             {group.title === "Cuenta" ? (
               <MenuItem icon={LogOut} label="Cerrar sesión" tone="destructive" onClick={() => void logout()} />
@@ -54,4 +58,27 @@ export function MoreScreen() {
       <DevSignature size={13} />
     </div>
   );
+}
+
+/** "2 personas" and "Ana te debe $ 14.880" next to the hogar rows (design `Mas`). */
+function useHogarDetails(hogarId: string | undefined, currency: string, me: string): Record<string, React.ReactNode> {
+  const { data: members } = useHouseholdMembers(hogarId ?? null);
+  const { data: balances } = useBalancesMe(hogarId ?? null);
+  if (!hogarId) return {};
+  const debt = biggestDebt(balances, me);
+  const name = (uid: string) => members?.find((m) => m.userId === uid)?.firstName || "un ex miembro";
+  return {
+    hogar: members ? (members.length === 1 ? "Solo vos" : `${members.length} personas`) : undefined,
+    debts: !balances ? undefined : !debt ? (
+      "Al día"
+    ) : debt.owedToMe ? (
+      <>
+        {name(debt.other)} te debe <Money amount={debt.amount} currency={currency} />
+      </>
+    ) : (
+      <>
+        Le debés <Money amount={debt.amount} currency={currency} />
+      </>
+    ),
+  };
 }
