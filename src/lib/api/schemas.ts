@@ -186,6 +186,8 @@ export type ExpenseDetail = z.infer<typeof expenseDetailSchema>;
 export const expenseListResponseSchema = z.object({
   items: z.array(expenseSchema),
   totalCount: z.number(),
+  /** The whole filtered list in the base currency (plan 1.10b). */
+  totalAmountBase: z.number().default(0),
   limit: z.number(),
   offset: z.number(),
 });

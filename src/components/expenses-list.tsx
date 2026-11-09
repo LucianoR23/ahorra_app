@@ -1,34 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Plus, Repeat, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronDown, Receipt, Search, X } from "lucide-react";
+import { CategoryIcon } from "@/components/category-icon";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import {
-  useExpenses,
-  useCategories,
-  usePaymentMethods,
-} from "@/lib/api/hooks";
-import { fmtDateShort, currentMonth, monthStart, monthEnd, fmtMonthLong, shiftMonth } from "@/lib/format";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
+import { ListRow, ListRowSkeleton } from "@/components/ui/list-row";
 import { Money } from "@/components/ui/money";
-import { cn } from "@/lib/utils";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { CategorySelect } from "@/components/category-select";
+import { MonthNavigator } from "@/components/ui/month-navigator";
+import { PageHeader } from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCategories, useExpenses, usePaymentMethods } from "@/lib/api/hooks";
+import type { Category, Expense } from "@/lib/api/schemas";
+import { currentMonth, dayLabel, monthEnd, monthStart } from "@/lib/format";
+import { useSpaces } from "@/lib/spaces";
 
-const PAGE = 20;
+/** Rows per "Cargar más"; the API returns at most MAX_ROWS at once. */
+export const PAGE = 50;
+const MAX_ROWS = 200;
 
-type FixedFilter = "all" | "fixed" | "variable";
+type Kind = "all" | "fixed" | "variable";
 
-export function ExpensesList() {
-  const [month, setMonth] = useState<string>(currentMonth());
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [paymentMethodId, setPaymentMethodId] = useState<string>("");
-  const [fixedFilter, setFixedFilter] = useState<FixedFilter>("all");
-  const [offset, setOffset] = useState(0);
+const KINDS: { value: Kind; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "fixed", label: "Fijos" },
+  { value: "variable", label: "Variables" },
+];
+
+/** Expenses grouped by day, newest first, with each day's total in the base currency. */
+export function groupByDay(items: Expense[]): { day: string; total: number; items: Expense[] }[] {
+  const groups: { day: string; total: number; items: Expense[] }[] = [];
+  for (const e of items) {
+    const day = e.spentAt.slice(0, 10);
+    const last = groups.at(-1);
+    if (last?.day === day) {
+      last.items.push(e);
+      last.total += e.amountBase;
+    } else {
+      groups.push({ day, total: e.amountBase, items: [e] });
+    }
+  }
+  return groups;
+}
+
+/**
+ * Movimientos (design `Movimientos`, plan 1.10b): the month with what it
+ * adds up to, filter chips, and the expenses grouped by day.
+ */
+export function ExpensesList({ help }: { help?: React.ReactNode }) {
+  const [month, setMonth] = useState(currentMonth());
+  const [categoryId, setCategoryId] = useState("");
+  const [paymentMethodId, setPaymentMethodId] = useState("");
+  const [kind, setKind] = useState<Kind>("all");
+  const [rows, setRows] = useState(PAGE);
+  const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
@@ -37,231 +72,234 @@ export function ExpensesList() {
     return () => clearTimeout(t);
   }, [query]);
 
-  // Reset offset cuando cambia la búsqueda — patrón render-time (sin useEffect)
-  // para evitar el cascading render que desaconseja react-hooks/set-state-in-effect.
-  const [prevDebouncedQuery, setPrevDebouncedQuery] = useState(debouncedQuery);
-  if (debouncedQuery !== prevDebouncedQuery) {
-    setPrevDebouncedQuery(debouncedQuery);
-    setOffset(0);
+  // A new search starts from the first page (render-time reset, no effect).
+  const [prevQuery, setPrevQuery] = useState(debouncedQuery);
+  if (debouncedQuery !== prevQuery) {
+    setPrevQuery(debouncedQuery);
+    setRows(PAGE);
   }
 
+  const { current } = useSpaces();
   const { data: categories } = useCategories();
-  const { data: paymentMethods } = usePaymentMethods();
+  const { data: methods } = usePaymentMethods();
   const { data, isLoading } = useExpenses({
     from: monthStart(month),
     to: monthEnd(month),
     categoryId: categoryId || undefined,
     paymentMethodId: paymentMethodId || undefined,
     q: debouncedQuery || undefined,
-    kind: fixedFilter === "all" ? undefined : fixedFilter,
-    limit: PAGE,
-    offset,
+    kind: kind === "all" ? undefined : kind,
+    limit: rows,
   });
 
-  // The fixed/variable filter runs on the server, so totalCount and paging match it.
   const items = data?.items ?? [];
-
   const total = data?.totalCount ?? 0;
-  const showingStart = total === 0 ? 0 : offset + 1;
-  const showingEnd = Math.min(offset + items.length, total);
+  const baseCurrency = current?.baseCurrency ?? "ARS";
+  const categoryById = new Map<string, Category>(categories?.map((c) => [c.id, c]) ?? []);
+  const methodName = (id: string) => methods?.find((m) => m.id === id)?.name ?? "";
 
-  const categoriesById = new Map<string, string>(
-    categories?.map((c) => [c.id, c.name]) ?? [],
-  );
-  const pmById = new Map<string, string>(
-    paymentMethods?.map((p) => [p.id, p.name]) ?? [],
-  );
-
-  function resetOffset<T>(setter: (v: T) => void) {
+  function filter<T>(set: (v: T) => void) {
     return (v: T) => {
-      setOffset(0);
-      setter(v);
+      setRows(PAGE);
+      set(v);
     };
   }
 
+  function closeSearch() {
+    setSearching(false);
+    setQuery("");
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      {/* Filtros */}
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-3 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => { setOffset(0); setMonth(shiftMonth(month, -1)); }}
-              className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
-              aria-label="Mes anterior"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <div className="text-sm font-bold first-letter:uppercase">{fmtMonthLong(month)}</div>
-            <button
-              type="button"
-              onClick={() => { setOffset(0); setMonth(shiftMonth(month, 1)); }}
-              className="grid size-8 cursor-pointer place-items-center rounded-md hover:bg-muted"
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por descripción"
-              className="pl-9 pr-9 text-xs"
-              aria-label="Buscar movimientos"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="Limpiar búsqueda"
-                className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <X className="size-3.5" />
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <CategorySelect value={categoryId} onValueChange={resetOffset(setCategoryId)} categories={categories} emptyLabel="Todas las categorías" className="text-xs" />
-            <Select value={paymentMethodId} onValueChange={(v) => resetOffset(setPaymentMethodId)(v ?? "")}>
-              <SelectTrigger className="text-xs">
-                <SelectValue placeholder="Todos los métodos">
-                  {(v: string | null) => (v ? (paymentMethods?.find((p) => p.id === v)?.name ?? "Todos los métodos") : "Todos los métodos")}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos los métodos</SelectItem>
-                {paymentMethods?.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex gap-1.5">
-            {(["all", "fixed", "variable"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => {
-                  setFixedFilter(f);
-                  setOffset(0);
-                }}
-                className={cn(
-                  "flex-1 cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
-                  fixedFilter === f
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/70",
-                )}
-              >
-                {f === "all" ? "Todos" : f === "fixed" ? "Fijos" : "Variables"}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista */}
-      <Card className="rounded-2xl border-0 shadow-card overflow-hidden">
-        {isLoading ? (
-          <div className="flex flex-col gap-2 p-3">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-md" />
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">
-            Sin movimientos para este filtro.
-          </div>
-        ) : (
-          items.map((e, i) => {
-            const isLast = i === items.length - 1;
-            const cat = e.categoryId ? categoriesById.get(e.categoryId) : "Sin categoría";
-            const pm = pmById.get(e.paymentMethodId) ?? "—";
-            return (
-              <Link
-                key={e.id}
-                href={`/movimientos/${e.id}`}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors",
-                  !isLast && "border-b border-border",
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-semibold">{e.description}</span>
-                    {e.recurringExpenseId && (
-                      <Badge variant="secondary" className="h-4 gap-0.5 px-1 text-xs">
-                        <Repeat className="size-2.5" /> Fijo
-                      </Badge>
-                    )}
-                    {e.installments > 1 && (
-                      <Badge variant="outline" className="h-4 px-1 text-xs">
-                        {e.installments}c
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {cat} · {pm} · {fmtDateShort(e.spentAt)}
-                  </div>
-                </div>
-                <div className="shrink-0 text-right">
-                  <div className="font-mono text-sm font-semibold">
-                    <Money amount={e.amountBase} currency={e.baseCurrency} compact={e.amountBase > 99999} />
-                  </div>
-                  {e.currency !== e.baseCurrency && (
-                    <div className="text-xs text-muted-foreground">
-                      <Money amount={e.amount} currency={e.currency} />
-                    </div>
-                  )}
-                </div>
-              </Link>
-            );
-          })
-        )}
-      </Card>
-
-      {/* Paginación */}
-      {total > 0 && (
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">
-            {showingStart}–{showingEnd} de {total}
-          </span>
-          <div className="flex gap-1">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-4">
+      <PageHeader
+        title="Movimientos"
+        className="mb-0 items-center"
+        action={
+          <div className="flex items-center gap-2">
+            {help}
             <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={offset === 0}
-              onClick={() => setOffset(Math.max(0, offset - PAGE))}
+              variant="secondary"
+              size="icon"
+              aria-label={searching ? "Cerrar búsqueda" : "Buscar"}
+              aria-expanded={searching}
+              onClick={() => (searching ? closeSearch() : setSearching(true))}
             >
-              ‹ Anterior
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={offset + PAGE >= total}
-              onClick={() => setOffset(offset + PAGE)}
-            >
-              Siguiente ›
+              {searching ? <X aria-hidden strokeWidth={1.75} /> : <Search aria-hidden strokeWidth={1.75} />}
             </Button>
           </div>
+        }
+      />
+
+      {searching && (
+        <div className="relative">
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-muted" strokeWidth={1.75} />
+          <Input
+            type="search"
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por descripción"
+            aria-label="Buscar movimientos"
+            className="pl-10"
+          />
         </div>
       )}
 
-      <Link
-        href="/agregar"
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold shadow-card transition-colors hover:bg-primary/90"
-      >
-        <Plus className="size-4" />
-        Agregar gasto
-      </Link>
+      <MonthNavigator
+        month={month}
+        onMonthChange={filter(setMonth)}
+        className="border-0 bg-card shadow-card dark:ring-1 dark:ring-border"
+        summary={
+          isLoading ? (
+            <Skeleton className="mx-auto mt-1 h-4 w-40" />
+          ) : (
+            <>
+              Gastaste{" "}
+              <Money amount={data?.totalAmountBase ?? 0} currency={baseCurrency} className="font-semibold text-ink" /> ·{" "}
+              {total === 1 ? "1 gasto" : `${total} gastos`}
+            </>
+          )
+        }
+      />
+
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="group" aria-label="Filtros">
+        {KINDS.map((k) => (
+          <Chip key={k.value} pressed={kind === k.value} onClick={() => filter(setKind)(k.value)}>
+            {k.label}
+          </Chip>
+        ))}
+        <FilterMenu
+          label="Categoría"
+          value={categoryId}
+          onChange={filter(setCategoryId)}
+          allLabel="Todas las categorías"
+          options={categoryOptions(categories ?? [])}
+        />
+        <FilterMenu
+          label="Pago"
+          value={paymentMethodId}
+          onChange={filter(setPaymentMethodId)}
+          allLabel="Todos los medios"
+          options={(methods ?? []).map((m) => ({ value: m.id, label: m.name }))}
+        />
+      </div>
+
+      {isLoading ? (
+        <Card>
+          <CardContent>
+            {[0, 1, 2, 3].map((i) => (
+              <ListRowSkeleton key={i} />
+            ))}
+          </CardContent>
+        </Card>
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon={Receipt}
+          title="Sin movimientos"
+          description={total === 0 && !debouncedQuery && !categoryId && !paymentMethodId && kind === "all" ? "No cargaste gastos este mes." : "Nada coincide con estos filtros."}
+        />
+      ) : (
+        groupByDay(items).map((g) => (
+          <section key={g.day} aria-label={dayLabel(g.day)} className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between px-1 text-body text-ink-muted">
+              <h2 className="font-semibold">{dayLabel(g.day)}</h2>
+              <Money amount={g.total} currency={baseCurrency} />
+            </div>
+            <Card>
+              <CardContent className="py-1">
+                <ul className="divide-y divide-border">
+                  {g.items.map((e) => {
+                    const category = e.categoryId ? categoryById.get(e.categoryId) : undefined;
+                    const foreign = e.currency !== e.baseCurrency;
+                    return (
+                      <li key={e.id}>
+                        <ListRow
+                          href={`/movimientos/${e.id}`}
+                          leading={<CategoryIcon icon={category?.icon} />}
+                          title={e.description}
+                          subtitle={
+                            <>
+                              {[e.installments > 1 ? `${e.installments} cuotas` : (category?.name ?? "Sin categoría"), methodName(e.paymentMethodId)]
+                                .filter(Boolean)
+                                .join(" · ")}
+                              {foreign && (
+                                <>
+                                  {" · ≈ "}
+                                  <Money amount={e.amountBase} currency={e.baseCurrency} />
+                                </>
+                              )}
+                            </>
+                          }
+                          trailing={<Money amount={e.amount} currency={e.currency} />}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            </Card>
+          </section>
+        ))
+      )}
+
+      {items.length < total &&
+        (rows < MAX_ROWS ? (
+          <Button variant="secondary" className="self-center" onClick={() => setRows(Math.min(rows + PAGE, MAX_ROWS))}>
+            Cargar más
+          </Button>
+        ) : (
+          <p className="text-center text-caption text-ink-muted">
+            Ves los últimos {MAX_ROWS} de {total}. Filtrá por categoría o medio de pago para ver el resto.
+          </p>
+        ))}
     </div>
+  );
+}
+
+/** Top categories with their subcategories right after them, indented. */
+function categoryOptions(categories: Category[]) {
+  const out: { value: string; label: string; sub?: boolean }[] = [];
+  for (const top of categories.filter((c) => !c.parentId)) {
+    out.push({ value: top.id, label: top.name });
+    for (const sub of categories.filter((c) => c.parentId === top.id)) out.push({ value: sub.id, label: sub.name, sub: true });
+  }
+  return out;
+}
+
+/** A chip that opens a single-choice menu; it reads the chosen option when there is one. */
+function FilterMenu({
+  label,
+  value,
+  onChange,
+  allLabel,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  allLabel: string;
+  options: { value: string; label: string; sub?: boolean }[];
+}) {
+  const chosen = options.find((o) => o.value === value);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Chip active={!!chosen} aria-label={chosen ? `${label}: ${chosen.label}` : label} />}>
+        {chosen?.label ?? label}
+        <ChevronDown aria-hidden strokeWidth={1.75} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="max-h-80 min-w-56">
+        <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(String(v))}>
+          <DropdownMenuRadioItem value="" className="min-h-11 text-body">
+            {allLabel}
+          </DropdownMenuRadioItem>
+          {options.map((o) => (
+            <DropdownMenuRadioItem key={o.value} value={o.value} className={o.sub ? "min-h-11 pl-6 text-body" : "min-h-11 text-body"}>
+              {o.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
