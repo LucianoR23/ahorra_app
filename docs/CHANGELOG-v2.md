@@ -5,7 +5,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 ## Unreleased
 
 ### 1.10b Recurrentes, Categorías, Presupuestos y objetivos
-- Create and edit dialogs open as a bottom sheet on phones (with a grabber, sliding up, still under reduced motion) and stay a centered dialog from `sm` up, as the design's components sheet asks. Confirmations stay centered everywhere (`DialogContent layout="center"`). This applies to every create/edit dialog in the app.
+- Create and edit dialogs open as a bottom sheet on phones (with a grabber, sliding up unless reduced motion is on) and stay a centered dialog from `sm` up, as the design's components sheet asks. Confirmations stay centered everywhere (`DialogContent layout="center"`). This applies to every create/edit dialog in the app.
 - `ListRow` takes `onClick` (the row is one button that opens a sheet); its inner markup is spans so it is valid inside a button.
 - Recurrentes: header from the components sheet, "Gastos fijos · Ingresos fijos" tabs, one list per tab (category icon, "Día 10 · Visa · Variable · Pausado", the amount, "último"/"estimado" for variable bills), the + button for a new one, and an empty state. Tapping a series opens its sheet: the form, "Ver histórico" (expenses), "Pausar"/"Activar" and delete. The form rules stay: a monthly series is charged on its start date's day, a variable bill is one installment, the start date can't change. A fixed income's account no longer lists credit cards. First tests for this screen.
 - Categorías: one list with subcategories indented and "2 subcategorías" under their parent; tapping a row opens its sheet, where it is also deleted. Empty state.
