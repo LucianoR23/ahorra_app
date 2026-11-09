@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBalancesMe, useHouseholdMembers, useMonthlyReport, useRecentExpenses } from "@/lib/api/hooks";
 import type { HouseholdMember, MonthlyReport } from "@/lib/api/schemas";
 import { monthName } from "@/lib/committed";
+import { biggestDebt } from "@/lib/debts";
 import { useSpaces } from "@/lib/spaces";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
@@ -171,9 +172,9 @@ function Accounts({ people }: { people: People }) {
   const currency = hogar?.baseCurrency ?? "ARS";
   if (people.others.length === 0) return null;
 
-  const biggest = [...(data?.owedToMe ?? []), ...(data?.owe ?? [])].sort((a, b) => b.amount - a.amount)[0];
-  const owedToMe = biggest?.to === people.me;
-  const other = biggest ? people.name(owedToMe ? biggest.from : biggest.to) : "";
+  const biggest = biggestDebt(data, people.me);
+  const owedToMe = biggest?.owedToMe ?? false;
+  const other = biggest ? people.name(biggest.other) : "";
 
   return (
     <Card>

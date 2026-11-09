@@ -39,10 +39,32 @@ describe("MoreScreen (design `Mas`)", () => {
     useAuthStore.setState((s) => ({ user: s.user && { ...s.user, isSuperadmin: true } }));
     render(<MoreScreen />, { wrapper: WithSWR });
 
-    expect(await screen.findByRole("link", { name: "Cuentas entre ustedes" })).toHaveAttribute("href", "/deudas");
-    expect(screen.getByRole("link", { name: "Hogar y miembros" })).toHaveAttribute("href", "/hogar");
+    expect(await screen.findByRole("link", { name: /^Cuentas entre ustedes/ })).toHaveAttribute("href", "/deudas");
+    expect(screen.getByRole("link", { name: /^Hogar y miembros/ })).toHaveAttribute("href", "/hogar");
     expect(screen.queryByRole("link", { name: "Compartir gastos" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Superadmin" })).toBeInTheDocument();
+  });
+
+  it("says how many are in the hogar and who owes whom, even from Mi plata", async () => {
+    let balancesFor: string | null = null;
+    server.use(
+      http.get(`${API}/households`, () => HttpResponse.json([personalSpace, hogarSpace])),
+      http.get(`${API}/households/${hogarSpace.id}/members`, () =>
+        HttpResponse.json([
+          { userId: "u1", email: "", firstName: "Ana", lastName: "Test", role: "owner", joinedAt: "" },
+          { userId: "u2", email: "", firstName: "Luis", lastName: "R", role: "member", joinedAt: "" },
+        ]),
+      ),
+      http.get(`${API}/balances/me`, ({ request }) => {
+        balancesFor = request.headers.get("x-household-id");
+        return HttpResponse.json({ userId: "u1", owe: [], owedToMe: [{ from: "u2", to: "u1", amount: 14880 }], net: 14880 });
+      }),
+    );
+    render(<MoreScreen />, { wrapper: WithSWR });
+
+    expect(await screen.findByRole("link", { name: /Hogar y miembros/ })).toHaveTextContent("2 personas");
+    await waitFor(() => expect(screen.getByRole("link", { name: /Cuentas entre ustedes/ })).toHaveTextContent("Luis te debe $ 14.880"));
+    expect(balancesFor).toBe(hogarSpace.id);
   });
 
   it("signs out from the Cuenta group", async () => {
