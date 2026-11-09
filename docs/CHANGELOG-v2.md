@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Cargar gasto
+- Cargar gasto follows the `CargarGasto` layout: full screen on phones (no top bar or bottom nav, "Cargar gasto" with a close button), the amount big on top with ARS · USD · EUR next to it (and "≈ $" in pesos for another currency), the data as rows (Descripción, Categoría, Pago, Cuotas, Fecha), "Compartido" in its own card, and "Guardar gasto" pinned at the bottom. Desktop keeps the sidebar.
+- Cuotas shows "6 de $ 20.000", the segment bar and where the first one lands: "La primera entra en el resumen que cierra el 28/11 y vence el 8/12." (or "en el resumen de noviembre." when that month's dates are not loaded), replacing the per-installment table.
+- The "Cancelar" button left (the close button does it); clearer messages for what is missing. The natural-language box of the design is 3.1.
+- `AppShell` gains `focus` (full screen on phones).
+- Detalle: an installment without a due date says "Cierra 24/1" instead of "Vence" with the closing date.
+
 ### 1.10b Detalle
 - The expense detail follows the `Detalle` design: back and edit (pencil) buttons, the category icon, description and amount centered with "12 cuotas de $ 89.990" (and "≈ $" for dollars), a data card (Categoría, Pago, Fecha de compra, Espacio and "Gasto fijo" when a recurring expense made it), and "Eliminar gasto" at the end.
 - "Cuotas": "3 de 12 · faltan $ 809.910", the segment bar, and the schedule folded to four rows around the current installment ("Ahora", in the statement to pay or the open one), with "Ver las 12 cuotas". Tapping an installment opens a dialog to mark it paid or unpaid or fix its dates. A credit card purchase in one payment shows its single installment; cash in one payment shows none.

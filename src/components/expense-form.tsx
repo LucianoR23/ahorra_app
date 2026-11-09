@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Segmented } from "@/components/ui/segmented";
 import { Switch } from "@/components/ui/switch";
 import {
   useCategories,
@@ -22,7 +23,9 @@ import { selectSpace, useSpaces } from "@/lib/spaces";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import { createExpense, type ExpenseCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
-import { isoToday, projectBillingMonth, shiftMonth } from "@/lib/format";
+import { isoToday, projectBillingMonth } from "@/lib/format";
+import { monthName } from "@/lib/committed";
+import { dayMonth } from "@/lib/statements";
 import { Money } from "@/components/ui/money";
 import type { Currency } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
@@ -31,7 +34,15 @@ import { PAYMENT_METHOD_KIND_LABELS } from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
 import { CategorySelect } from "@/components/category-select";
 
-const CURRENCIES: Currency[] = ["ARS", "USD", "EUR"];
+const CURRENCIES = [
+  { value: "ARS", label: "ARS" },
+  { value: "USD", label: "USD" },
+  { value: "EUR", label: "EUR" },
+] as const;
+
+/** A control inside a data row (design `CargarGasto`): no box, right-aligned, still focusable and visible on hover. */
+const rowControl =
+  "h-11 w-auto min-w-0 max-w-[62%] justify-end gap-2 border-transparent bg-transparent px-2 text-right font-semibold hover:bg-surface-2 aria-invalid:border-negative";
 
 /** Last "Compartido" choice (plan 1.2). The form renders only on the client. */
 function readSharedPref(): boolean {
@@ -51,6 +62,10 @@ function writeSharedPref(v: boolean) {
 }
 
 /**
+ * Cargar gasto (design `CargarGasto`, plan 1.10b): the amount big on top
+ * with its currency, the data as rows, "Compartido", and "Guardar gasto"
+ * pinned at the bottom. The natural-language box of the design is 3.1.
+ *
  * `onCreated` replaces the default jump to the new expense's detail
  * (onboarding's first expense, plan 1.3).
  */
@@ -94,32 +109,18 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
     if (currency === baseCurrency) return { rate: 1, amountBase: amountValid ? amount : 0 };
     if (!rates) return null;
     const candidate =
-      rates.find((r) => r.currency === currency && r.source === "blue") ??
-      rates.find((r) => r.currency === currency);
+      rates.find((r) => r.currency === currency && r.source === "blue") ?? rates.find((r) => r.currency === currency);
     if (!candidate) return null;
     return { rate: candidate.rateAvg, amountBase: amountValid ? amount * candidate.rateAvg : 0 };
   })();
 
-  const billingPreview =
-    !isCredit || !creditCard || !amountValid || installments < 1
-      ? null
-      : (() => {
-          const firstMonth = projectBillingMonth(spentAt, creditCard.defaultClosingDay);
-          const perInstallment = amount / installments;
-          const perInstallmentBase = (ratePreview?.amountBase ?? amount) / installments;
-          return Array.from({ length: installments }, (_, i) => {
-            const ym = shiftMonth(firstMonth, i);
-            const override = periods?.find((p) => p.periodYm === ym);
-            return {
-              n: i + 1,
-              ym,
-              billingDate: override?.closingDate ?? null,
-              dueDate: override?.dueDate ?? null,
-              amount: perInstallment,
-              amountBase: perInstallmentBase,
-            };
-          });
-        })();
+  // Where the first installment lands: the loaded period of its month, or just the month.
+  const firstStatement = (() => {
+    if (!isCredit || !creditCard) return null;
+    const ym = projectBillingMonth(spentAt, creditCard.defaultClosingDay);
+    const period = periods?.find((p) => p.periodYm === ym);
+    return { ym, closingDate: period?.closingDate ?? null, dueDate: period?.dueDate ?? null };
+  })();
 
   const sharesList =
     !isShared || !overrideShares || !members
@@ -135,12 +136,12 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!description.trim()) e.description = "Requerido";
+    if (!description.trim()) e.description = "Contá qué compraste";
     if (!amountValid) e.amount = "Ingresá un monto mayor a 0";
-    if (!paymentMethodId) e.paymentMethodId = "Elegí un método de pago";
-    if (!spentAt) e.spentAt = "Requerido";
+    if (!paymentMethodId) e.paymentMethodId = "Elegí con qué pagaste";
+    if (!spentAt) e.spentAt = "Elegí la fecha";
     if (installments < 1) e.installments = "Mínimo 1";
-    if (installments > 1 && !allowsInstallments) e.installments = "Este método no admite cuotas";
+    if (installments > 1 && !allowsInstallments) e.installments = "Este medio no admite cuotas";
     if (sharesList && !sharesMatch) {
       e.shares = `Las partes suman ${sharesSum.toFixed(2)}, deben sumar ${amount.toFixed(2)}`;
     }
@@ -173,9 +174,11 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
       const detail = await createExpense(input, target.id);
       // The detail page reads the current space: show the one it went to.
       if (target.id !== current?.id) selectSpace(target.id);
-      // Invalidate expenses + reports
       swrMutate(
-        (k) => Array.isArray(k) && typeof k[0] === "string" && (k[0].startsWith("/expenses") || k[0].startsWith("/reports") || k[0].startsWith("/balances")),
+        (k) =>
+          Array.isArray(k) &&
+          typeof k[0] === "string" &&
+          (k[0].startsWith("/expenses") || k[0].startsWith("/reports") || k[0].startsWith("/balances") || k[0].startsWith("/credit-cards")),
         undefined,
         { revalidate: true },
       );
@@ -193,173 +196,160 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      {/* Monto + moneda */}
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4 space-y-3">
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="amount">Monto</Label>
-              <Input
-                id="amount"
-                inputMode="decimal"
-                value={amountStr}
-                placeholder="0"
-                onChange={(e) => setAmountStr(e.target.value)}
-                aria-invalid={!!errors.amount}
-                className="h-10 text-lg font-mono font-semibold"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="currency">Moneda</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-                <SelectTrigger id="currency" className="h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      {/* The amount, big, with its currency. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <Label htmlFor="amount" className="sr-only">
+            Monto
+          </Label>
+          <div className="flex min-w-0 flex-1 items-baseline gap-1 text-display font-bold">
+            <span aria-hidden className={cn(!amountStr && "text-ink-muted")}>
+              {currency === "USD" ? "US$" : currency === "EUR" ? "€" : "$"}
+            </span>
+            <Input
+              id="amount"
+              inputMode="decimal"
+              autoComplete="off"
+              value={amountStr}
+              placeholder="0"
+              onChange={(e) => setAmountStr(e.target.value)}
+              aria-invalid={!!errors.amount}
+              aria-describedby={errors.amount ? "amount-error" : undefined}
+              className="h-auto border-transparent bg-transparent px-1 text-display font-bold tabular-nums focus-visible:border-focus"
+            />
           </div>
-          {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
-          {ratePreview && currency !== baseCurrency && (
-            <div className="rounded-lg bg-muted/50 px-3 py-2 text-xs">
-              <div className="font-semibold">Conversión estimada</div>
-              <div className="text-muted-foreground">
-                1 {currency} ≈ {ratePreview.rate.toLocaleString("es-AR", { maximumFractionDigits: 2 })} {baseCurrency}
-                {" · "}
-                Total: <Money amount={ratePreview.amountBase} currency={baseCurrency} />
-              </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">La tasa exacta se congela al crear.</div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <Segmented
+            aria-label="Moneda"
+            value={currency}
+            onValueChange={(v) => setCurrency(v)}
+            options={CURRENCIES}
+            className="w-auto shrink-0"
+          />
+        </div>
+        {errors.amount && (
+          <p id="amount-error" className="text-caption text-negative">
+            {errors.amount}
+          </p>
+        )}
+        {ratePreview && currency !== baseCurrency && (
+          <p className="text-caption text-ink-muted">
+            ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> (1 {currency} ≈{" "}
+            {ratePreview.rate.toLocaleString("es-AR", { maximumFractionDigits: 2 })} {baseCurrency}). La cotización se fija al guardar.
+          </p>
+        )}
+      </div>
 
-      {/* Descripción + categoría */}
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4 space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="description">Descripción</Label>
+      {/* The data, one row each. */}
+      <Card className="py-1">
+        <CardContent className="divide-y divide-border">
+          <Row label="Descripción" htmlFor="description" error={errors.description}>
             <Input
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ej: Super del sábado"
+              placeholder="Qué compraste"
               aria-invalid={!!errors.description}
-              className="h-9"
+              className={cn(rowControl, "flex-1")}
             />
-            {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
-          </div>
+          </Row>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="category">Categoría</Label>
-              <CategorySelect value={categoryId} onValueChange={setCategoryId} categories={categories} emptyLabel="Sin categoría" id="category" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="spentAt">Fecha</Label>
-              <DatePicker
-                value={spentAt}
-                onChange={setSpentAt}
-                aria-invalid={!!errors.spentAt}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <Row label="Categoría" htmlFor="category">
+            <CategorySelect
+              value={categoryId}
+              onValueChange={setCategoryId}
+              categories={categories}
+              emptyLabel="Sin categoría"
+              id="category"
+              className={rowControl}
+            />
+          </Row>
 
-      {/* Método de pago + cuotas */}
-      <Card className="rounded-2xl border-0 shadow-card">
-        <CardContent className="p-4 space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="paymentMethod">Método de pago</Label>
-            <Select value={paymentMethodId} onValueChange={(v) => { setPaymentMethodId(v ?? ""); setInstallments(1); }}>
-              <SelectTrigger id="paymentMethod">
-                <SelectValue placeholder="Elegí un método">
-                  {(v: string | null) => {
-                    if (!v) return "Elegí un método";
-                    const pm = paymentMethods?.find((p) => p.id === v);
-                    return pm ? `${pm.name} · ${PAYMENT_METHOD_KIND_LABELS[pm.kind]}` : "Elegí un método";
-                  }}
+          <Row label="Pago" htmlFor="paymentMethod" error={errors.paymentMethodId}>
+            <Select
+              value={paymentMethodId}
+              onValueChange={(v) => {
+                setPaymentMethodId(v ?? "");
+                setInstallments(1);
+              }}
+            >
+              <SelectTrigger id="paymentMethod" aria-invalid={!!errors.paymentMethodId} className={rowControl}>
+                <SelectValue placeholder="Elegí">
+                  {(v: string | null) => paymentMethods?.find((p) => p.id === v)?.name ?? "Elegí"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Elegí un método</SelectItem>
-                {paymentMethods?.filter((p) => p.isActive).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name} · {PAYMENT_METHOD_KIND_LABELS[p.kind]}</SelectItem>
-                ))}
+                {paymentMethods
+                  ?.filter((p) => p.isActive)
+                  .map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} · {PAYMENT_METHOD_KIND_LABELS[p.kind]}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
-            {errors.paymentMethodId && <p className="text-xs text-destructive">{errors.paymentMethodId}</p>}
-          </div>
-
-          {isCredit && paymentMethod && <CardPeriodNudge paymentMethodId={paymentMethod.id} cardName={paymentMethod.name} />}
+          </Row>
 
           {allowsInstallments && (
-            <div className="space-y-1.5">
-              <Label htmlFor="installments">Cuotas</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="installments"
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={installments}
-                  onChange={(e) => setInstallments(Math.max(1, Number(e.target.value) || 1))}
-                  className="h-9 w-20"
-                />
-                {amountValid && installments > 1 && (
-                  <span className="text-xs text-muted-foreground">
-                    <Money amount={amount / installments} currency={currency} /> × {installments}
-                  </span>
-                )}
-              </div>
+            <div className="flex flex-col gap-2 py-2">
+              <Row label="Cuotas" htmlFor="installments" error={errors.installments} bare>
+                <span className="flex items-center gap-2 font-semibold">
+                  <Input
+                    id="installments"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={60}
+                    value={installments}
+                    onChange={(e) => setInstallments(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+                    className="h-11 w-20 text-center font-semibold"
+                  />
+                  {amountValid && installments > 1 && (
+                    <span>
+                      de <Money amount={amount / installments} currency={currency} />
+                    </span>
+                  )}
+                </span>
+              </Row>
+              {installments > 1 && (
+                <div aria-hidden className="flex gap-1">
+                  {Array.from({ length: Math.min(installments, 12) }, (_, i) => (
+                    <span key={i} className="h-2 flex-1 rounded-full bg-border" />
+                  ))}
+                </div>
+              )}
+              {firstStatement && (
+                <p className="text-caption text-ink-muted">
+                  {installments > 1 ? "La primera entra" : "Entra"}{" "}
+                  {firstStatement.closingDate && firstStatement.dueDate
+                    ? `en el resumen que cierra el ${dayMonth(firstStatement.closingDate)} y vence el ${dayMonth(firstStatement.dueDate)}.`
+                    : `en el resumen de ${monthName(firstStatement.ym)}.`}
+                </p>
+              )}
             </div>
           )}
 
-          {isCredit && billingPreview && billingPreview.length > 0 && (
-            <div className="rounded-lg bg-muted/50 px-3 py-2">
-              <div className="text-xs font-semibold mb-1.5">Facturación estimada</div>
-              <div className="flex flex-col gap-1">
-                {billingPreview.map((b) => (
-                  <div key={b.n} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="font-mono text-muted-foreground">
-                      {installments > 1 ? `Cuota ${b.n}/${installments}` : "Gasto"}
-                    </span>
-                    <span className="flex-1 mx-2 truncate">
-                      {b.billingDate ? (
-                        <>Cierra {b.billingDate} · vence {b.dueDate}</>
-                      ) : (
-                        <span className="text-warn">Período {b.ym} sin configurar — el backend lo deriva del cierre por defecto</span>
-                      )}
-                    </span>
-                    <span className="font-mono font-semibold shrink-0">
-                      <Money amount={b.amountBase} currency={baseCurrency} />
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {errors.installments && <p className="text-xs text-destructive">{errors.installments}</p>}
+          <Row label="Fecha" error={errors.spentAt}>
+            <DatePicker value={spentAt} onChange={setSpentAt} aria-invalid={!!errors.spentAt} className={rowControl} />
+          </Row>
         </CardContent>
       </Card>
 
+      {isCredit && paymentMethod && <CardPeriodNudge paymentMethodId={paymentMethod.id} cardName={paymentMethod.name} />}
+
       {/* Compartido (plan 1.2): only with a hogar */}
       {hogar && (
-        <Card className="rounded-2xl border-0 shadow-card">
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
+        <Card>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <Label htmlFor="isShared" className="text-sm">Compartido</Label>
-                <p className="text-xs text-muted-foreground">
+                <Label htmlFor="isShared" className="text-heading font-semibold">
+                  Compartido
+                </Label>
+                <p className="text-caption text-ink-muted">
                   {isShared
                     ? `Va a ${hogar.name} y se divide según sus reglas, salvo que especifiques.`
-                    : "Va a Mi plata: solo lo ves vos."}
+                    : "Va a Mi plata. Activalo para sumarlo al Hogar."}
                 </p>
               </div>
               <Switch
@@ -377,34 +367,34 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
 
             {isShared && members && members.length > 1 && (
               <>
-                <div className="flex items-center justify-between pt-2 border-t border-border">
-                  <Label htmlFor="overrideShares" className="text-xs">División personalizada</Label>
-                  <Switch
-                    id="overrideShares"
-                    checked={overrideShares}
-                    onCheckedChange={setOverrideShares}
-                  />
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <Label htmlFor="overrideShares">División personalizada</Label>
+                  <Switch id="overrideShares" checked={overrideShares} onCheckedChange={setOverrideShares} />
                 </div>
 
                 {overrideShares && sharesList && (
                   <div className="flex flex-col gap-2">
                     {sharesList.map((s) => (
                       <div key={s.userId} className="flex items-center gap-2">
-                        <span className="flex-1 truncate text-xs font-medium">{s.name}</span>
+                        <Label htmlFor={`share-${s.userId}`} className="flex-1 truncate font-normal">
+                          {s.name}
+                        </Label>
                         <Input
+                          id={`share-${s.userId}`}
                           inputMode="decimal"
                           placeholder="0"
                           value={shareAmounts[s.userId] ?? ""}
                           onChange={(e) => setShareAmounts({ ...shareAmounts, [s.userId]: e.target.value })}
-                          className="h-8 w-28 text-right font-mono"
+                          className="h-11 w-32 text-right tabular-nums"
                         />
-                        <span className="text-xs text-muted-foreground w-8">{currency}</span>
+                        <span className="w-9 text-caption text-ink-muted">{currency}</span>
                       </div>
                     ))}
-                    <div className={cn("flex items-center gap-1 text-xs", sharesMatch ? "text-positive" : "text-destructive")}>
-                      {sharesMatch ? <Check aria-hidden className="size-3.5" /> : <TriangleAlert aria-hidden className="size-3.5" />} Suma {sharesSum.toFixed(2)} / {amount.toFixed(2)} {currency}
-                    </div>
-                    {errors.shares && <p className="text-xs text-destructive">{errors.shares}</p>}
+                    <p className={cn("flex items-center gap-1 text-caption", sharesMatch ? "text-positive" : "text-negative")}>
+                      {sharesMatch ? <Check aria-hidden className="size-4" /> : <TriangleAlert aria-hidden className="size-4" />} Suma{" "}
+                      {sharesSum.toFixed(2)} / {amount.toFixed(2)} {currency}
+                    </p>
+                    {errors.shares && <p className="text-caption text-negative">{errors.shares}</p>}
                   </div>
                 )}
               </>
@@ -414,26 +404,49 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
       )}
 
       {errors.form && (
-        <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
           {errors.form}
-        </div>
+        </p>
       )}
 
-      <div className="flex gap-2 pb-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={() => router.back()}
-          className="flex-1"
-          disabled={submitting}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" size="lg" className="flex-1" disabled={submitting}>
-          {submitting ? "Guardando…" : "Crear gasto"}
+      {/* One action, pinned to the bottom on phones. */}
+      <div className="safe-bottom sticky bottom-0 -mx-4 border-t border-border bg-background px-4 pt-3 pb-4 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
+        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+          {submitting ? "Guardando…" : "Guardar gasto"}
         </Button>
       </div>
     </form>
+  );
+}
+
+/** A data row: label on the left, its control on the right, the error under it. */
+function Row({
+  label,
+  htmlFor,
+  error,
+  bare,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  error?: string;
+  /** Inside a block that already has the padding and the divider. */
+  bare?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("flex flex-col", !bare && "py-2")}>
+      <div className="flex min-h-12 items-center justify-between gap-4">
+        {htmlFor ? (
+          <Label htmlFor={htmlFor} className="shrink-0 font-normal text-ink-muted">
+            {label}
+          </Label>
+        ) : (
+          <span className="shrink-0 text-body text-ink-muted">{label}</span>
+        )}
+        {children}
+      </div>
+      {error && <p className="text-right text-caption text-negative">{error}</p>}
+    </div>
   );
 }
