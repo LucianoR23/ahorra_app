@@ -2,195 +2,165 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { Loader2, Save, Info } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useSplitRules, useHouseholdMembers, useHouseholds } from "@/lib/api/hooks";
+import { Label } from "@/components/ui/label";
+import { MenuGroup, MenuItem, MenuRow } from "@/components/ui/menu-list";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useHouseholdMembers, useHouseholds, useSplitRules } from "@/lib/api/hooks";
 import { patchSplitRules } from "@/lib/api/mutations";
-import { useAuthStore } from "@/stores/auth";
 import { ApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth";
 
-/** Split rules of the hogar (plan 1.2: settings show the hogar from either tab). */
+type Rule = { userId: string; weight: number };
+
+const fmtPct = (n: number) => {
+  const r = Math.round(n * 10) / 10;
+  return Number.isInteger(r) ? r.toString() : r.toFixed(1);
+};
+
+/**
+ * "Cómo se dividen los gastos" (plan 1.10b, the grouped list): each member's
+ * share; the owner changes them in a sheet. Rules must add up to 100%.
+ */
 export function SplitRulesCard({ householdId }: { householdId: string }) {
   const me = useAuthStore((s) => s.user);
   const { data: households } = useHouseholds();
   const household = households?.find((h) => h.id === householdId);
   const isOwner = !!(me && household && household.createdBy === me.id);
-
   const { data: rules, isLoading } = useSplitRules(householdId);
   const { data: members } = useHouseholdMembers(householdId);
+  const [editing, setEditing] = useState(false);
 
-  const [edits, setEdits] = useState<Record<string, string>>({});
-  const [editingKey, setEditingKey] = useState<unknown>(null);
+  // Go sends an empty slice as null (the SWR fetcher does not apply zod defaults).
+  const list: Rule[] = rules?.rules ?? [];
+  const total = list.reduce((acc, r) => acc + r.weight, 0);
+  const pct = (w: number) => (total > 0 ? (w / total) * 100 : 0);
+  const name = (id: string) => {
+    if (id === me?.id) return "Vos";
+    const m = members?.find((x) => x.userId === id);
+    return m ? `${m.firstName} ${m.lastName}`.trim() : "Miembro";
+  };
+
+  return (
+    <>
+      <MenuGroup
+        title="Cómo se dividen los gastos"
+        footer="Se usa en los gastos compartidos que no tienen una división propia."
+      >
+        {isLoading ? (
+          <MenuRow>
+            <Skeleton className="h-10 w-full" />
+          </MenuRow>
+        ) : (
+          list.map((r) => (
+            <MenuRow key={r.userId}>
+              <span className="min-w-0 flex-1 truncate">{name(r.userId)}</span>
+              <span className="font-semibold tabular-nums">{fmtPct(pct(r.weight))}%</span>
+            </MenuRow>
+          ))
+        )}
+        {isOwner && list.length > 0 && <MenuItem icon={Percent} label="Cambiar la división" onClick={() => setEditing(true)} />}
+      </MenuGroup>
+      {editing && (
+        <SplitSheet householdId={householdId} rules={list} name={name} pct={pct} onOpenChange={setEditing} />
+      )}
+    </>
+  );
+}
+
+function SplitSheet({
+  householdId,
+  rules,
+  name,
+  pct,
+  onOpenChange,
+}: {
+  householdId: string;
+  rules: Rule[];
+  name: (id: string) => string;
+  pct: (w: number) => number;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(rules.map((r) => [r.userId, fmtPct(pct(r.weight))])),
+  );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [ok, setOk] = useState(false);
 
-  if (rules && editingKey !== rules) {
-    setEditingKey(rules);
-    setEdits({});
-  }
+  const nums = rules.map((r) => Number(values[r.userId]));
+  const sum = nums.reduce((a, n) => a + (Number.isFinite(n) ? n : 0), 0);
+  const invalid = nums.some((n) => !Number.isFinite(n) || n < 0);
+  const sumsTo100 = Math.abs(sum - 100) < 1e-2;
 
-  const storedTotal = rules ? rules.rules.reduce((acc, r) => acc + r.weight, 0) : 0;
-  const toPct = (w: number) => (storedTotal > 0 ? (w / storedTotal) * 100 : 0);
-  const fmtPct = (n: number) => {
-    const r = Math.round(n * 10) / 10;
-    return Number.isInteger(r) ? r.toString() : r.toFixed(1);
-  };
-
-  const weights: Record<string, string> = {};
-  if (rules) {
-    for (const r of rules.rules) {
-      weights[r.userId] = edits[r.userId] ?? fmtPct(toPct(r.weight));
-    }
-  }
-
-  const memberName = (id: string) => {
-    if (id === me?.id) return "Yo";
-    const m = members?.find((x) => x.userId === id);
-    return m ? `${m.firstName} ${m.lastName}` : id.slice(0, 8);
-  };
-
-  const totalWeight = Object.values(weights).reduce(
-    (acc, v) => acc + (Number(v) || 0),
-    0,
-  );
-
-  const dirty =
-    !!rules &&
-    rules.rules.some((r) => {
-      const n = Number(weights[r.userId]);
-      return !Number.isFinite(n) || Math.abs(n - toPct(r.weight)) > 1e-2;
-    });
-
-  const invalid =
-    totalWeight <= 0 ||
-    Object.values(weights).some((v) => {
-      const n = Number(v);
-      return !Number.isFinite(n) || n < 0;
-    });
-
-  const sumsTo100 = Math.abs(totalWeight - 100) < 1e-2;
-
-  async function handleSave() {
-    if (invalid || !rules) return;
-    setErr(null);
-    setOk(false);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (invalid || !sumsTo100) return;
     setSaving(true);
+    setErr(null);
     try {
       await patchSplitRules(
-        rules.rules.map((r) => ({ userId: r.userId, weight: Number(weights[r.userId]) })),
+        rules.map((r) => ({ userId: r.userId, weight: Number(values[r.userId]) })),
         householdId,
       );
       swrMutate(
-        (k) =>
-          Array.isArray(k) &&
-          typeof k[0] === "string" &&
-          (k[0].startsWith("/split") || k[0].startsWith("/balances")),
+        (k) => Array.isArray(k) && typeof k[0] === "string" && (k[0].startsWith("/split") || k[0].startsWith("/balances")),
         undefined,
         { revalidate: true },
       );
-      setOk(true);
+      toast.success("División actualizada");
+      onOpenChange(false);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "No se pudo guardar");
-    } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-bold">Reglas de división</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Porcentajes usados para dividir gastos compartidos cuando no hay override.
-            </p>
-          </div>
-          {!isOwner && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
-              <Info className="size-3" /> Solo lectura
-            </span>
-          )}
-        </div>
-
-        {isLoading || !rules ? (
-          <div className="mt-3 space-y-2">
-            <Skeleton className="h-10 w-full rounded-md" />
-            <Skeleton className="h-10 w-full rounded-md" />
-          </div>
-        ) : (
-          <>
-            <div className="mt-3 flex flex-col gap-2">
-              {rules.rules.map((r) => {
-                const n = Number(weights[r.userId] ?? r.weight);
-                const share = totalWeight > 0 && Number.isFinite(n) ? (n / totalWeight) * 100 : 0;
-                return (
-                  <div key={r.userId} className="flex items-center gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold">{memberName(r.userId)}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {share.toFixed(1)}% del total
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        step="1"
-                        min="0"
-                        max="100"
-                        disabled={!isOwner || saving}
-                        value={weights[r.userId] ?? ""}
-                        onChange={(e) =>
-                          setEdits((prev) => ({ ...prev, [r.userId]: e.target.value }))
-                        }
-                        className="h-9 w-24 pr-6 text-right"
-                      />
-                      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                        %
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Cómo se dividen los gastos</DialogTitle>
+          <DialogDescription>El porcentaje que le toca a cada uno. Tiene que sumar 100%.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {rules.map((r) => (
+            <div key={r.userId} className="flex items-center justify-between gap-4">
+              <Label htmlFor={`split-${r.userId}`} className="min-w-0 flex-1 truncate text-body font-normal">
+                {name(r.userId)}
+              </Label>
+              <div className="relative w-28">
+                <Input
+                  id={`split-${r.userId}`}
+                  inputMode="decimal"
+                  value={values[r.userId] ?? ""}
+                  onChange={(e) => setValues((v) => ({ ...v, [r.userId]: e.target.value.replace(",", ".") }))}
+                  disabled={saving}
+                  className="pr-8 text-right tabular-nums"
+                />
+                <span aria-hidden className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-ink-muted">
+                  %
+                </span>
+              </div>
             </div>
-
-            {isOwner && (
-              <>
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <span className={cn("text-muted-foreground", !sumsTo100 && "text-amber-500")}>
-                    Total: {fmtPct(totalWeight)}%{!sumsTo100 && " (debería sumar 100)"}
-                  </span>
-                  {ok && !dirty && <span className="text-emerald-500">Guardado</span>}
-                </div>
-                {err && (
-                  <div className="mt-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                    {err}
-                  </div>
-                )}
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!dirty || invalid || saving}
-                  >
-                    {saving ? (
-                      <Loader2 className="mr-1 size-3.5 animate-spin" />
-                    ) : (
-                      <Save className="mr-1 size-3.5" />
-                    )}
-                    Guardar
-                  </Button>
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+          ))}
+          <p aria-live="polite" className={cn("text-caption", sumsTo100 ? "text-ink-muted" : "text-warn")}>
+            Suman {fmtPct(sum)}%{sumsTo100 ? "" : ". Ajustalos para que den 100%."}
+          </p>
+          {err && (
+            <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
+              {err}
+            </p>
+          )}
+          <Button type="submit" size="lg" className="w-full" disabled={invalid || !sumsTo100 || saving}>
+            {saving ? "Guardando…" : "Guardar"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

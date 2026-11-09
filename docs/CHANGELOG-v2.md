@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Hogar y miembros
+- Hogar follows the grouped list of Más, titled "Hogar y miembros" like in Más, with a back button. "Hogar": name and base currency as rows (the owner opens a sheet to change them, with the currency as a segmented control; members see them read-only). "Miembros · 2": avatar, name, email and "Dueño"; the owner gets a menu per member ("Hacer dueño", "Sacar del hogar", both confirmed) and "Invitar a alguien", which opens the invite sheet and then shows the link to copy. "Invitaciones pendientes" with a menu to resend or cancel. "Cómo se dividen los gastos": each member's share, and "Cambiar la división" opens a sheet that only saves when it adds up to 100%. Last, "Eliminar hogar" (typed confirmation) or "Salir del hogar" (confirmed) as a destructive row.
+- Without a hogar, and in Cuentas from Mi plata, an empty state offers to create it or go to it.
+- Crear hogar uses the app shell, the page header with back and the currency as a segmented control.
+- Copy without internal terms ("soft-deleted", "owner", "DB").
+- Tests for removing a member, inviting, the split sheet and the member's read-only view.
+
 ### 1.10b Soporte
 - Soporte follows the Movimientos list: page header with the + for a new report, a "Solo abiertos" chip, the reports as rows (bug or idea icon, subject, date, attachments and replies, status badge on the right), "Cargar más" and an empty state. An empty page from the API (`items: null`) no longer breaks it.
 - Nuevo reporte: page header with back, Error · Mejora as a segmented control, attachments as removable rows, "Enviar reporte" pinned at the bottom on phones.

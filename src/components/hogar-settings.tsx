@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Home } from "lucide-react";
+import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { HouseholdConfig } from "@/components/household-config";
 import { SplitRulesCard } from "@/components/split-rules-card";
 import { selectSpace, useSpaces } from "@/lib/spaces";
@@ -12,33 +12,24 @@ import { selectSpace, useSpaces } from "@/lib/spaces";
 export function HogarSettings() {
   const { hogar, isLoading } = useSpaces();
   if (isLoading) return null;
-  if (!hogar) return <CreateHogarCard />;
-  return (
-    <>
-      <HouseholdConfig householdId={hogar.id} />
-      <SplitRulesCard householdId={hogar.id} />
-    </>
-  );
-}
-
-function CreateHogarCard() {
-  return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="flex items-start gap-3 p-4">
-        <Home className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-bold">Hogar</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            ¿Compartís gastos con alguien? Creá un hogar, invitalo y llevá las cuentas entre ustedes.
-          </p>
-        </div>
-        <Link href="/hogar/nuevo">
-          <Button variant="outline" size="xs">
+  if (!hogar) {
+    return (
+      <EmptyState
+        icon={Users}
+        title="Todavía no compartís gastos"
+        description="Creá un hogar, invitá a quien vive con vos y llevá las cuentas entre ustedes."
+        action={
+          <Button variant="outline" nativeButton={false} render={<Link href="/hogar/nuevo" />}>
             Crear hogar
           </Button>
-        </Link>
-      </CardContent>
-    </Card>
+        }
+      />
+    );
+  }
+  return (
+    <HouseholdConfig householdId={hogar.id}>
+      <SplitRulesCard householdId={hogar.id} />
+    </HouseholdConfig>
   );
 }
 
@@ -51,23 +42,21 @@ export function HogarOnly({ children }: { children: (hogarId: string) => React.R
   if (isLoading) return null;
   if (hogar && inHogar) return <>{children(hogar.id)}</>;
   return (
-    <Card className="rounded-2xl border-0 shadow-card">
-      <CardContent className="flex flex-col items-start gap-3 p-4">
-        <p className="text-sm text-muted-foreground">
-          Las cuentas entre ustedes se llevan en el hogar. En Mi plata solo están tus gastos.
-        </p>
-        {hogar ? (
-          <Button variant="outline" size="sm" onClick={() => selectSpace(hogar.id)}>
+    <EmptyState
+      icon={Users}
+      title="Las cuentas son del hogar"
+      description="En Mi plata solo están tus gastos. Las cuentas entre ustedes se llevan en el hogar."
+      action={
+        hogar ? (
+          <Button variant="outline" onClick={() => selectSpace(hogar.id)}>
             Ir al hogar
           </Button>
         ) : (
-          <Link href="/hogar/nuevo">
-            <Button variant="outline" size="sm">
-              Crear hogar
-            </Button>
-          </Link>
-        )}
-      </CardContent>
-    </Card>
+          <Button variant="outline" nativeButton={false} render={<Link href="/hogar/nuevo" />}>
+            Crear hogar
+          </Button>
+        )
+      }
+    />
   );
 }
