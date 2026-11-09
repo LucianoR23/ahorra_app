@@ -42,7 +42,8 @@ describe("InsightDetail", () => {
     render(<InsightDetail id="n1" />, { wrapper: WithSWR });
     expect(await screen.findByRole("heading", { name: "Tu Visa vence el jueves" })).toBeInTheDocument();
     expect(screen.getByText("Vencimiento de tarjeta")).toBeInTheDocument();
-    expect(screen.getByText("9 de noviembre, 10:00")).toBeInTheDocument();
+    // The separator depends on the ICU build ("," or "a las").
+    expect(screen.getByText(/^9 de noviembre.*10:00$/)).toBeInTheDocument();
     expect(screen.getByText("Ver resumen")).toHaveAttribute("href", "/tarjetas/visa/resumen/2026-10");
     await vi.waitFor(() => expect(requests().some((r) => r.method === "POST" && r.path === "/insights/n1/read")).toBe(true));
   });
