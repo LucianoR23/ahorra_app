@@ -41,7 +41,14 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] }, testIgnore: /screens\.spec\.ts/ },
     // Screenshot harness (plan 1.10a), run on its own: `pnpm test:screens`.
-    { name: "screens", use: { ...devices["Desktop Chrome"] }, testMatch: /screens\.spec\.ts/ },
+    // With VISUAL=1 it also compares with the CI baselines (plan 1.10b). No
+    // platform in the path: only CI's Linux runner writes or reads them.
+    {
+      name: "screens",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /screens\.spec\.ts/,
+      snapshotPathTemplate: "{testDir}/__screenshots__/{arg}{ext}",
+    },
   ],
   webServer: [
     {

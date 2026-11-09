@@ -153,9 +153,7 @@ function LoginForm({ remembered }: { remembered: string }) {
       </form>
 
       <AuthDivider />
-      <div className="flex justify-center">
-        <GoogleSignInButton />
-      </div>
+      <GoogleSignInButton />
 
       <AuthFootnote>
         ¿No tenés cuenta?{" "}
