@@ -190,8 +190,13 @@ export function ExpensesList({ help }: { help?: React.ReactNode }) {
           description={total === 0 && !debouncedQuery && !categoryId && !paymentMethodId && kind === "all" ? "No cargaste gastos este mes." : "Nada coincide con estos filtros."}
         />
       ) : (
-        groupByDay(items).map((g) => (
-          <section key={g.day} aria-label={dayLabel(g.day)} className="flex flex-col gap-2">
+        groupByDay(items).map((g, i) => (
+          <section
+            key={g.day}
+            aria-label={dayLabel(g.day)}
+            className="rise flex flex-col gap-2"
+            style={{ "--i": i } as React.CSSProperties}
+          >
             <div className="flex items-baseline justify-between px-1 text-body text-ink-muted">
               <h2 className="font-semibold">{dayLabel(g.day)}</h2>
               <Money amount={g.total} currency={baseCurrency} />

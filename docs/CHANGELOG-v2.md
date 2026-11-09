@@ -4,6 +4,9 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.10b Motion
+- Lists rise into place when they appear: the day groups of Movimientos and Ingresos one after the other (30 ms apart, at most 8 steps), and each group of the grouped lists. `rise` in `globals.css`, with the brand's `duration-base` and `ease-out`; nothing moves with reduced motion.
+- Press feedback: rows that are links or buttons (`ListRow`, `MenuItem`) dim while held, and the button's 1 px press now eases instead of jumping.
 ### 1.10b Visual regression
 - The screenshot harness compares every shot with its baseline when `VISUAL=1` (CI): `toHaveScreenshot`, soft so all changed screens show up, up to 1% of pixels different. Baselines live in `e2e/__screenshots__` and come only from CI's Linux runner.
 - Dates, months, weekdays, times, "día 9", "en 5 días" and emails are masked, and so are the chart's axis labels and the Google button (drawn by Google's servers).

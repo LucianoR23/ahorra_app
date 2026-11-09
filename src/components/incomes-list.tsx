@@ -108,8 +108,13 @@ export function IncomesList({ help }: { help?: React.ReactNode }) {
           }
         />
       ) : (
-        groupByDay(items, (i) => i.receivedAt, (i) => i.amountBase).map((g) => (
-          <section key={g.day} aria-label={dayLabel(g.day)} className="flex flex-col gap-2">
+        groupByDay(items, (i) => i.receivedAt, (i) => i.amountBase).map((g, n) => (
+          <section
+            key={g.day}
+            aria-label={dayLabel(g.day)}
+            className="rise flex flex-col gap-2"
+            style={{ "--i": n } as React.CSSProperties}
+          >
             <div className="flex items-baseline justify-between px-1 text-body text-ink-muted">
               <h2 className="font-semibold">{dayLabel(g.day)}</h2>
               <Money amount={g.total} currency={baseCurrency} income />

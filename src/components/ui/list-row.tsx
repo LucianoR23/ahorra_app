@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils"
 const rowClass =
   "flex min-h-16 w-full items-center gap-3 py-3 text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
 
+/** Press feedback of a row that is a link or a button: it dims while held. */
+const pressable = "transition-opacity duration-(--duration-fast) active:opacity-60"
+
 /**
  * A movement-like row (design "Filas de lista"): leading icon, title,
  * subtitle and a trailing amount. With `href` the whole row is a link;
@@ -43,7 +46,7 @@ function ListRow({
   )
   if (href) {
     return (
-      <Link data-slot="list-row" href={href} className={cn(rowClass, "rounded-sm", className)}>
+      <Link data-slot="list-row" href={href} className={cn(rowClass, pressable, "rounded-sm", className)}>
         {content}
       </Link>
     )
@@ -55,7 +58,7 @@ function ListRow({
         data-slot="list-row"
         aria-label={ariaLabel}
         onClick={onClick}
-        className={cn(rowClass, "cursor-pointer rounded-sm", className)}
+        className={cn(rowClass, pressable, "cursor-pointer rounded-sm", className)}
       >
         {content}
       </button>
