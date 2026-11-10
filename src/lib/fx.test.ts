@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Rate } from "@/lib/api/schemas";
-import { convert, rateFor, rateSourceLabel, sourceOf } from "./fx";
+import { convert, isStale, rateFor, rateSourceLabel, sourceOf } from "./fx";
 
 const rate = (currency: string, source: string, rateSell: number, rateAvg = rateSell - 10): Rate => ({
   currency, source, rateSell, rateAvg, rateBuy: rateSell - 20, lastUpdate: "2026-11-10T12:00:00Z", fetchedAt: "2026-11-10T12:00:00Z",
@@ -54,5 +54,17 @@ describe("labels", () => {
     expect(rateSourceLabel("futuro")).toBe("futuro");
     expect(sourceOf(undefined)).toBe("bolsa");
     expect(sourceOf("blue")).toBe("blue");
+  });
+});
+
+describe("isStale (plan 5.2)", () => {
+  const stale = (r: Rate): Rate => ({ ...r, stale: true });
+  it("follows the rate used, or the three a crossed euro uses", () => {
+    const list = [stale(rate("USD", "tarjeta", 2041)), rate("USD", "bolsa", 1200), rate("USD", "oficial", 1000), stale(rate("EUR", "oficial", 1100))];
+    expect(isStale(list, "USD", "tarjeta")).toBe(true);
+    expect(isStale(list, "USD", "bolsa")).toBe(false);
+    expect(isStale(list, "EUR", "bolsa")).toBe(true); // through the stale official euro
+    expect(isStale(list, "ARS", "tarjeta")).toBe(false);
+    expect(isStale(undefined, "USD", "bolsa")).toBe(false);
   });
 });

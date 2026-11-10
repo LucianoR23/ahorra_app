@@ -4,6 +4,10 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 5.2: stale rates
+- When the dollar a conversion uses was not confirmed by any source in the last day, Cargar gasto, Cargar ingreso and the space's "Cotización" setting say "Ojo: esta cotización no se actualizó en el último día." A euro priced through the dollar warns when any of the rates it uses is stale. Reads `stale` from `GET /exchange-rates/current`.
+- The history endpoint (`GET /exchange-rates/history`) has no screen yet.
+
 ### 5.1: which dollar converts
 - Each space has its dollar: "Cotización de Mi plata" in Ajustes and "Cotización del hogar" in Hogar (the owner changes it, the others see it). MEP by default. Options: MEP, Oficial, Blue, Tarjeta, CCL, Cripto, Mayorista, each with its price.
 - Cargar gasto and Cargar ingreso show "Cotización" when the amount is in another currency, starting at the space's dollar: e.g. Tarjeta for a purchase abroad, CCL for dollars sold. The preview says "≈ $ 204.100 al dólar Tarjeta"; the pick goes as `rateSource`.

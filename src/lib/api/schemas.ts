@@ -472,6 +472,8 @@ export const rateSchema = z.object({
   rateSell: z.number(),
   lastUpdate: z.string(),
   fetchedAt: z.string(),
+  /** No upstream confirmed it in 24 h (plan 5.2). */
+  stale: z.boolean().optional(),
 });
 export type Rate = z.infer<typeof rateSchema>;
 
