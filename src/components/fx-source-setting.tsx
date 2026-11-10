@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { DollarSign } from "lucide-react";
-import { MenuGroup, MenuRow } from "@/components/ui/menu-list";
+import { ChartLine, DollarSign } from "lucide-react";
+import { MenuGroup, MenuItem, MenuRow } from "@/components/ui/menu-list";
 import { rowControl } from "@/components/ui/form-row";
 import { RateSourceSelect } from "@/components/rate-source-select";
 import { useExchangeRates } from "@/lib/api/hooks";
@@ -59,6 +59,7 @@ export function FxSourceSetting({ household, editable, title }: { household: Hou
           </span>
         )}
       </MenuRow>
+      <MenuItem icon={ChartLine} label="Ver evolución del dólar" href="/cotizaciones" />
       {saving ? <span className="sr-only" role="status">Guardando…</span> : null}
     </MenuGroup>
   );

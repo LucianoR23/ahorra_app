@@ -73,3 +73,16 @@ export function isStale(rates: Rate[] | undefined, currency: string, source: str
 
 /** The warning under a conversion that uses a stale rate. */
 export const STALE_RATE_WARNING = "Ojo: esta cotización no se actualizó en el último día.";
+
+/** The selling price of a history point, the average without one. */
+export function historyPrice(p: { rateSell: number; rateAvg: number }): number {
+  return p.rateSell > 0 ? p.rateSell : p.rateAvg;
+}
+
+/** How much a dollar moved over its history: last vs first, in percent. */
+export function periodChange(points: { rateSell: number; rateAvg: number }[]): number | null {
+  if (points.length < 2) return null;
+  const first = historyPrice(points[0]);
+  const last = historyPrice(points[points.length - 1]);
+  return first > 0 ? ((last - first) / first) * 100 : null;
+}

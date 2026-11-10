@@ -24,10 +24,19 @@ export function TrendsLineChart({
   data,
   lines,
   currency,
+  yTick = fmtK,
+  fitY = false,
+  dots = true,
 }: {
   data: Record<string, string | number>[];
   lines: readonly TrendLine[];
   currency: Currency;
+  /** Axis labels; amounts default to "12k". */
+  yTick?: (n: number) => string;
+  /** Fit the axis to the values instead of starting at 0 (a price that moves 5%). */
+  fitY?: boolean;
+  /** A dot per point; off for long series. */
+  dots?: boolean;
 }) {
   const hidden = useDiscreet();
   const formatAmount = useFormatAmount();
@@ -37,7 +46,8 @@ export function TrendsLineChart({
         <CartesianGrid vertical={false} stroke="var(--color-border)" />
         <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }} axisLine={false} tickLine={false} />
         <YAxis
-          tickFormatter={hidden ? noTick : fmtK}
+          tickFormatter={hidden ? noTick : yTick}
+          domain={fitY ? ["auto", "auto"] : undefined}
           tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
           axisLine={false}
           tickLine={false}
@@ -64,7 +74,7 @@ export function TrendsLineChart({
             stroke={l.color}
             strokeWidth={2}
             strokeDasharray={l.dashed ? "4 4" : undefined}
-            dot={{ r: 3, strokeWidth: 0, fill: l.color }}
+            dot={dots ? { r: 3, strokeWidth: 0, fill: l.color } : false}
             activeDot={{ r: 5 }}
           />
         ))}

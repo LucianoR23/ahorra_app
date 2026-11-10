@@ -26,6 +26,7 @@ import type {
   SeriesStats,
   Expense,
   Rate,
+  RateHistory,
   BalancesResponse,
   BalancesMeResponse,
   Settlement,
@@ -429,6 +430,16 @@ export function useExchangeRates() {
   const token = useAuthStore((s) => s.accessToken);
   return useSWR<Rate[]>(
     token ? (["/exchange-rates/current", { householdScoped: false }] as const) : null,
+  );
+}
+
+/** A dollar's history (plan 5.2b): one quote per day over `days` days. */
+export function useRateHistory(source: string, days: number, currency = "USD") {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<RateHistory>(
+    token
+      ? ([`/exchange-rates/history?currency=${currency}&source=${source}&days=${days}`, { householdScoped: false }] as const)
+      : null,
   );
 }
 
