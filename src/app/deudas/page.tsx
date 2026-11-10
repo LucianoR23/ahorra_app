@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { DebtsScreen } from "@/components/debts-screen";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 import { PageHeader } from "@/components/ui/page-header";
+import { PesosNotice } from "@/components/view-currency";
 
 const DEUDAS_HELP: InfoHelpContent = {
   titulo: "Cuentas entre ustedes",
@@ -37,6 +38,7 @@ export default function Page() {
           action={<InfoHelp content={DEUDAS_HELP} size="icon" />}
           className="mb-0"
         />
+        <PesosNotice what="Las cuentas entre ustedes" />
         <DebtsScreen />
       </div>
     </AppShell>

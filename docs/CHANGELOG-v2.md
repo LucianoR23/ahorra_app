@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 5.3: Ver en dólares
+- A "$ / US$" selector on top of Inicio (Yo and Hogar) and Reportes, remembered per device (`app.view_currency`). In dollars, the month's totals, categories, what each member paid and Tendencias come from the API in dollars.
+- Under the totals: which dollar converts them ("al dólar MEP del día de cada movimiento") and a link to use today's instead. Without quotes for the space's dollar, an error with "Ver en pesos".
+- Tarjetas and Cuentas entre ustedes stay in pesos; with "US$" on they say so and that dollars there come later (plan 5.3b).
+- Inicio · Yo takes the month's income from the monthly report instead of `/totals/income`.
+
 ### 5.2b: Cotizaciones
 - New screen `/cotizaciones`, in Más under "Tu plata" and from "Ver evolución del dólar" in the space's rate setting. A line chart of a dollar's selling price, one point per day (`GET /exchange-rates/history`), picking the dollar (starts at the space's) and the period (30 days, 6 months, 1 year), with today's price and the change over the period ("+5,9% en 30 días").
 - `TrendsLineChart` takes `yTick`, `fitY` (an axis fitted to the values) and `dots`. Discreet mode hides the price, the axis numbers and the tooltips.

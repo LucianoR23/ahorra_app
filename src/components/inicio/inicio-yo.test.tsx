@@ -1,9 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InicioYo } from "./inicio-yo";
 import type { Committed } from "@/lib/api/schemas";
 import { API, server, signIn } from "@/test/msw";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useViewCurrencyStore } from "@/stores/view-currency";
 import { personalSpace, WithSWR } from "@/test/spaces";
 
 // Inicio · Yo (designs `Main` and `DesktopInicio`, plan 4.2).
@@ -76,21 +79,27 @@ const expense = {
 function handlers({ income = 1151143, spent = 486320, cards = committed } = {}) {
   server.use(
     http.get(`${API}/households`, () => HttpResponse.json([personalSpace])),
-    http.get(`${API}/reports/monthly`, () =>
-      HttpResponse.json({
+    http.get(`${API}/reports/monthly`, ({ request }) => {
+      const q = new URL(request.url).searchParams;
+      // Plan 5.3: in dollars at $ 1.600, or $ 2.000 for "today".
+      const usd = q.get("currency") === "USD";
+      const rate = q.get("rate") === "today" ? 2000 : 1600;
+      const amount = (n: number) => (usd ? Math.round((n / rate) * 100) / 100 : n);
+      return HttpResponse.json({
         householdId: personalSpace.id,
         baseCurrency: "ARS",
+        ...(usd ? { currency: "USD", rateSource: "bolsa", rateMode: q.get("rate") ?? "day", usdRate: 2000 } : { currency: "ARS" }),
         month: "2026-11",
         from: "2026-11-01",
         to: "2026-11-30",
-        spentThisMonth: spent,
+        spentThisMonth: amount(spent),
+        incomeThisMonth: amount(income),
         billedThisMonth: 0,
         dueThisMonth: 0,
         byCategory: [],
         fixedVariable: { fixedTotal: 0, variableTotal: 0, fixedPct: 0, variablePct: 0, fixedCount: 0, variableCount: 0 },
-      }),
-    ),
-    http.get(`${API}/totals/income`, () => HttpResponse.json({ total: income, baseCurrency: "ARS", from: "", to: "" })),
+      });
+    }),
     http.get(`${API}/credit-cards/committed`, () => HttpResponse.json(cards)),
     http.get(`${API}/insights`, () =>
       HttpResponse.json(
@@ -135,6 +144,28 @@ describe("InicioYo", () => {
     expect(within(hero).getByText("Te quedan")).toBeInTheDocument();
     expect(within(hero).getByText("$ 664.823")).toBeInTheDocument();
     expect(within(hero).getByText("Gastaste el 42% de lo que entró este mes.")).toBeInTheDocument();
+  });
+
+  it("switches to dollars and back (plan 5.3)", async () => {
+    useViewCurrencyStore.setState({ usd: false, today: false });
+    handlers();
+    render(<InicioYo />, { wrapper: WithSWR });
+    const hero = await screen.findByRole("region", { name: /Gastaste en/ });
+    expect(await within(hero).findByText("$ 486.320")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("radio", { name: "US$" }));
+    expect(await within(hero).findByText("US$ 303,95")).toBeInTheDocument();
+    expect(within(hero).getByText("+ US$ 719,46")).toBeInTheDocument();
+    expect(within(hero).getByText(/al dólar MEP del día de cada movimiento\. Tarjetas y deudas siguen en pesos\./)).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.viewCurrency) ?? "{}")).toMatchObject({ state: { usd: true } });
+
+    await userEvent.click(within(hero).getByRole("button", { name: "Usar el de hoy" }));
+    expect(await within(hero).findByText("US$ 243,16")).toBeInTheDocument();
+    expect(within(hero).getByText(/al dólar MEP de hoy, a/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("radio", { name: "$" }));
+    expect(await within(hero).findByText("$ 486.320")).toBeInTheDocument();
+    useViewCurrencyStore.setState({ usd: false, today: false });
   });
 
   it("says when the month went over what came in", async () => {

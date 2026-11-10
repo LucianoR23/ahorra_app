@@ -86,3 +86,8 @@ export function periodChange(points: { rateSell: number; rateAvg: number }[]): n
   const last = historyPrice(points[points.length - 1]);
   return first > 0 ? ((last - first) / first) * 100 : null;
 }
+
+/** The currency a report's amounts are in (plan 5.3). */
+export function reportCurrency(r: { currency?: string; baseCurrency: string } | undefined): string {
+  return r?.currency ?? r?.baseCurrency ?? "ARS";
+}

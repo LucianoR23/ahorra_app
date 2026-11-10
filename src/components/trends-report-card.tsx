@@ -6,6 +6,7 @@ import { TrendsLineChart } from "@/components/report-charts-lazy";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Money } from "@/components/ui/money";
+import { reportCurrency } from "@/lib/fx";
 import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrendsReport } from "@/lib/api/hooks";
@@ -35,7 +36,7 @@ const LINES = [
 export function TrendsReportCard() {
   const [months, setMonths] = useState<"3" | "6" | "12">("6");
   const { data, isLoading } = useTrendsReport(Number(months) as 3 | 6 | 12);
-  const cur = data?.baseCurrency ?? "ARS";
+  const cur = reportCurrency(data);
   const points = data?.points ?? [];
   const chartData = points.map((p) => ({
     month: shortMonth(p.month),

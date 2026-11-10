@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { useViewCurrency, viewQuery } from "@/stores/view-currency";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type {
@@ -63,10 +64,13 @@ export function useHouseholdMembers(householdId?: string | null) {
   );
 }
 
+/** The month's report, in pesos or dollars per "Ver en dólares" (plan 5.3). */
 export function useMonthlyReport(month?: string) {
   const { token, householdId } = useReady();
+  const view = viewQuery(useViewCurrency());
+  const query = { ...(month ? { month } : {}), ...view };
   const key = token && householdId
-    ? (["/reports/monthly", { query: month ? { month } : undefined }] as const)
+    ? (["/reports/monthly", { query: Object.keys(query).length ? query : undefined }] as const)
     : null;
   return useSWR<MonthlyReport>(key);
 }
@@ -445,8 +449,9 @@ export function useRateHistory(source: string, days: number, currency = "USD") {
 
 export function useTrendsReport(months = 6) {
   const { token, householdId } = useReady();
+  const view = viewQuery(useViewCurrency());
   const key = token && householdId
-    ? (["/reports/trends", { query: { months } }] as const)
+    ? (["/reports/trends", { query: { months, ...view } }] as const)
     : null;
   return useSWR<TrendsReport>(key);
 }
