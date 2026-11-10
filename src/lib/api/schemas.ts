@@ -118,6 +118,10 @@ export const monthlyReportSchema = z.object({
   baseCurrency: z.string(),
   ...reportCurrencyFields,
   incomeThisMonth: z.number().optional(),
+  /** Spent in today's pesos (plan 5.4): pesos only, months older than the last published CPI. */
+  spentRealThisMonth: z.number().optional(),
+  /** Last month with published CPI (YYYY-MM), with spentRealThisMonth or adjust. */
+  cpiThrough: z.string().optional(),
   month: z.string(),
   from: z.string(),
   to: z.string(),
@@ -510,6 +514,9 @@ export const trendsReportSchema = z.object({
   householdId: z.string(),
   baseCurrency: z.string(),
   ...reportCurrencyFields,
+  /** "cpi" when the amounts are in today's pesos (plan 5.4). */
+  adjust: z.literal("cpi").optional(),
+  cpiThrough: z.string().optional(),
   months: z.number(),
   points: z.array(trendPointSchema),
 });
