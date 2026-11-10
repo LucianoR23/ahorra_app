@@ -113,8 +113,9 @@ export function maskedAmount(currency = "ARS"): string {
   return `${currencyPrefix(currency)} ${MASKED_DIGITS}`;
 }
 
-// Amounts inside API text (notification titles and bodies): "$1234.56",
-// "1234.56 ARS", "US$ 10". The API writes them in these two shapes.
+// Amounts inside API text (notification titles and bodies). The API writes
+// es-AR ("$ 19.450,50", "US$ 10") since plan 1.10c; older rows keep
+// "$1234.56" and "1234.56 ARS". The pattern covers both.
 const AMOUNT_IN_TEXT = /(?:US\$|\$|€)\s?-?\d(?:[\d.,]*\d)?|-?\d(?:[\d.,]*\d)?\s?(?:ARS|USD|EUR)\b/g;
 
 /** Replaces every amount in a free text with `$ ••••••`. */
