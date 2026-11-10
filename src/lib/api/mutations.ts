@@ -84,6 +84,8 @@ export type ExpenseCreateInput = {
   installments: number;
   isShared: boolean;
   sharesOverride?: { userId: string; amount: number }[];
+  /** The dollar for this expense (plan 5.1); absent: the household's. */
+  rateSource?: string;
 };
 
 /** Creates the expense in `householdId` ("Mi plata" or the hogar), or in the current space. */
@@ -165,6 +167,8 @@ export type IncomeCreateInput = {
   source: string;
   description?: string;
   receivedAt: string;
+  /** The dollar for this income (plan 5.1); absent: the household's. */
+  rateSource?: string;
 };
 
 export function createIncome(input: IncomeCreateInput) {
@@ -487,7 +491,7 @@ export function createHousehold(input: { name: string; baseCurrency: Currency })
   });
 }
 
-export function patchHousehold(id: string, input: { name?: string; baseCurrency?: Currency }) {
+export function patchHousehold(id: string, input: { name?: string; baseCurrency?: Currency; fxSource?: string }) {
   return apiMutate<Household>({
     method: "PATCH",
     path: `/households/${id}`,

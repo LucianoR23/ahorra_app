@@ -43,6 +43,8 @@ export const householdSchema = z.object({
   id: z.string(),
   name: z.string(),
   baseCurrency: currencySchema,
+  /** The dollar it converts with (plan 5.1); MEP ("bolsa") by default. */
+  fxSource: z.string().optional(),
   kind: householdKindSchema,
   createdBy: z.string(),
   createdAt: z.string(),
@@ -146,6 +148,8 @@ export const expenseSchema = z.object({
   baseCurrency: z.string(),
   rateUsed: z.number().optional(),
   rateAt: z.string().optional(),
+  /** Where rateUsed came from (plan 5.1); absent without conversion. */
+  rateSource: z.string().nullable().optional(),
   description: z.string(),
   spentAt: z.string(),
   installments: z.number(),
@@ -204,6 +208,8 @@ export const incomeSchema = z.object({
   baseCurrency: z.string(),
   rateUsed: z.number().optional(),
   rateAt: z.string().optional(),
+  /** Where rateUsed came from (plan 5.1); absent without conversion. */
+  rateSource: z.string().nullable().optional(),
   source: z.string(),
   description: z.string().nullable().optional(),
   receivedAt: z.string(),

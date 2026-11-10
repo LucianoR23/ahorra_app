@@ -1,5 +1,6 @@
 "use client";
 
+import { rateSourceLabel } from "@/lib/fx";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -196,6 +197,7 @@ export function ExpenseDetailView({ id }: { id: string }) {
             {foreign && (
               <>
                 ≈ <Money amount={expense.amountBase} currency={expense.baseCurrency} />
+                {expense.rateSource && <> al dólar {rateSourceLabel(expense.rateSource)}</>}
               </>
             )}
           </p>

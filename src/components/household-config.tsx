@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MenuGroup, MenuItem, MenuRow } from "@/components/ui/menu-list";
+import { FxSourceSetting } from "@/components/fx-source-setting";
 import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHouseholdInvites, useHouseholdMembers, useHouseholds } from "@/lib/api/hooks";
@@ -142,6 +143,8 @@ export function HouseholdConfig({ householdId, children }: { householdId: string
           </>
         )}
       </MenuGroup>
+
+      <FxSourceSetting household={household} editable={isOwner} title="Cotización del hogar" />
 
       <MenuGroup title={members ? `Miembros · ${members.length}` : "Miembros"}>
         {members?.map((m) => {

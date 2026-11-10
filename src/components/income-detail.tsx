@@ -1,5 +1,6 @@
 "use client";
 
+import { rateSourceLabel } from "@/lib/fx";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -149,6 +150,7 @@ export function IncomeDetailView({ id }: { id: string }) {
         {foreign && (
           <p className="text-body text-ink-muted">
             ≈ <Money amount={income.amountBase} currency={income.baseCurrency} />
+            {income.rateSource && <> al dólar {rateSourceLabel(income.rateSource)}</>}
           </p>
         )}
       </div>
