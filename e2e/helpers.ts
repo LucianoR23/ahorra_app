@@ -12,13 +12,26 @@ export function uniqueEmail(tag: string) {
   return `e2e-${tag}-${Date.now()}-${counter}@example.test`;
 }
 
-async function call<T>(method: string, path: string, opts: { token?: string; household?: string; body?: unknown } = {}): Promise<T> {
+// Each API sign-up comes from its own address (X-Forwarded-For, trusted from
+// localhost in playwright.config.ts), so the register limit of 5 per hour and
+// IP holds for real users but not across specs.
+const runTag = Math.floor(Math.random() * 250) + 1;
+function signupIP() {
+  return `10.${runTag}.${Math.floor(counter / 250)}.${(counter % 250) + 1}`;
+}
+
+async function call<T>(
+  method: string,
+  path: string,
+  opts: { token?: string; household?: string; body?: unknown; ip?: string } = {},
+): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       ...(opts.token ? { Authorization: `Bearer ${opts.token}` } : {}),
       ...(opts.household ? { "X-Household-ID": opts.household } : {}),
+      ...(opts.ip ? { "X-Forwarded-For": opts.ip } : {}),
     },
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
   });
