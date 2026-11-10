@@ -7,7 +7,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 ### 5.3: Ver en dólares
 - A "$ / US$" selector on top of Inicio (Yo and Hogar) and Reportes, remembered per device (`app.view_currency`). In dollars, the month's totals, categories, what each member paid and Tendencias come from the API in dollars.
 - Under the totals: which dollar converts them ("al dólar MEP del día de cada movimiento") and a link to use today's instead. Without quotes for the space's dollar, an error with "Ver en pesos".
-- Tarjetas and Cuentas entre ustedes stay in pesos; with "US$" on they say so and that dollars there come later (plan 5.3b).
+- Tarjetas and Cuentas entre ustedes stay in pesos; with "US$" on they say so. Dollars there are an optional later item (plan 5.3b), so the app does not promise it.
 - Inicio · Yo takes the month's income from the monthly report instead of `/totals/income`.
 
 ### 5.2b: Cotizaciones

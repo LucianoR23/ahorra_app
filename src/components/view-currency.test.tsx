@@ -20,7 +20,7 @@ describe("Ver en dólares (plan 5.3)", () => {
     useViewCurrencyStore.setState({ usd: true });
     rerender(<PesosNotice what="Los resúmenes y las cuotas" />);
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "Los resúmenes y las cuotas se muestran en pesos, porque así se pagan. Pasarlos a dólares queda para más adelante.",
+      "Los resúmenes y las cuotas se muestran en pesos, porque así se pagan.",
     );
   });
 
