@@ -477,6 +477,16 @@ export const rateSchema = z.object({
 });
 export type Rate = z.infer<typeof rateSchema>;
 
+/** A dollar's quotes, one per day, oldest first (plan 5.2). */
+export const rateHistorySchema = z.object({
+  currency: z.string(),
+  source: z.string(),
+  points: z.array(
+    z.object({ day: z.string(), rateAvg: z.number(), rateBuy: z.number(), rateSell: z.number(), lastUpdate: z.string() }),
+  ),
+});
+export type RateHistory = z.infer<typeof rateHistorySchema>;
+
 export const trendPointSchema = z.object({
   month: z.string(),
   spentTotal: z.number(),

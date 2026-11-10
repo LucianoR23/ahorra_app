@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 5.2b: Cotizaciones
+- New screen `/cotizaciones`, in Más under "Tu plata" and from "Ver evolución del dólar" in the space's rate setting. A line chart of a dollar's selling price, one point per day (`GET /exchange-rates/history`), picking the dollar (starts at the space's) and the period (30 days, 6 months, 1 year), with today's price and the change over the period ("+5,9% en 30 días").
+- `TrendsLineChart` takes `yTick`, `fitY` (an axis fitted to the values) and `dots`. Discreet mode hides the price, the axis numbers and the tooltips.
+- Not in the visual regression: it shows live rates.
+
 ### 5.2: stale rates
 - When the dollar a conversion uses was not confirmed by any source in the last day, Cargar gasto, Cargar ingreso and the space's "Cotización" setting say "Ojo: esta cotización no se actualizó en el último día." A euro priced through the dollar warns when any of the rates it uses is stale. Reads `stale` from `GET /exchange-rates/current`.
 - The history endpoint (`GET /exchange-rates/history`) has no screen yet.

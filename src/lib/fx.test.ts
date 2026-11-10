@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Rate } from "@/lib/api/schemas";
-import { convert, isStale, rateFor, rateSourceLabel, sourceOf } from "./fx";
+import { convert, isStale, periodChange, rateFor, rateSourceLabel, sourceOf } from "./fx";
 
 const rate = (currency: string, source: string, rateSell: number, rateAvg = rateSell - 10): Rate => ({
   currency, source, rateSell, rateAvg, rateBuy: rateSell - 20, lastUpdate: "2026-11-10T12:00:00Z", fetchedAt: "2026-11-10T12:00:00Z",
@@ -66,5 +66,13 @@ describe("isStale (plan 5.2)", () => {
     expect(isStale(list, "EUR", "bolsa")).toBe(true); // through the stale official euro
     expect(isStale(list, "ARS", "tarjeta")).toBe(false);
     expect(isStale(undefined, "USD", "bolsa")).toBe(false);
+  });
+});
+
+describe("periodChange (plan 5.2b)", () => {
+  it("compares the last selling price with the first", () => {
+    expect(periodChange([{ rateSell: 1500, rateAvg: 0 }, { rateSell: 1587.9, rateAvg: 0 }])).toBeCloseTo(5.86, 2);
+    expect(periodChange([{ rateSell: 0, rateAvg: 1000 }, { rateSell: 900, rateAvg: 0 }])).toBe(-10);
+    expect(periodChange([{ rateSell: 1500, rateAvg: 0 }])).toBeNull();
   });
 });
