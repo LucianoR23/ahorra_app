@@ -13,6 +13,8 @@ import { Money } from "@/components/ui/money";
 import { Segmented } from "@/components/ui/segmented";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useExchangeRates, useHouseholdMembers, usePaymentMethods } from "@/lib/api/hooks";
+import { RateSourceSelect } from "@/components/rate-source-select";
+import { convert, rateSourceLabel, sourceOf } from "@/lib/fx";
 import { ApiError } from "@/lib/api/errors";
 import { createIncome, type IncomeCreateInput } from "@/lib/api/mutations";
 import type { Currency } from "@/lib/api/schemas";
@@ -56,12 +58,12 @@ export function IncomeForm() {
   const amountValid = amountStr !== "" && !isNaN(amount) && amount > 0;
   const others = members?.filter((m) => m.userId !== me) ?? [];
 
-  const ratePreview = (() => {
-    if (currency === baseCurrency || !rates) return null;
-    const r = rates.find((x) => x.currency === currency && x.source === "blue") ?? rates.find((x) => x.currency === currency);
-    if (!r) return null;
-    return { rate: r.rateAvg, amountBase: amountValid ? amount * r.rateAvg : 0 };
-  })();
+  // The dollar it converts with (plan 5.1): the space's unless picked here,
+  // e.g. CCL for dollars sold that way.
+  const [pickedSource, setPickedSource] = useState("");
+  const rateSource = pickedSource || sourceOf(current?.fxSource);
+  const ratePreview = currency === baseCurrency ? null : convert(rates, amountValid ? amount : 0, currency, baseCurrency, rateSource);
+  const foreignCurrency = currency === baseCurrency ? null : currency === "ARS" ? baseCurrency : currency;
 
   async function onSubmit(ev: React.FormEvent) {
     ev.preventDefault();
@@ -81,6 +83,7 @@ export function IncomeForm() {
       receivedBy: receivedBy || undefined,
       paymentMethodId: paymentMethodId || undefined,
     };
+    if (currency !== baseCurrency) input.rateSource = rateSource;
 
     setSubmitting(true);
     try {
@@ -137,14 +140,28 @@ export function IncomeForm() {
         )}
         {ratePreview && (
           <p className="text-caption text-ink-muted">
-            ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> (1 {currency} ≈{" "}
-            {ratePreview.rate.toLocaleString("es-AR", { maximumFractionDigits: 2 })} {baseCurrency}). La cotización se fija al guardar.
+            ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> al dólar {rateSourceLabel(rateSource)}. La
+            cotización se fija al guardar.
           </p>
         )}
       </div>
 
       <Card className="py-1">
         <CardContent className="divide-y divide-border">
+          {foreignCurrency && (
+            <FormRow label="Cotización" htmlFor="rateSource" error={errors.rateSource}>
+              <RateSourceSelect
+                id="rateSource"
+                value={rateSource}
+                onValueChange={setPickedSource}
+                rates={rates}
+                currency={foreignCurrency}
+                aria-invalid={!!errors.rateSource}
+                className={rowControl}
+              />
+            </FormRow>
+          )}
+
           <div className="flex flex-col py-2">
             <FormRow label="Fuente" htmlFor="source" error={errors.source} bare>
               <Select

@@ -35,6 +35,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { CategorySelect } from "@/components/category-select";
 import { FormRow as Row, rowControl } from "@/components/ui/form-row";
 import type { ExpensePrefill } from "@/lib/simulator";
+import { RateSourceSelect } from "@/components/rate-source-select";
+import { convert, rateSourceLabel, sourceOf } from "@/lib/fx";
 
 const CURRENCIES = [
   { value: "ARS", label: "ARS" },
@@ -107,14 +109,12 @@ export function ExpenseForm({
   const { data: creditCard } = useCreditCard(isCredit ? paymentMethodId : null);
   const { data: periods } = useCreditCardPeriods(isCredit ? paymentMethodId : null);
 
-  const ratePreview = (() => {
-    if (currency === baseCurrency) return { rate: 1, amountBase: amountValid ? amount : 0 };
-    if (!rates) return null;
-    const candidate =
-      rates.find((r) => r.currency === currency && r.source === "blue") ?? rates.find((r) => r.currency === currency);
-    if (!candidate) return null;
-    return { rate: candidate.rateAvg, amountBase: amountValid ? amount * candidate.rateAvg : 0 };
-  })();
+  // The dollar it converts with (plan 5.1): the space's unless picked here.
+  const [pickedSource, setPickedSource] = useState("");
+  const rateSource = pickedSource || sourceOf(target?.fxSource);
+  const foreignRate = currency === baseCurrency ? null : convert(rates, amountValid ? amount : 0, currency, baseCurrency, rateSource);
+  const ratePreview = currency === baseCurrency ? { rate: 1, amountBase: amountValid ? amount : 0 } : foreignRate;
+  const foreignCurrency = currency === baseCurrency ? null : currency === "ARS" ? baseCurrency : currency;
 
   // Where the first installment lands: the loaded period of its month, or just the month.
   const firstStatement = (() => {
@@ -166,6 +166,7 @@ export function ExpenseForm({
       installments,
       isShared,
     };
+    if (currency !== baseCurrency) input.rateSource = rateSource;
     if (sharesList) {
       input.sharesOverride = sharesList.map((s) => ({ userId: s.userId, amount: s.amount }));
     }
@@ -236,8 +237,8 @@ export function ExpenseForm({
         )}
         {ratePreview && currency !== baseCurrency && (
           <p className="text-caption text-ink-muted">
-            ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> (1 {currency} ≈{" "}
-            {ratePreview.rate.toLocaleString("es-AR", { maximumFractionDigits: 2 })} {baseCurrency}). La cotización se fija al guardar.
+            ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> al dólar {rateSourceLabel(rateSource)}. La
+            cotización se fija al guardar.
           </p>
         )}
       </div>
@@ -245,6 +246,20 @@ export function ExpenseForm({
       {/* The data, one row each. */}
       <Card className="py-1">
         <CardContent className="divide-y divide-border">
+          {foreignCurrency && (
+            <Row label="Cotización" htmlFor="rateSource" error={errors.rateSource}>
+              <RateSourceSelect
+                id="rateSource"
+                value={rateSource}
+                onValueChange={setPickedSource}
+                rates={rates}
+                currency={foreignCurrency}
+                aria-invalid={!!errors.rateSource}
+                className={rowControl}
+              />
+            </Row>
+          )}
+
           <Row label="Descripción" htmlFor="description" error={errors.description}>
             <Input
               id="description"
