@@ -4,6 +4,8 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { PayDebtDialog } from "@/components/debts-manager";
 import { DiscreetToggle } from "@/components/discreet-toggle";
+import { CurrencyToggle, UsdViewNote } from "@/components/view-currency";
+import { reportCurrency } from "@/lib/fx";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { InstallPrompt } from "@/components/install-prompt";
 import { PendingDraftsCard } from "@/components/pending-drafts-card";
@@ -122,7 +124,7 @@ function HogarHeader({ people }: { people: People }) {
 /** "Gastaron juntos en noviembre" and what each one put. */
 function SharedHero({ people }: { people: People }) {
   const { data: report, isLoading } = useMonthlyReport();
-  const currency = report?.baseCurrency ?? "ARS";
+  const currency = reportCurrency(report);
   const payers = payersOf(report, people);
 
   return (
@@ -130,9 +132,12 @@ function SharedHero({ people }: { people: People }) {
       aria-labelledby="shared-spent"
       className="flex flex-col gap-3 md:rounded-xl md:bg-card md:p-6 md:shadow-card md:dark:ring-1 md:dark:ring-border"
     >
-      <h2 id="shared-spent" className="text-label uppercase text-ink-muted">
-        Gastaron juntos{report ? ` en ${monthName(report.month)}` : ""}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="shared-spent" className="text-label uppercase text-ink-muted">
+          Gastaron juntos{report ? ` en ${monthName(report.month)}` : ""}
+        </h2>
+        <CurrencyToggle />
+      </div>
       {isLoading ? (
         <Skeleton className="h-12 w-56" />
       ) : (
@@ -152,6 +157,7 @@ function SharedHero({ people }: { people: People }) {
           ))}
         </dl>
       )}
+      <UsdViewNote />
     </section>
   );
 }
@@ -239,7 +245,7 @@ function WhereItWent() {
     <Card>
       <CardContent className="flex flex-col gap-4">
         <h2 className="text-heading font-semibold">En qué se fue</h2>
-        <CategoryBars rows={rows} currency={report.baseCurrency} />
+        <CategoryBars rows={rows} currency={reportCurrency(report)} />
       </CardContent>
     </Card>
   );

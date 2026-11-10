@@ -4,6 +4,7 @@ import { CardStatementsSummary } from "@/components/card-statements/card-stateme
 import { PaymentMethodsConfig } from "@/components/payment-methods-config";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 import { PageHeader } from "@/components/ui/page-header";
+import { PesosNotice } from "@/components/view-currency";
 
 // Design `Tarjetas`: statements, Comprometido and installments in progress on
 // top (4.1, 4.2), the card setup below (1.10a).
@@ -33,6 +34,7 @@ export default function Page() {
         action={<InfoHelp content={TARJETAS_HELP} size="icon" />}
       />
       <div className="flex flex-col gap-4">
+        <PesosNotice what="Los resúmenes y las cuotas" />
         <CardStatementsSummary />
         <PaymentMethodsConfig />
         <BanksConfig />

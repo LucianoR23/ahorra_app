@@ -6,6 +6,8 @@ import { CardsDue, CommittedWidget } from "@/components/committed/committed-widg
 import { CardPeriodNudges } from "@/components/card-statements/period-nudge";
 import { CategoryIcon } from "@/components/category-icon";
 import { DiscreetToggle } from "@/components/discreet-toggle";
+import { CurrencyToggle, UsdViewNote } from "@/components/view-currency";
+import { reportCurrency } from "@/lib/fx";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { InstallPrompt } from "@/components/install-prompt";
 import { PendingDraftsCard } from "@/components/pending-drafts-card";
@@ -22,7 +24,6 @@ import {
   useMonthlyReport,
   usePaymentMethods,
   useRecentExpenses,
-  useTotalIncome,
 } from "@/lib/api/hooks";
 import type { Expense } from "@/lib/api/schemas";
 import { greeting } from "@/lib/format";
@@ -92,21 +93,13 @@ function Greeting() {
   );
 }
 
-function monthRange(now: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const ym = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
-  return { from: `${ym}-01`, to: `${ym}-${pad(last)}` };
-}
-
 /** "Gastaste en noviembre" with what came in and what is left. */
 function MonthHero() {
   const now = new Date();
   const { data: report, isLoading } = useMonthlyReport();
-  const { data: income, isLoading: loadingIncome } = useTotalIncome(monthRange(now));
-  const currency = report?.baseCurrency ?? "ARS";
+  const currency = reportCurrency(report);
   const spent = report?.spentThisMonth ?? 0;
-  const came = income?.total ?? 0;
+  const came = report?.incomeThisMonth ?? 0;
   const left = came - spent;
   const pct = came > 0 ? Math.round((spent / came) * 100) : 0;
 
@@ -115,9 +108,12 @@ function MonthHero() {
       aria-labelledby="month-spent"
       className="flex flex-col gap-3 md:rounded-xl md:bg-card md:p-6 md:shadow-card md:dark:ring-1 md:dark:ring-border"
     >
-      <h2 id="month-spent" className="text-label uppercase text-ink-muted">
-        Gastaste en {MONTHS[now.getMonth()]}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="month-spent" className="text-label uppercase text-ink-muted">
+          Gastaste en {MONTHS[now.getMonth()]}
+        </h2>
+        <CurrencyToggle />
+      </div>
       {isLoading ? (
         <Skeleton className="h-12 w-56" />
       ) : (
@@ -125,7 +121,7 @@ function MonthHero() {
           <Money amount={spent} currency={currency} />
         </p>
       )}
-      {!loadingIncome && came === 0 ? (
+      {!isLoading && came === 0 ? (
         <p className="text-caption text-ink-muted">
           <Link href="/ingresos" className="font-semibold text-ink underline underline-offset-4">
             Cargá tus ingresos
@@ -137,13 +133,13 @@ function MonthHero() {
           <div>
             <dt className="text-caption text-ink-muted">Entraron</dt>
             <dd className="text-body font-semibold">
-              {loadingIncome ? <Skeleton className="h-5 w-24" /> : <Money amount={came} currency={currency} income />}
+              {isLoading ? <Skeleton className="h-5 w-24" /> : <Money amount={came} currency={currency} income />}
             </dd>
           </div>
           <div>
             <dt className="text-caption text-ink-muted">{left < 0 ? "Te pasaste" : "Te quedan"}</dt>
             <dd className={cn("text-body font-semibold", left < 0 && "text-negative")}>
-              {loadingIncome || isLoading ? <Skeleton className="h-5 w-24" /> : <Money amount={Math.abs(left)} currency={currency} />}
+              {isLoading ? <Skeleton className="h-5 w-24" /> : <Money amount={Math.abs(left)} currency={currency} />}
             </dd>
           </div>
         </dl>
@@ -156,6 +152,7 @@ function MonthHero() {
           <p className="text-caption text-ink-muted">Gastaste el {pct}% de lo que entró este mes.</p>
         </div>
       )}
+      <UsdViewNote />
     </section>
   );
 }

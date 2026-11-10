@@ -6,6 +6,7 @@ import { CategoryBars } from "@/components/category-bars";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Money } from "@/components/ui/money";
+import { reportCurrency } from "@/lib/fx";
 import { MonthNavigator } from "@/components/ui/month-navigator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMonthlyReport } from "@/lib/api/hooks";
@@ -18,7 +19,7 @@ import { currentMonth } from "@/lib/format";
 export function MonthlyReportCard() {
   const [month, setMonth] = useState(currentMonth());
   const { data, isLoading } = useMonthlyReport(month);
-  const cur = data?.baseCurrency ?? "ARS";
+  const cur = reportCurrency(data);
   // Go sends an empty slice as null (the SWR fetcher does not apply zod defaults).
   const byCategory = data?.byCategory ?? [];
   const fv = data?.fixedVariable;

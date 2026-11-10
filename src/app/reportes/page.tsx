@@ -7,6 +7,7 @@ import { TrendsReportCard } from "@/components/trends-report-card";
 import { AiExportCard } from "@/components/ai-export-card";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 import { PageHeader } from "@/components/ui/page-header";
+import { CurrencyToggle, UsdViewNote } from "@/components/view-currency";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const REPORTES_HELP: InfoHelpContent = {
@@ -22,7 +23,8 @@ const REPORTES_HELP: InfoHelpContent = {
     "Los porcentajes por categoría se calculan sobre lo gastado del mes.",
     "«Fijo» son los gastos generados por recurrentes y «Variable» los cargados a mano.",
     "En Tendencias, el «Neto» es ingresos menos lo que tenés a pagar (no menos lo gastado).",
-    "Todos los montos están en la moneda base del hogar y los reportes son de solo lectura.",
+    "Los montos están en pesos. Con «US$» arriba los ves en dólares, al dólar del espacio del día de cada movimiento o al de hoy. Lo cargado en dólares queda como lo cargaste.",
+    "Los reportes son de solo lectura.",
   ],
   relacionado: [
     { label: "Movimientos", href: "/movimientos" },
@@ -53,6 +55,15 @@ export default function Page() {
             <TabsTrigger value="ai">Exportar IA</TabsTrigger>
           </TabsList>
         </Tabs>
+        {tab !== "ai" && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-caption text-ink-muted">Ver montos en</span>
+              <CurrencyToggle />
+            </div>
+            <UsdViewNote />
+          </div>
+        )}
         {tab === "monthly" && <MonthlyReportCard />}
         {tab === "trends" && <TrendsReportCard />}
         {tab === "ai" && <AiExportCard />}

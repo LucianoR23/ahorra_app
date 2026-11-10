@@ -105,9 +105,19 @@ export const registerInputSchema = z.object({
 });
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 
+/** What a report's amounts are in (plan 5.3); older payloads lack it. */
+const reportCurrencyFields = {
+  currency: z.string().optional(),
+  rateSource: z.string().optional(),
+  rateMode: z.enum(["day", "today"]).optional(),
+  usdRate: z.number().optional(),
+};
+
 export const monthlyReportSchema = z.object({
   householdId: z.string(),
   baseCurrency: z.string(),
+  ...reportCurrencyFields,
+  incomeThisMonth: z.number().optional(),
   month: z.string(),
   from: z.string(),
   to: z.string(),
@@ -499,6 +509,7 @@ export type TrendPoint = z.infer<typeof trendPointSchema>;
 export const trendsReportSchema = z.object({
   householdId: z.string(),
   baseCurrency: z.string(),
+  ...reportCurrencyFields,
   months: z.number(),
   points: z.array(trendPointSchema),
 });
