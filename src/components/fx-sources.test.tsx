@@ -128,3 +128,30 @@ describe("FxSourceSetting", () => {
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 });
+
+describe("stale rates (plan 5.2)", () => {
+  it("warns when the dollar used was not confirmed in a day", async () => {
+    api();
+    server.use(
+      http.get(`${API}/exchange-rates/current`, () =>
+        HttpResponse.json([rate("bolsa", 1587.9), { ...rate("tarjeta", 2041), stale: true }]),
+      ),
+    );
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await screen.findByLabelText("Monto"), "100");
+    await userEvent.click(screen.getByRole("radio", { name: "USD" }));
+    await screen.findByText(/al dólar MEP/);
+    expect(screen.queryByText(/no se actualizó/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText("Cotización"));
+    await userEvent.click(await screen.findByRole("option", { name: /Tarjeta/ }));
+    expect(await screen.findByText("Ojo: esta cotización no se actualizó en el último día.")).toBeInTheDocument();
+  });
+
+  it("the space's setting warns too", async () => {
+    api();
+    server.use(http.get(`${API}/exchange-rates/current`, () => HttpResponse.json([{ ...rate("bolsa", 1587.9), stale: true }])));
+    render(<FxSourceSetting household={{ ...personalSpace, fxSource: "bolsa" }} editable title="Cotización de Mi plata" />, { wrapper: WithSWR });
+    expect(await screen.findByText("Ojo: esta cotización no se actualizó en el último día.")).toBeInTheDocument();
+  });
+});

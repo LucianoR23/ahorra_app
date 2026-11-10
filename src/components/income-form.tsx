@@ -14,7 +14,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useExchangeRates, useHouseholdMembers, usePaymentMethods } from "@/lib/api/hooks";
 import { RateSourceSelect } from "@/components/rate-source-select";
-import { convert, rateSourceLabel, sourceOf } from "@/lib/fx";
+import { convert, isStale, rateSourceLabel, sourceOf, STALE_RATE_WARNING } from "@/lib/fx";
 import { ApiError } from "@/lib/api/errors";
 import { createIncome, type IncomeCreateInput } from "@/lib/api/mutations";
 import type { Currency } from "@/lib/api/schemas";
@@ -142,6 +142,9 @@ export function IncomeForm() {
           <p className="text-caption text-ink-muted">
             ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> al dólar {rateSourceLabel(rateSource)}. La
             cotización se fija al guardar.
+            {foreignCurrency && isStale(rates, foreignCurrency, rateSource) && (
+              <span className="block text-negative">{STALE_RATE_WARNING}</span>
+            )}
           </p>
         )}
       </div>

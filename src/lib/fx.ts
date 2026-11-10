@@ -57,3 +57,19 @@ export function convert(rates: Rate[] | undefined, amount: number, from: string,
   if (rFrom === null || rTo === null) return null;
   return { amountBase: (amount * rFrom) / rTo, rate: rFrom / rTo };
 }
+
+/**
+ * Whether pricing `currency` at `source` relies on a stale rate (plan 5.2):
+ * the rate itself, or, for a euro priced through the dollar, any of the
+ * three it uses. Pesos are never stale.
+ */
+export function isStale(rates: Rate[] | undefined, currency: string, source: string): boolean {
+  if (currency === "ARS" || !rates) return false;
+  const row = (c: string, s: string) => rates.find((r) => r.currency === c && r.source === s);
+  const direct = row(currency, source);
+  if (direct || currency === "USD" || source === "oficial") return !!direct?.stale;
+  return [row(currency, "oficial"), row("USD", source), row("USD", "oficial")].some((r) => !!r?.stale);
+}
+
+/** The warning under a conversion that uses a stale rate. */
+export const STALE_RATE_WARNING = "Ojo: esta cotización no se actualizó en el último día.";

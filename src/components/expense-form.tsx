@@ -36,7 +36,7 @@ import { CategorySelect } from "@/components/category-select";
 import { FormRow as Row, rowControl } from "@/components/ui/form-row";
 import type { ExpensePrefill } from "@/lib/simulator";
 import { RateSourceSelect } from "@/components/rate-source-select";
-import { convert, rateSourceLabel, sourceOf } from "@/lib/fx";
+import { convert, isStale, rateSourceLabel, sourceOf, STALE_RATE_WARNING } from "@/lib/fx";
 
 const CURRENCIES = [
   { value: "ARS", label: "ARS" },
@@ -239,6 +239,9 @@ export function ExpenseForm({
           <p className="text-caption text-ink-muted">
             ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> al dólar {rateSourceLabel(rateSource)}. La
             cotización se fija al guardar.
+            {foreignCurrency && isStale(rates, foreignCurrency, rateSource) && (
+              <span className="block text-negative">{STALE_RATE_WARNING}</span>
+            )}
           </p>
         )}
       </div>

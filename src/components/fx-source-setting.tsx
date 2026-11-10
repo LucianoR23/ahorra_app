@@ -9,7 +9,7 @@ import { RateSourceSelect } from "@/components/rate-source-select";
 import { useExchangeRates } from "@/lib/api/hooks";
 import { patchHousehold } from "@/lib/api/mutations";
 import type { Household } from "@/lib/api/schemas";
-import { rateSourceLabel, sourceOf } from "@/lib/fx";
+import { isStale, rateSourceLabel, sourceOf, STALE_RATE_WARNING } from "@/lib/fx";
 import { toast, toastError } from "@/lib/toast";
 
 /**
@@ -39,7 +39,12 @@ export function FxSourceSetting({ household, editable, title }: { household: Hou
   return (
     <MenuGroup
       title={title}
-      footer="Los gastos e ingresos en otra moneda se pasan a pesos con este dólar. Al cargar cada uno podés elegir otro."
+      footer={
+        <>
+          Los gastos e ingresos en otra moneda se pasan a pesos con este dólar. Al cargar cada uno podés elegir otro.
+          {isStale(rates, "USD", current) && <span className="block text-negative">{STALE_RATE_WARNING}</span>}
+        </>
+      }
     >
       <MenuRow>
         <DollarSign aria-hidden className="size-5 shrink-0" strokeWidth={1.75} />
