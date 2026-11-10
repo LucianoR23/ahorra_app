@@ -50,6 +50,17 @@ describe("discreet mode (plan 1.9)", () => {
     expect(maskAmountsInText("En 3 días vence la cuota 2/6 de \"TV\" ($ 1.500).")).toBe("En 3 días vence la cuota 2/6 de \"TV\" ($ ••••••).");
   });
 
+  it("masks the es-AR amounts the API writes since plan 1.10c", () => {
+    expect(maskAmountsInText("Ana cargó \"Súper\". Te toca $ 19.450,50.")).toBe("Ana cargó \"Súper\". Te toca $ ••••••.");
+    expect(maskAmountsInText("Pasó de US$ 500 a US$ 1.200 (umbral 20%).")).toBe("Pasó de $ •••••• a $ •••••• (umbral 20%).");
+    expect(maskAmountsInText("Llevás -$ 20 ahorrados de € 1.234.567,89 objetivo este mes.")).toBe(
+      "Llevás -$ •••••• ahorrados de $ •••••• objetivo este mes.",
+    );
+    expect(maskAmountsInText("El resumen de tu Visa vence el sábado 7/3: $ 300 + US$ 25,10.")).toBe(
+      "El resumen de tu Visa vence el sábado 7/3: $ •••••• + $ ••••••.",
+    );
+  });
+
   it("leaves text without amounts alone", () => {
     const text = "Objetivo al 80%. Cuota 3/12 del 15/11. Sumaste 2 categorías.";
     expect(maskAmountsInText(text)).toBe(text);
