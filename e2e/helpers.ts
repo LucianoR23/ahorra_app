@@ -47,6 +47,7 @@ async function call<T>(
 export async function register(tag: string, firstName: string, opts: { inviteToken?: string; onboarded?: boolean } = {}): Promise<User> {
   const email = uniqueEmail(tag);
   const r = await call<{ user: { id: string }; accessToken: string }>("POST", "/auth/register", {
+    ip: signupIP(),
     body: { email, password: PASSWORD, firstName, lastName: "E2E", ...(opts.inviteToken ? { inviteToken: opts.inviteToken } : {}) },
   });
   if (opts.onboarded !== false) await call("POST", "/me/onboarding/complete", { token: r.accessToken });
@@ -63,6 +64,7 @@ export async function addMember(owner: User, householdId: string, firstName: str
   const email = uniqueEmail(firstName.toLowerCase());
   const inv = await call<{ token: string }>("POST", `/households/${householdId}/invites`, { token: owner.token, body: { email } });
   const r = await call<{ user: { id: string }; accessToken: string }>("POST", "/auth/register", {
+    ip: signupIP(),
     body: { email, password: PASSWORD, firstName, lastName: "E2E", inviteToken: inv.token },
   });
   await call("POST", "/me/onboarding/complete", { token: r.accessToken });
