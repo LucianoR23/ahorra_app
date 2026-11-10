@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { LineChart } from "lucide-react";
 import { TrendsLineChart } from "@/components/report-charts-lazy";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Money } from "@/components/ui/money";
@@ -11,11 +13,17 @@ import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTrendsReport } from "@/lib/api/hooks";
 import { fmtMonthLong } from "@/lib/format";
+import { useViewCurrency } from "@/stores/view-currency";
 
 const RANGES = [
   { value: "3", label: "3 meses" },
   { value: "6", label: "6 meses" },
   { value: "12", label: "12 meses" },
+] as const;
+
+const AMOUNTS = [
+  { value: "nominal", label: "Sin ajustar" },
+  { value: "real", label: "Pesos de hoy" },
 ] as const;
 
 function shortMonth(ym: string) {
@@ -35,7 +43,11 @@ const LINES = [
 /** Reportes · Tendencias (plan 1.10b): the last 3, 6 or 12 months. */
 export function TrendsReportCard() {
   const [months, setMonths] = useState<"3" | "6" | "12">("6");
-  const { data, isLoading } = useTrendsReport(Number(months) as 3 | 6 | 12);
+  const [real, setReal] = useState(false);
+  const { usd } = useViewCurrency();
+  const { data, error, isLoading } = useTrendsReport(Number(months) as 3 | 6 | 12, real);
+  // Today's pesos (plan 5.4) only make sense in pesos, in a space kept in pesos.
+  const canAdjust = !usd && (data ? data.baseCurrency === "ARS" : real);
   const cur = reportCurrency(data);
   const points = data?.points ?? [];
   const chartData = points.map((p) => ({
@@ -50,8 +62,23 @@ export function TrendsReportCard() {
   return (
     <div className="flex flex-col gap-4">
       <Segmented aria-label="Período" value={months} onValueChange={setMonths} options={RANGES} />
+      {canAdjust && (
+        <Segmented
+          aria-label="Montos"
+          value={real ? "real" : "nominal"}
+          onValueChange={(v) => setReal(v === "real")}
+          options={AMOUNTS}
+        />
+      )}
 
-      {isLoading ? (
+      {real && error && !usd ? (
+        <Alert variant="error">
+          Todavía no tenemos el índice de inflación del INDEC.{" "}
+          <Button variant="link" onClick={() => setReal(false)}>
+            Ver sin ajustar
+          </Button>
+        </Alert>
+      ) : isLoading ? (
         <Skeleton className="h-64 w-full rounded-2xl" />
       ) : chartData.length === 0 ? (
         <EmptyState icon={LineChart} title="Sin datos todavía" description="Con un par de meses cargados, acá ves cómo vienen tus gastos e ingresos." />
@@ -61,6 +88,12 @@ export function TrendsReportCard() {
             <CardContent className="flex flex-col gap-3">
               <h2 className="text-heading font-semibold">Mes a mes</h2>
               <TrendsLineChart data={chartData} lines={LINES} currency={cur as "ARS" | "USD" | "EUR"} />
+              {data?.adjust === "cpi" && data.cpiThrough && (
+                <p className="text-caption text-ink-muted">
+                  En pesos de hoy, con la inflación del INDEC hasta {fmtMonthLong(data.cpiThrough).toLowerCase()}.
+                  {last && last.month > data.cpiThrough ? " Los meses siguientes van sin ajustar hasta que salga su dato." : ""}
+                </p>
+              )}
             </CardContent>
           </Card>
 

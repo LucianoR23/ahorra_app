@@ -120,3 +120,83 @@ describe("AiExportCard", () => {
     expect(await navigator.clipboard.readText()).toContain("Gastado: 1500 ARS");
   });
 });
+
+// Plan 5.4: spending in today's pesos.
+describe("reports in today's pesos", () => {
+  const trend = (url: URL) => {
+    const real = url.searchParams.get("adjust") === "cpi";
+    return {
+      householdId: "h1",
+      baseCurrency: "ARS",
+      months: 6,
+      ...(real ? { adjust: "cpi", cpiThrough: "2026-09" } : {}),
+      points: [
+        { month: "2026-03", spentTotal: real ? 1700 : 1500, income: 3000, dueTotal: 900, net: 2100 },
+        { month: "2026-10", spentTotal: 800, income: 0, dueTotal: 0, net: 0 },
+      ],
+    };
+  };
+
+  it("a past month shows what was spent in today's pesos", async () => {
+    server.use(
+      http.get(`${API}/reports/monthly`, () =>
+        HttpResponse.json({
+          householdId: "h1",
+          baseCurrency: "ARS",
+          month: "2026-02",
+          from: "2026-02-01",
+          to: "2026-02-28",
+          spentThisMonth: 20000,
+          spentRealThisMonth: 22727.27,
+          cpiThrough: "2026-09",
+          billedThisMonth: 0,
+          dueThisMonth: 0,
+          byCategory: [],
+          fixedVariable: { fixedTotal: 0, variableTotal: 0, fixedPct: 0, variablePct: 0, fixedCount: 0, variableCount: 0 },
+        }),
+      ),
+    );
+    wrap(<MonthlyReportCard />);
+    const row = (await screen.findByText("En pesos de hoy")).closest("div")!.parentElement!;
+    expect(row).toHaveTextContent("$ 22.727");
+    expect(row).toHaveTextContent("hasta septiembre 2026");
+  });
+
+  it("trends switch to today's pesos and say up to which month", async () => {
+    const asked: string[] = [];
+    server.use(
+      http.get(`${API}/reports/trends`, ({ request }) => {
+        const url = new URL(request.url);
+        asked.push(url.searchParams.get("adjust") ?? "");
+        return HttpResponse.json(trend(url));
+      }),
+    );
+    wrap(<TrendsReportCard />);
+    await screen.findByTestId("line-chart");
+    expect(screen.queryByText(/con la inflación/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("radio", { name: "Pesos de hoy" }));
+    expect(await screen.findByText(/con la inflación del INDEC hasta septiembre 2026/)).toHaveTextContent(
+      "Los meses siguientes van sin ajustar",
+    );
+    expect(asked).toContain("cpi");
+  });
+
+  it("without the index it offers the unadjusted view", async () => {
+    server.use(
+      http.get(`${API}/reports/trends`, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get("adjust")) {
+          return HttpResponse.json({ code: "conflict", message: "Todavía no" }, { status: 409 });
+        }
+        return HttpResponse.json(trend(url));
+      }),
+    );
+    wrap(<TrendsReportCard />);
+    await screen.findByTestId("line-chart");
+    await userEvent.click(screen.getByRole("radio", { name: "Pesos de hoy" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Ver sin ajustar" }));
+    expect(await screen.findByTestId("line-chart")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Sin ajustar" })).toBeChecked();
+  });
+});

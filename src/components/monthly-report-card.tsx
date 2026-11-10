@@ -10,7 +10,7 @@ import { reportCurrency } from "@/lib/fx";
 import { MonthNavigator } from "@/components/ui/month-navigator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMonthlyReport } from "@/lib/api/hooks";
-import { currentMonth } from "@/lib/format";
+import { currentMonth, fmtMonthLong } from "@/lib/format";
 
 /**
  * Reportes · Mensual (plan 1.10b, no design: the month navigator, then
@@ -56,6 +56,14 @@ export function MonthlyReportCard() {
             <CardContent>
               <dl className="divide-y divide-border">
                 <Figure label="Gastado" hint="Por la fecha de cada gasto" amount={data.spentThisMonth} currency={cur} />
+                {data.spentRealThisMonth !== undefined && data.cpiThrough && (
+                  <Figure
+                    label="En pesos de hoy"
+                    hint={`Lo gastado, con la inflación del INDEC hasta ${fmtMonthLong(data.cpiThrough).toLowerCase()}`}
+                    amount={data.spentRealThisMonth}
+                    currency={cur}
+                  />
+                )}
                 <Figure label="Facturado" hint="Lo que cerraron tus tarjetas" amount={data.billedThisMonth} currency={cur} />
                 <Figure label="A pagar" hint="Lo que vence este mes" amount={data.dueThisMonth} currency={cur} />
               </dl>

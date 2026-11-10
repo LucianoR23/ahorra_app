@@ -447,11 +447,13 @@ export function useRateHistory(source: string, days: number, currency = "USD") {
   );
 }
 
-export function useTrendsReport(months = 6) {
+/** real: in today's pesos, adjusted by INDEC's CPI (plan 5.4); pesos only. */
+export function useTrendsReport(months = 6, real = false) {
   const { token, householdId } = useReady();
   const view = viewQuery(useViewCurrency());
+  const adjust = real && !view.currency ? { adjust: "cpi" } : {};
   const key = token && householdId
-    ? (["/reports/trends", { query: { months, ...view } }] as const)
+    ? (["/reports/trends", { query: { months, ...view, ...adjust } }] as const)
     : null;
   return useSWR<TrendsReport>(key);
 }
