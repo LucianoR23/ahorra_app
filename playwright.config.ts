@@ -69,6 +69,8 @@ export default defineConfig({
         JWT_REFRESH_SECRET: "e2e-refresh-secret-0123456789abcdefghij",
         ALLOWED_ORIGINS: `http://localhost:${WEB_PORT}`,
         APP_BASE_URL: `http://localhost:${WEB_PORT}`,
+        // The specs' API calls set X-Forwarded-For per sign-up (e2e/helpers.ts).
+        TRUSTED_PROXIES: "127.0.0.1/32,::1/128",
         // No RESEND_API_KEY: emails are not sent. No VAPID keys: no push.
       },
     },

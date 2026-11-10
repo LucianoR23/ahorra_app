@@ -672,6 +672,55 @@ export const committedSchema = z.object({
 });
 export type Committed = z.infer<typeof committedSchema>;
 
+/** "¿Me lo puedo comprar?" (plan 4.8): amounts in the base currency. */
+export const purchaseSimulationSchema = z.object({
+  baseCurrency: z.string(),
+  purchase: z.object({
+    paymentMethodId: z.string(),
+    isCredit: z.boolean(),
+    amount: z.number(),
+    currency: z.string(),
+    amountBase: z.number(),
+    installments: z.array(
+      z.object({ number: z.number(), amountBase: z.number(), periodYm: z.string(), dueDate: z.string().nullable() }),
+    ),
+  }),
+  /** By statement period, like "Comprometido". */
+  months: z.array(
+    z.object({
+      periodYm: z.string(),
+      cardsBefore: z.number(),
+      purchase: z.number(),
+      cardsAfter: z.number(),
+      fixed: z.number(),
+      income: z.number(),
+      left: z.number(),
+      pctOfIncome: z.number().nullable(),
+    }),
+  ),
+  /** The chosen card's statements; empty when it is not a credit card. */
+  card: z.array(z.object({ periodYm: z.string(), before: z.number(), after: z.number() })),
+  goals: z.array(
+    z.object({
+      goalId: z.string(),
+      goalType: z.enum(["total_limit", "category_limit"]),
+      scope: z.string(),
+      categoryId: z.string().nullable(),
+      target: z.number(),
+      current: z.number(),
+      thisPeriod: z.number(),
+      after: z.number(),
+      pctAfter: z.number(),
+      exceeds: z.boolean(),
+      perInstallment: z.number(),
+      pctPerInstallment: z.number(),
+    }),
+  ),
+  hasIncome: z.boolean(),
+  todayRate: z.boolean(),
+});
+export type PurchaseSimulation = z.infer<typeof purchaseSimulationSchema>;
+
 /** "Cuotas en curso" (plan 4.2). */
 export const installmentPlanSchema = z.object({
   expenseId: z.string(),

@@ -12,13 +12,26 @@ export function uniqueEmail(tag: string) {
   return `e2e-${tag}-${Date.now()}-${counter}@example.test`;
 }
 
-async function call<T>(method: string, path: string, opts: { token?: string; household?: string; body?: unknown } = {}): Promise<T> {
+// Each API sign-up comes from its own address (X-Forwarded-For, trusted from
+// localhost in playwright.config.ts), so the register limit of 5 per hour and
+// IP holds for real users but not across specs.
+const runTag = Math.floor(Math.random() * 250) + 1;
+function signupIP() {
+  return `10.${runTag}.${Math.floor(counter / 250)}.${(counter % 250) + 1}`;
+}
+
+async function call<T>(
+  method: string,
+  path: string,
+  opts: { token?: string; household?: string; body?: unknown; ip?: string } = {},
+): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       ...(opts.token ? { Authorization: `Bearer ${opts.token}` } : {}),
       ...(opts.household ? { "X-Household-ID": opts.household } : {}),
+      ...(opts.ip ? { "X-Forwarded-For": opts.ip } : {}),
     },
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
   });
@@ -34,6 +47,7 @@ async function call<T>(method: string, path: string, opts: { token?: string; hou
 export async function register(tag: string, firstName: string, opts: { inviteToken?: string; onboarded?: boolean } = {}): Promise<User> {
   const email = uniqueEmail(tag);
   const r = await call<{ user: { id: string }; accessToken: string }>("POST", "/auth/register", {
+    ip: signupIP(),
     body: { email, password: PASSWORD, firstName, lastName: "E2E", ...(opts.inviteToken ? { inviteToken: opts.inviteToken } : {}) },
   });
   if (opts.onboarded !== false) await call("POST", "/me/onboarding/complete", { token: r.accessToken });
@@ -50,6 +64,7 @@ export async function addMember(owner: User, householdId: string, firstName: str
   const email = uniqueEmail(firstName.toLowerCase());
   const inv = await call<{ token: string }>("POST", `/households/${householdId}/invites`, { token: owner.token, body: { email } });
   const r = await call<{ user: { id: string }; accessToken: string }>("POST", "/auth/register", {
+    ip: signupIP(),
     body: { email, password: PASSWORD, firstName, lastName: "E2E", inviteToken: inv.token },
   });
   await call("POST", "/me/onboarding/complete", { token: r.accessToken });

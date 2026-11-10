@@ -168,3 +168,23 @@ describe("ExpenseForm layout (design CargarGasto, plan 1.10b)", () => {
     expect(expensePost()).toBeUndefined();
   });
 });
+
+describe("ExpenseForm filled in (Cargar compra, plan 4.8)", () => {
+  it("starts with the simulated purchase and saves it with a description", async () => {
+    api([personalSpace]);
+    render(<ExpenseForm initial={{ amount: 1500.5, currency: "USD", paymentMethodId: "pm1", categoryId: "c-p" }} />, {
+      wrapper: WithSWR,
+    });
+    expect(await screen.findByLabelText("Monto")).toHaveValue("1500,5");
+    await userEvent.type(screen.getByLabelText("Descripción"), "Heladera");
+    await userEvent.click(screen.getByRole("button", { name: "Guardar gasto" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/movimientos/e1"));
+    expect(JSON.parse(expensePost()!.body || "{}")).toMatchObject({
+      amount: 1500.5,
+      currency: "USD",
+      paymentMethodId: "pm1",
+      categoryId: "c-p",
+      description: "Heladera",
+    });
+  });
+});

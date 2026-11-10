@@ -34,6 +34,7 @@ import { PAYMENT_METHOD_KIND_LABELS } from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
 import { CategorySelect } from "@/components/category-select";
 import { FormRow as Row, rowControl } from "@/components/ui/form-row";
+import type { ExpensePrefill } from "@/lib/simulator";
 
 const CURRENCIES = [
   { value: "ARS", label: "ARS" },
@@ -64,9 +65,13 @@ function writeSharedPref(v: boolean) {
  * pinned at the bottom. The natural-language box of the design is 3.1.
  *
  * `onCreated` replaces the default jump to the new expense's detail
- * (onboarding's first expense, plan 1.3).
+ * (onboarding's first expense, plan 1.3). `initial` fills the form in, as
+ * "Cargar compra" does from the simulator (plan 4.8).
  */
-export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => void } = {}) {
+export function ExpenseForm({
+  onCreated,
+  initial = {},
+}: { onCreated?: (expenseId: string) => void; initial?: ExpensePrefill } = {}) {
   const router = useRouter();
   // "Compartido" off → Mi plata; on → the hogar with its split rules.
   const { personal, hogar, current } = useSpaces();
@@ -81,12 +86,12 @@ export function ExpenseForm({ onCreated }: { onCreated?: (expenseId: string) => 
   const { data: members } = useHouseholdMembers(hogar?.id);
 
   const [description, setDescription] = useState("");
-  const [amountStr, setAmountStr] = useState("");
-  const [currency, setCurrency] = useState<Currency>(baseCurrency);
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [paymentMethodId, setPaymentMethodId] = useState<string>("");
+  const [amountStr, setAmountStr] = useState(initial.amount ? String(initial.amount).replace(".", ",") : "");
+  const [currency, setCurrency] = useState<Currency>((initial.currency as Currency | undefined) ?? baseCurrency);
+  const [categoryId, setCategoryId] = useState<string>(initial.categoryId ?? "");
+  const [paymentMethodId, setPaymentMethodId] = useState<string>(initial.paymentMethodId ?? "");
   const [spentAt, setSpentAt] = useState<string>(isoToday());
-  const [installments, setInstallments] = useState<number>(1);
+  const [installments, setInstallments] = useState<number>(initial.installments ?? 1);
   const [overrideShares, setOverrideShares] = useState(false);
   const [shareAmounts, setShareAmounts] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
