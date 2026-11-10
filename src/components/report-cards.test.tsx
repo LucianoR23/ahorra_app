@@ -177,9 +177,38 @@ describe("reports in today's pesos", () => {
 
     await userEvent.click(screen.getByRole("radio", { name: "Pesos de hoy" }));
     expect(await screen.findByText(/con la inflación del INDEC hasta septiembre 2026/)).toHaveTextContent(
-      "Los meses siguientes van sin ajustar",
+      "Octubre va sin ajustar: el INDEC todavía no publicó su inflación.",
     );
     expect(asked).toContain("cpi");
+  });
+
+  it("names the two months INDEC has not published yet", async () => {
+    server.use(
+      http.get(`${API}/reports/trends`, ({ request }) => {
+        const body = trend(new URL(request.url));
+        body.points.push({ month: "2026-11", spentTotal: 300, income: 0, dueTotal: 0, net: 0 });
+        return HttpResponse.json(body);
+      }),
+    );
+    wrap(<TrendsReportCard />);
+    await userEvent.click(await screen.findByRole("radio", { name: "Pesos de hoy" }));
+    expect(await screen.findByText(/Octubre y noviembre van sin ajustar/)).toBeInTheDocument();
+  });
+
+  it("a longer gap does not blame INDEC", async () => {
+    server.use(
+      http.get(`${API}/reports/trends`, ({ request }) => {
+        const body = trend(new URL(request.url));
+        body.points.push(
+          { month: "2026-11", spentTotal: 300, income: 0, dueTotal: 0, net: 0 },
+          { month: "2026-12", spentTotal: 300, income: 0, dueTotal: 0, net: 0 },
+        );
+        return HttpResponse.json(body);
+      }),
+    );
+    wrap(<TrendsReportCard />);
+    await userEvent.click(await screen.findByRole("radio", { name: "Pesos de hoy" }));
+    expect(await screen.findByText("Desde octubre van sin ajustar hasta que tengamos el dato del INDEC.")).toBeInTheDocument();
   });
 
   it("without the index it offers the unadjusted view", async () => {
