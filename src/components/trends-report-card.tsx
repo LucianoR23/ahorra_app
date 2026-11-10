@@ -40,6 +40,28 @@ const LINES = [
   { key: "net", label: "Neto", color: "var(--color-ink)" },
 ] as const;
 
+function monthName(ym: string) {
+  return fmtMonthLong(ym).split(" ")[0];
+}
+
+/**
+ * Months after the last published index go as they are. INDEC publishes a
+ * month around the 12th of the next, so normally one or two are pending and
+ * get named; more means our copy is behind, not INDEC.
+ */
+function PendingMonths({ months }: { months: string[] }) {
+  if (months.length === 0) return null;
+  if (months.length > 2) {
+    return <span className="block">Desde {monthName(months[0]).toLowerCase()} van sin ajustar hasta que tengamos el dato del INDEC.</span>;
+  }
+  const names = months.map((m, i) => (i === 0 ? monthName(m) : monthName(m).toLowerCase())).join(" y ");
+  return (
+    <span className="block">
+      {names} {months.length === 1 ? "va" : "van"} sin ajustar: el INDEC todavía no publicó su inflación.
+    </span>
+  );
+}
+
 /** Reportes · Tendencias (plan 1.10b): the last 3, 6 or 12 months. */
 export function TrendsReportCard() {
   const [months, setMonths] = useState<"3" | "6" | "12">("6");
@@ -91,7 +113,7 @@ export function TrendsReportCard() {
               {data?.adjust === "cpi" && data.cpiThrough && (
                 <p className="text-caption text-ink-muted">
                   En pesos de hoy, con la inflación del INDEC hasta {fmtMonthLong(data.cpiThrough).toLowerCase()}.
-                  {last && last.month > data.cpiThrough ? " Los meses siguientes van sin ajustar hasta que salga su dato." : ""}
+                  <PendingMonths months={points.map((p) => p.month).filter((m) => m > data.cpiThrough!)} />
                 </p>
               )}
             </CardContent>

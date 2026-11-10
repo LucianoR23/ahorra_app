@@ -7,6 +7,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 ### 5.4 (app part): spending in today's pesos
 - Reportes · Tendencias: "Sin ajustar / Pesos de hoy" under the period, in pesos only (hidden with "US$" on or in a space kept in another currency). In today's pesos the chart and figures come adjusted by INDEC's CPI (`adjust=cpi`), with a line saying up to which month the index goes and that later months go unadjusted until their figure is out. Without an index yet, an alert offers the unadjusted view.
 - Reportes · Mensual: a past month shows "En pesos de hoy" under Gastado when the API sends it.
+- The Tendencias note names the months not adjusted yet and why ("Octubre y noviembre van sin ajustar: el INDEC todavía no publicó su inflación."). A gap of more than two months says "hasta que tengamos el dato del INDEC" instead, since that means our copy is behind, not INDEC.
 
 ### 5.3: Ver en dólares
 - A "$ / US$" selector on top of Inicio (Yo and Hogar) and Reportes, remembered per device (`app.view_currency`). In dollars, the month's totals, categories, what each member paid and Tendencias come from the API in dollars.
