@@ -58,7 +58,7 @@ describe("Cargar gasto in dollars", () => {
     await userEvent.type(await screen.findByLabelText("Monto"), "100");
     await userEvent.click(screen.getByRole("radio", { name: "USD" }));
 
-    expect(await screen.findByLabelText("Cotización")).toHaveTextContent("MEP · $ 1.587,90");
+    expect(await screen.findByLabelText("Cotización")).toHaveTextContent(/^MEP$/);
     expect(screen.getByText(/al dólar MEP/)).toHaveTextContent("≈ $ 158.790 al dólar MEP");
 
     // A card purchase abroad: the card dollar.
@@ -91,7 +91,7 @@ describe("Cargar gasto in dollars", () => {
     api({ ...personalSpace, fxSource: "oficial" });
     render(<ExpenseForm />, { wrapper: WithSWR });
     await userEvent.click(await screen.findByRole("radio", { name: "USD" }));
-    expect(await screen.findByLabelText("Cotización")).toHaveTextContent("Oficial · $ 1.570");
+    expect(await screen.findByLabelText("Cotización")).toHaveTextContent(/^Oficial$/);
   });
 });
 
@@ -115,7 +115,7 @@ describe("FxSourceSetting", () => {
     api();
     render(<FxSourceSetting household={{ ...personalSpace, fxSource: "bolsa" }} editable title="Cotización de Mi plata" />, { wrapper: WithSWR });
     const select = await screen.findByLabelText("Dólar para convertir");
-    await waitFor(() => expect(select).toHaveTextContent("MEP · $ 1.587,90"));
+    expect(select).toHaveTextContent(/^MEP$/);
     await userEvent.click(select);
     await userEvent.click(await screen.findByRole("option", { name: "Oficial · $ 1.570" }));
     await waitFor(() => expect(body("PATCH", `/households/${personalSpace.id}`)).toEqual({ name: "Mi plata", baseCurrency: "ARS", fxSource: "oficial" }));

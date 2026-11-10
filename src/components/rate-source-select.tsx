@@ -6,9 +6,9 @@ import { RATE_SOURCES, rateFor, rateSourceLabel } from "@/lib/fx";
 import { useFormatAmount } from "@/stores/discreet";
 
 /**
- * Which dollar a movement or a household converts with (plan 5.1): "MEP ·
- * $ 1.588". With `currency`, each option shows its price for it; sources
- * without one are still listed (the API may price them by then).
+ * Which dollar a movement or a household converts with (plan 5.1). Closed
+ * it shows the name ("MEP"); each option shows its price for `currency`
+ * ("MEP · $ 1.588"), and sources without one are still listed.
  */
 export function RateSourceSelect({
   id,
@@ -35,7 +35,8 @@ export function RateSourceSelect({
   return (
     <Select value={value} onValueChange={(v) => v && onValueChange(v)}>
       <SelectTrigger id={id} aria-invalid={ariaInvalid} className={className}>
-        <SelectValue>{(v: string | null) => (v ? label(v) : "Elegí")}</SelectValue>
+        {/* Closed, just the name: it fits the row, and the preview line already says the amount. */}
+        <SelectValue>{(v: string | null) => (v ? rateSourceLabel(v) : "Elegí")}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {RATE_SOURCES.map((s) => (
