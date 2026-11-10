@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 4.8: "¿Me lo puedo comprar?"
+- New screen `/simular`, in Más under "Tu plata". Amount and currency, payment method, installments and an optional category; "Ver cómo me queda" asks the API (`POST /simulations/purchase`), which saves nothing.
+- The answer: how many installments and from which statement, the tightest month ("te quedan" or "te faltarían"), month by month what the cards would have, the share of income and what is left after the recurring expenses, the chosen card's statements before and after, and the limits the purchase counts against. Without a recurring income it asks for the salary instead of showing what is left. Every amount goes through `<Money>`, so discreet mode hides them.
+- "¿Cuotas o contado?": the installments' value today against the cash price at an editable monthly yield (default 2%), computed in the app (`lib/simulator.ts`).
+- "Cargar compra" opens Cargar gasto filled in (`/agregar?amount=…&currency=…&paymentMethodId=…&installments=…&categoryId=…`); `ExpenseForm` takes `initial`.
+- Open to every plan for now: the Plus/Pro Hogar gate comes with pricing.
+
 ### 1.10b Motion
 - Lists rise into place when they appear: the day groups of Movimientos and Ingresos one after the other (30 ms apart, at most 8 steps), and each group of the grouped lists. `rise` in `globals.css`, with the brand's `duration-base` and `ease-out`; nothing moves with reduced motion.
 - Press feedback: rows that are links or buttons (`ListRow`, `MenuItem`) dim while held, and the button's 1 px press now eases instead of jumping.

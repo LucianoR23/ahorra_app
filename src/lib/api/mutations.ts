@@ -27,6 +27,7 @@ import type {
   User,
   InsightGenerateResult,
   CardStatementDetail,
+  PurchaseSimulation,
   AdjustmentKind,
 } from "./schemas";
 import { userSchema } from "./schemas";
@@ -88,6 +89,20 @@ export type ExpenseCreateInput = {
 /** Creates the expense in `householdId` ("Mi plata" or the hogar), or in the current space. */
 export function createExpense(input: ExpenseCreateInput, householdId?: string) {
   return apiMutate<ExpenseDetail>({ method: "POST", path: "/expenses", body: input, householdId });
+}
+
+export type PurchaseSimulationInput = {
+  paymentMethodId: string;
+  categoryId?: string | null;
+  amount: number;
+  currency: string;
+  installments: number;
+  months?: number;
+};
+
+/** "¿Me lo puedo comprar?" (plan 4.8): a POST that saves nothing. */
+export function simulatePurchase(input: PurchaseSimulationInput, householdId?: string) {
+  return apiMutate<PurchaseSimulation>({ method: "POST", path: "/simulations/purchase", body: input, householdId });
 }
 
 export type ExpensePatchInput = {

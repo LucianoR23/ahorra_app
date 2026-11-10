@@ -3,6 +3,7 @@ import { ExpenseForm } from "@/components/expense-form";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 import { PageHeader } from "@/components/ui/page-header";
 import { CloseButton } from "@/components/close-button";
+import { parsePrefill } from "@/lib/simulator";
 
 const AGREGAR_HELP: InfoHelpContent = {
   titulo: "Cargar gasto",
@@ -27,7 +28,9 @@ const AGREGAR_HELP: InfoHelpContent = {
   ],
 };
 
-export default function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  // "Cargar compra" from the simulator (plan 4.8) fills the form in.
+  const initial = parsePrefill(await searchParams);
   return (
     <AppShell focus>
       <div className="mx-auto w-full max-w-xl">
@@ -41,7 +44,7 @@ export default function Page() {
             </div>
           }
         />
-        <ExpenseForm />
+        <ExpenseForm initial={initial} />
       </div>
     </AppShell>
   );
