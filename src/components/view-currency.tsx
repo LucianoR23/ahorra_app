@@ -79,5 +79,5 @@ export function UsdViewNote() {
 export function PesosNotice({ what }: { what: string }) {
   const { usd } = useViewCurrency();
   if (!usd) return null;
-  return <Alert>{what} se muestran en pesos, porque así se pagan. Pasarlos a dólares queda para más adelante.</Alert>;
+  return <Alert>{what} se muestran en pesos, porque así se pagan.</Alert>;
 }
