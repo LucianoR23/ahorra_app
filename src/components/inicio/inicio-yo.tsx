@@ -88,10 +88,7 @@ function Greeting() {
           {now ? now.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" }) : " "}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <CurrencyToggle />
-        <DiscreetToggle />
-      </div>
+      <DiscreetToggle />
     </div>
   );
 }
@@ -111,9 +108,12 @@ function MonthHero() {
       aria-labelledby="month-spent"
       className="flex flex-col gap-3 md:rounded-xl md:bg-card md:p-6 md:shadow-card md:dark:ring-1 md:dark:ring-border"
     >
-      <h2 id="month-spent" className="text-label uppercase text-ink-muted">
-        Gastaste en {MONTHS[now.getMonth()]}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="month-spent" className="text-label uppercase text-ink-muted">
+          Gastaste en {MONTHS[now.getMonth()]}
+        </h2>
+        <CurrencyToggle />
+      </div>
       {isLoading ? (
         <Skeleton className="h-12 w-56" />
       ) : (

@@ -46,12 +46,7 @@ export default function Page() {
           title="Reportes"
           description="Cómo viene tu plata, mes a mes."
           className="mb-0"
-          action={
-            <div className="flex items-center gap-2">
-              <CurrencyToggle />
-              <InfoHelp content={REPORTES_HELP} size="icon" />
-            </div>
-          }
+          action={<InfoHelp content={REPORTES_HELP} size="icon" />}
         />
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="w-full">
           <TabsList className="w-full" aria-label="Reporte">
@@ -60,7 +55,15 @@ export default function Page() {
             <TabsTrigger value="ai">Exportar IA</TabsTrigger>
           </TabsList>
         </Tabs>
-        {tab !== "ai" && <UsdViewNote />}
+        {tab !== "ai" && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-caption text-ink-muted">Ver montos en</span>
+              <CurrencyToggle />
+            </div>
+            <UsdViewNote />
+          </div>
+        )}
         {tab === "monthly" && <MonthlyReportCard />}
         {tab === "trends" && <TrendsReportCard />}
         {tab === "ai" && <AiExportCard />}

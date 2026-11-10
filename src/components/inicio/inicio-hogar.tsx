@@ -115,7 +115,6 @@ function HogarHeader({ people }: { people: People }) {
           <UserPlus aria-hidden strokeWidth={1.75} />
           <span className="max-md:sr-only">Invitar</span>
         </Button>
-        <CurrencyToggle />
         <DiscreetToggle />
       </div>
     </div>
@@ -133,9 +132,12 @@ function SharedHero({ people }: { people: People }) {
       aria-labelledby="shared-spent"
       className="flex flex-col gap-3 md:rounded-xl md:bg-card md:p-6 md:shadow-card md:dark:ring-1 md:dark:ring-border"
     >
-      <h2 id="shared-spent" className="text-label uppercase text-ink-muted">
-        Gastaron juntos{report ? ` en ${monthName(report.month)}` : ""}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="shared-spent" className="text-label uppercase text-ink-muted">
+          Gastaron juntos{report ? ` en ${monthName(report.month)}` : ""}
+        </h2>
+        <CurrencyToggle />
+      </div>
       {isLoading ? (
         <Skeleton className="h-12 w-56" />
       ) : (
