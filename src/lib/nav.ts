@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   LifeBuoy,
   List,
+  ListChecks,
   Repeat,
   ScrollText,
   Settings,
@@ -97,6 +98,7 @@ export const ADMIN_NAV: NavItem[] = [
   { id: "admin-accounts", label: "Cuentas", href: "/admin/cuentas", icon: Users },
   { id: "admin-audit", label: "Auditoría", href: "/admin/auditoria", icon: ScrollText },
   { id: "admin-households", label: "Hogares", href: "/admin/hogares", icon: House },
+  { id: "admin-waitlist", label: "Lista de espera", href: "/admin/lista-de-espera", icon: ListChecks },
   { id: "admin-tools", label: "Herramientas", href: "/admin/herramientas", icon: Wrench },
 ];
 

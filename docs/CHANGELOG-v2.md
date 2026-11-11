@@ -10,6 +10,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 - Cuentas: search by email or name, newest first, with badges for superadmin, unverified and deleted accounts. Each account shows its metadata (sign-up, verified, sign-in methods, last seen, open sessions), its spaces by name, role and size, and its activity.
 - Auditoría: the security events of every account and every superadmin action, filtered by Sesiones, Fallidos, Cuenta, Hogares or Superadmin, 50 at a time. Each event names the account and, when someone else did it, who.
 - Hogares borrados and Herramientas (regenerate insights, test push) moved from the old single page into their own sections, unchanged.
+- Lista de espera: download the confirmed entries as CSV and erase an address on request (Ley 25.326, 5 business days), with a confirmation. Both use the B.5 endpoints, which until now had no screen; the API records them in the audit log, without the erased address.
 
 ### 10.1 (app part): notification preferences
 - New screen "Preferencias de notificaciones" (`/ajustes/notificaciones`), reachable from Ajustes (Avisos > Notificaciones) and from a gear in Notificaciones. Per person, for every space.
