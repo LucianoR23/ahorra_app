@@ -21,7 +21,7 @@ export function ViewCurrencyPicker() {
   if (picked && !options.includes(picked)) options.push(picked);
   return (
     <Select value={currency} onValueChange={(v) => v && setCurrency(v)}>
-      <SelectTrigger aria-label="Ver montos en" className="h-9 w-auto min-w-0 gap-1 px-3">
+      <SelectTrigger aria-label="Ver montos en" className="h-11 w-auto min-w-0 gap-1 px-3">
         <SelectValue>{(v: string | null) => currencyPrefix(v || "ARS")}</SelectValue>
       </SelectTrigger>
       <SelectContent>

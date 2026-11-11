@@ -32,12 +32,10 @@ export const useViewCurrencyStore = create<ViewCurrencyState>()(
       name: STORAGE_KEYS.viewCurrency,
       storage: createJSONStorage(() => localStorage),
       version: 1,
-      migrate: (persisted, version) => {
-        if (version === 0) {
-          const old = (persisted ?? {}) as V0;
-          return { currency: old.usd ? "USD" : "ARS", today: !!old.today };
-        }
-        return persisted as Pick<ViewCurrencyState, "currency" | "today">;
+      // Only runs for an older version, and 0 is the only one.
+      migrate: (persisted) => {
+        const old = (persisted ?? {}) as V0;
+        return { currency: old.usd ? "USD" : "ARS", today: !!old.today };
       },
       partialize: (s) => ({ currency: s.currency, today: s.today }),
     },
