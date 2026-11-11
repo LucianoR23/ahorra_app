@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 7.3 (app part): subscription suggestions and price-increase alert
+- Recurrentes, Gastos fijos tab: "¿Son gastos fijos?" lists expenses loaded by hand that repeat every month (from `GET /recurring-expenses/suggestions`), with how many of the last 4 months, the day and the last amount (and the earlier one when it went up).
+- "Agregar como fijo" opens the new fixed expense filled in: description, amount, currency, category, payment method (left empty when it is another member's) and a start on its day, the month after the last one paid and never before today, so nothing loaded by hand is booked twice. Once created it stops being suggested.
+- "No es fijo" hides it for the whole space (`POST /recurring-expenses/suggestions/dismiss`).
+- A variable fixed expense has "Avisame si sube" (sin aviso, 10%, 20%, 30%, 50%; a value set before is kept): the existing `alertThresholdPct`, a push when a confirmed bill is that much over the previous one. Turning "Importe variable" off clears it.
+
 ### 7.2 (app part): Vencimientos
 - New screen "Vencimientos" (`/vencimientos`), in Más > Tu plata and linked from Tarjetas: the month with a dot on each day with something (paid, comes in, a card closes) and the list below, by day. Tap a day to see only that day; arrows change the month.
 - Rows: fixed incomes, card due dates (statement totals per currency, installments, paid or overdue), fixed expenses (category, payment method, "monto estimado" when variable) and card closings. A statement row opens it; a fixed expense or income opens Recurrentes.

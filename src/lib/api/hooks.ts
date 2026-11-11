@@ -24,6 +24,7 @@ import type {
   CreditCard,
   CreditCardPeriod,
   RecurringExpense,
+  RecurringSuggestion,
   RecurringIncome,
   SeriesStats,
   Expense,
@@ -147,6 +148,13 @@ export function useRecurringExpenses() {
   const { token, householdId } = useReady();
   const key = token && householdId ? (["/recurring-expenses"] as const) : null;
   return useSWR<RecurringExpense[]>(key);
+}
+
+/** Expenses that look recurring (plan 7.3). */
+export function useRecurringSuggestions() {
+  const { token, householdId } = useReady();
+  const key = token && householdId ? (["/recurring-expenses/suggestions"] as const) : null;
+  return useSWR<RecurringSuggestion[]>(key);
 }
 
 export function useRecurringExpense(id: string | null | undefined) {

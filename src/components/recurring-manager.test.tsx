@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { RecurringManager } from "./recurring-manager";
+import { RecurringManager, suggestionStart } from "./recurring-manager";
 import { confirm } from "@/lib/confirm";
 import { API, requests, server, signIn } from "@/test/msw";
 import { personalSpace, WithSWR } from "@/test/spaces";
@@ -66,6 +66,7 @@ beforeEach(() => {
   vi.mocked(confirm).mockReset();
   server.use(
     http.get(`${API}/households`, () => HttpResponse.json([personalSpace])),
+    http.get(`${API}/recurring-expenses/suggestions`, () => HttpResponse.json([])),
     http.get(`${API}/recurring-expenses`, () => HttpResponse.json(expenses)),
     http.get(`${API}/recurring-expenses/:id`, ({ params }) => HttpResponse.json(expenses.find((e) => e.id === params.id))),
     http.get(`${API}/recurring-incomes`, () => HttpResponse.json([rinc("i1")])),
@@ -208,5 +209,128 @@ describe("RecurringManager", () => {
     server.use(http.get(`${API}/recurring-expenses`, () => HttpResponse.json([])));
     render(<RecurringManager />, { wrapper: WithSWR });
     expect(await screen.findByText("Todavía no tenés gastos fijos")).toBeInTheDocument();
+  });
+});
+
+// Subscription suggestions and the price-increase alert (plan 7.3).
+
+const sug = (over: Record<string, unknown> = {}) => ({
+  key: "ARS:gimnasio",
+  description: "Gimnasio",
+  currency: "ARS",
+  amount: 42000,
+  minAmount: 38000,
+  maxAmount: 42000,
+  months: 3,
+  dayOfMonth: 4,
+  lastSpentAt: "2026-11-04",
+  categoryId: "luz",
+  paymentMethodId: "cuenta",
+  ...over,
+});
+
+describe("suggestionStart", () => {
+  it("is the month after the last one paid, never before today", () => {
+    expect(suggestionStart({ lastSpentAt: "2026-10-05", dayOfMonth: 5 }, "2026-11-09")).toBe("2026-12-05");
+    expect(suggestionStart({ lastSpentAt: "2026-10-12", dayOfMonth: 12 }, "2026-11-09")).toBe("2026-11-12");
+    expect(suggestionStart({ lastSpentAt: "2026-08-20", dayOfMonth: 20 }, "2026-11-09")).toBe("2026-11-20");
+  });
+
+  it("falls on the last day of a short month", () => {
+    expect(suggestionStart({ lastSpentAt: "2027-01-31", dayOfMonth: 31 }, "2027-01-31")).toBe("2027-02-28");
+  });
+});
+
+describe("RecurringManager suggestions (plan 7.3)", () => {
+  it("adds a suggestion as a recurring expense with the form filled in", async () => {
+    server.use(http.get(`${API}/recurring-expenses/suggestions`, () => HttpResponse.json([sug()])));
+    render(<RecurringManager />, { wrapper: WithSWR });
+
+    const card = await screen.findByRole("region", { name: "¿Son gastos fijos?" });
+    expect(card).toHaveTextContent("GimnasioLo cargaste 3 de los últimos 4 meses, cerca del día 4");
+    expect(card).toHaveTextContent("antes $ 38.000");
+
+    await userEvent.click(within(card).getByRole("button", { name: "Agregar Gimnasio como gasto fijo" }));
+    const sheet = await screen.findByRole("dialog", { name: "Nuevo gasto fijo" });
+    expect(within(sheet).getByLabelText("Descripción")).toHaveValue("Gimnasio");
+    expect(within(sheet).getByLabelText("Monto")).toHaveValue("42000");
+    await userEvent.click(within(sheet).getByRole("button", { name: "Crear gasto fijo" }));
+    await waitFor(() =>
+      expect(body("POST", "/recurring-expenses")).toMatchObject({
+        description: "Gimnasio",
+        amount: 42000,
+        currency: "ARS",
+        categoryId: "luz",
+        paymentMethodId: "cuenta",
+        frequency: "monthly",
+        dayOfMonth: 4,
+        startsAt: "2026-12-04",
+      }),
+    );
+  });
+
+  it("leaves the payment method empty when it is someone else's", async () => {
+    server.use(http.get(`${API}/recurring-expenses/suggestions`, () => HttpResponse.json([sug({ paymentMethodId: "other" })])));
+    render(<RecurringManager />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("button", { name: "Agregar Gimnasio como gasto fijo" }));
+    const sheet = await screen.findByRole("dialog");
+    await userEvent.click(within(sheet).getByRole("button", { name: "Crear gasto fijo" }));
+    expect(within(sheet).getByRole("alert")).toHaveTextContent("Completá descripción, monto y con qué pagás");
+  });
+
+  it("dismisses a suggestion for the whole space", async () => {
+    let dismissed = false;
+    server.use(
+      http.get(`${API}/recurring-expenses/suggestions`, () => HttpResponse.json(dismissed ? [] : [sug()])),
+      http.post(`${API}/recurring-expenses/suggestions/dismiss`, () => {
+        dismissed = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    render(<RecurringManager />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("button", { name: "Gimnasio no es un gasto fijo" }));
+    await waitFor(() => expect(screen.queryByRole("region", { name: "¿Son gastos fijos?" })).not.toBeInTheDocument());
+    expect(body("POST", "/recurring-expenses/suggestions/dismiss")).toEqual({ key: "ARS:gimnasio" });
+  });
+
+  it("does not show suggestions on the incomes tab", async () => {
+    server.use(http.get(`${API}/recurring-expenses/suggestions`, () => HttpResponse.json([sug()])));
+    render(<RecurringManager />, { wrapper: WithSWR });
+    await screen.findByRole("region", { name: "¿Son gastos fijos?" });
+    await userEvent.click(screen.getByRole("tab", { name: "Ingresos fijos" }));
+    expect(screen.queryByRole("region", { name: "¿Son gastos fijos?" })).not.toBeInTheDocument();
+  });
+});
+
+describe("RecurringManager price-increase alert (plan 7.3)", () => {
+  it("a variable bill can warn when it goes up", async () => {
+    render(<RecurringManager />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("button", { name: "Nuevo gasto fijo" }));
+    const sheet = await screen.findByRole("dialog");
+    expect(within(sheet).queryByLabelText("Avisame si sube")).not.toBeInTheDocument();
+    await userEvent.type(within(sheet).getByLabelText("Descripción"), "Luz");
+    await userEvent.type(within(sheet).getByLabelText("Monto"), "30000");
+    await userEvent.click(within(sheet).getByLabelText("Pago"));
+    await userEvent.click(await screen.findByRole("option", { name: "Galicia" }));
+    await userEvent.click(within(sheet).getByRole("switch", { name: "Importe variable" }));
+    await userEvent.click(within(sheet).getByLabelText("Avisame si sube"));
+    await userEvent.click(await screen.findByRole("option", { name: "Más de 20% que la anterior" }));
+    await userEvent.click(within(sheet).getByRole("button", { name: "Crear gasto fijo" }));
+    await waitFor(() => expect(body("POST", "/recurring-expenses")).toMatchObject({ amountIsVariable: true, alertThresholdPct: 20 }));
+  });
+
+  it("keeps a threshold set before, and drops it when the bill stops being variable", async () => {
+    expenses[1] = rexp("r2", { description: "Luz", amountIsVariable: true, lastAmount: 31500, isActive: false, alertThresholdPct: 15 });
+    try {
+      render(<RecurringManager />, { wrapper: WithSWR });
+      await userEvent.click(await screen.findByRole("button", { name: "Editar Luz" }));
+      const sheet = await screen.findByRole("dialog", { name: "Editar gasto fijo" });
+      expect(await within(sheet).findByLabelText("Avisame si sube")).toHaveTextContent("Más de 15% que la anterior");
+      await userEvent.click(within(sheet).getByRole("switch", { name: "Importe variable" }));
+      await userEvent.click(within(sheet).getByRole("button", { name: "Guardar" }));
+      await waitFor(() => expect(body("PATCH", "/recurring-expenses/r2")).toMatchObject({ amountIsVariable: false, alertThresholdPct: null }));
+    } finally {
+      expenses[1] = rexp("r2", { description: "Luz", amountIsVariable: true, lastAmount: 31500, isActive: false });
+    }
   });
 });

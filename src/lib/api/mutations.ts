@@ -221,6 +221,11 @@ export function patchRecurringExpense(id: string, input: Partial<RecurringExpens
   });
 }
 
+/** "No es fijo": the suggestion stops showing for the whole space (plan 7.3). */
+export function dismissRecurringSuggestion(key: string) {
+  return apiMutate<void>({ method: "POST", path: "/recurring-expenses/suggestions/dismiss", body: { key } });
+}
+
 export function toggleRecurringExpense(id: string, isActive: boolean) {
   return apiMutate<void>({
     method: "PATCH",

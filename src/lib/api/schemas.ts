@@ -273,6 +273,22 @@ export const recurringExpenseSchema = z.object({
 });
 export type RecurringExpense = z.infer<typeof recurringExpenseSchema>;
 
+/** An expense loaded by hand that repeats every month (plan 7.3). */
+export const recurringSuggestionSchema = z.object({
+  key: z.string(),
+  description: z.string(),
+  currency: z.string(),
+  amount: z.number(),
+  minAmount: z.number(),
+  maxAmount: z.number(),
+  months: z.number(),
+  dayOfMonth: z.number(),
+  lastSpentAt: z.string(),
+  categoryId: z.string().nullable().optional(),
+  paymentMethodId: z.string(),
+});
+export type RecurringSuggestion = z.infer<typeof recurringSuggestionSchema>;
+
 export const seriesPointSchema = z.object({
   expenseId: z.string(),
   amount: z.number(),

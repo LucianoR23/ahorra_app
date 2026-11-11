@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { Plus, Repeat } from "lucide-react";
+import { Plus, Repeat, Sparkles } from "lucide-react";
 import { CategoryIcon } from "@/components/category-icon";
 import { CategorySelect } from "@/components/category-select";
 import { IncomeIcon } from "@/components/incomes-list";
@@ -30,6 +30,7 @@ import {
   useRecurringExpenses,
   useRecurringIncome,
   useRecurringIncomes,
+  useRecurringSuggestions,
 } from "@/lib/api/hooks";
 import { ApiError } from "@/lib/api/errors";
 import {
@@ -37,6 +38,7 @@ import {
   createRecurringIncome,
   deleteRecurringExpense,
   deleteRecurringIncome,
+  dismissRecurringSuggestion,
   patchRecurringExpense,
   patchRecurringIncome,
   toggleRecurringExpense,
@@ -44,9 +46,9 @@ import {
   type RecurringExpenseInput,
   type RecurringIncomeInput,
 } from "@/lib/api/mutations";
-import type { Currency, RecurringExpense, RecurringIncome } from "@/lib/api/schemas";
+import type { Currency, RecurringExpense, RecurringIncome, RecurringSuggestion } from "@/lib/api/schemas";
 import { confirm } from "@/lib/confirm";
-import { isoToday } from "@/lib/format";
+import { isoToday, shiftMonth } from "@/lib/format";
 import {
   FREQUENCY_LABELS,
   INCOME_SOURCES,
@@ -112,7 +114,31 @@ function useBaseCurrency(): Currency {
 }
 
 type Tab = "expenses" | "incomes";
-type Open = { kind: Tab; id?: string } | null;
+type Open = { kind: Tab; id?: string; suggestion?: RecurringSuggestion } | null;
+
+/** What a new recurring expense starts with when it comes from a suggestion. */
+type Prefill = Pick<RecurringExpense, "description" | "amount" | "currency" | "categoryId" | "paymentMethodId" | "startsAt">;
+
+/**
+ * The first charge of a suggestion turned into a recurring expense: its day,
+ * the month after the last one paid by hand, and never before today (a start
+ * in the past would book a charge already loaded). Day 31 in a short month
+ * is its last day.
+ */
+export function suggestionStart(s: Pick<RecurringSuggestion, "lastSpentAt" | "dayOfMonth">, today: string = isoToday()): string {
+  const at = (ym: string) => {
+    const [y, m] = ym.split("-").map(Number);
+    const last = new Date(y, m, 0).getDate();
+    return `${ym}-${String(Math.min(s.dayOfMonth, last)).padStart(2, "0")}`;
+  };
+  let ym = shiftMonth(s.lastSpentAt.slice(0, 7), 1);
+  while (at(ym) < today) ym = shiftMonth(ym, 1);
+  return at(ym);
+}
+
+// Price-increase alert of a variable bill: a push when the confirmed bill is
+// this much over the previous one.
+const THRESHOLDS = [10, 20, 30, 50];
 
 /**
  * Recurrentes (plan 1.10b, no design: the header from `Componentes`, the
@@ -126,6 +152,7 @@ export function RecurringManager({ help }: { help?: React.ReactNode }) {
   const { data: recInc, isLoading: loadingInc } = useRecurringIncomes();
   const { data: categories } = useCategories();
   const { data: paymentMethods } = usePaymentMethods();
+  const { data: suggestions, mutate: reloadSuggestions } = useRecurringSuggestions();
 
   const loading = tab === "expenses" ? loadingExp : loadingInc;
   const count = tab === "expenses" ? (recExp?.length ?? 0) : (recInc?.length ?? 0);
@@ -154,6 +181,14 @@ export function RecurringManager({ help }: { help?: React.ReactNode }) {
           <TabsTrigger value="incomes">Ingresos fijos</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {tab === "expenses" && !loadingExp && suggestions && suggestions.length > 0 && (
+        <SuggestionsCard
+          suggestions={suggestions}
+          onAdd={(sg) => setOpen({ kind: "expenses", suggestion: sg })}
+          onDismissed={() => reloadSuggestions()}
+        />
+      )}
 
       {loading ? (
         <Card className="py-1">
@@ -240,8 +275,9 @@ export function RecurringManager({ help }: { help?: React.ReactNode }) {
 
       {open?.kind === "expenses" && (
         <RecurringExpenseSheet
-          key={open.id ?? "new"}
+          key={open.id ?? open.suggestion?.key ?? "new"}
           rec={open.id ? recExp?.find((r) => r.id === open.id) : undefined}
+          prefill={open.suggestion ? prefillFrom(open.suggestion, paymentMethods) : undefined}
           onOpenChange={close}
         />
       )}
@@ -253,6 +289,100 @@ export function RecurringManager({ help }: { help?: React.ReactNode }) {
         />
       )}
     </div>
+  );
+}
+
+function prefillFrom(sg: RecurringSuggestion, methods: { id: string; isActive: boolean }[] | undefined): Prefill {
+  // The card may be another member's: then the user picks theirs.
+  const own = methods?.some((m) => m.id === sg.paymentMethodId && m.isActive);
+  return {
+    description: sg.description,
+    amount: sg.amount,
+    currency: sg.currency,
+    categoryId: sg.categoryId ?? null,
+    paymentMethodId: own ? sg.paymentMethodId : "",
+    startsAt: suggestionStart(sg),
+  };
+}
+
+/**
+ * Expenses loaded by hand that repeat every month (plan 7.3): add one as a
+ * recurring expense (the form opens filled in) or say it is not one, which
+ * hides it for everyone in the space.
+ */
+function SuggestionsCard({
+  suggestions,
+  onAdd,
+  onDismissed,
+}: {
+  suggestions: RecurringSuggestion[];
+  onAdd: (s: RecurringSuggestion) => void;
+  onDismissed: () => Promise<unknown>;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function dismiss(sg: RecurringSuggestion) {
+    setBusy(sg.key);
+    try {
+      await dismissRecurringSuggestion(sg.key);
+      await onDismissed();
+      toast.success("Listo, no lo sugerimos más");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "No se pudo descartar");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <section aria-labelledby="suggestions-title" className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 px-1">
+        <Sparkles aria-hidden className="size-4 text-ink-muted" strokeWidth={1.75} />
+        <h2 id="suggestions-title" className="text-body font-semibold text-ink">
+          ¿Son gastos fijos?
+        </h2>
+      </div>
+      <Card className="py-1">
+        <CardContent>
+          <ul className="divide-y divide-border">
+            {suggestions.map((sg) => (
+              <li key={sg.key} className="flex flex-col gap-2 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-body font-semibold text-ink">{sg.description}</p>
+                    <p className="text-caption text-ink-muted">
+                      Lo cargaste {sg.months} de los últimos 4 meses, cerca del día {sg.dayOfMonth}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-right">
+                    <Money amount={sg.amount} currency={sg.currency} />
+                    {sg.maxAmount > sg.minAmount && (
+                      <span className="block text-caption font-normal text-ink-muted">
+                        antes <Money amount={sg.minAmount} currency={sg.currency} />
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => onAdd(sg)} disabled={busy === sg.key} aria-label={`Agregar ${sg.description} como gasto fijo`}>
+                    Agregar como fijo
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => dismiss(sg)}
+                    disabled={busy === sg.key}
+                    aria-label={`${sg.description} no es un gasto fijo`}
+                  >
+                    No es fijo
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 
@@ -299,7 +429,15 @@ function SeriesActions({
   );
 }
 
-function RecurringExpenseSheet({ rec, onOpenChange }: { rec?: RecurringExpense; onOpenChange: (v: boolean) => void }) {
+function RecurringExpenseSheet({
+  rec,
+  prefill,
+  onOpenChange,
+}: {
+  rec?: RecurringExpense;
+  prefill?: Prefill;
+  onOpenChange: (v: boolean) => void;
+}) {
   // Edit reads the series fresh: the list may lag behind the last generation.
   const { data, isLoading } = useRecurringExpense(rec?.id ?? null);
   const initial = rec ? (data ?? rec) : undefined;
@@ -352,6 +490,7 @@ function RecurringExpenseSheet({ rec, onOpenChange }: { rec?: RecurringExpense; 
           <RecurringExpenseForm
             key={initial?.lastGenerated ?? initial?.id ?? "new"}
             initial={initial}
+            prefill={prefill}
             onDone={() => {
               refresh();
               onOpenChange(false);
@@ -596,27 +735,32 @@ function FormError({ err }: { err: string | null }) {
   );
 }
 
-function RecurringExpenseForm({ initial, onDone }: { initial?: RecurringExpense; onDone: () => void }) {
+function RecurringExpenseForm({ initial, prefill, onDone }: { initial?: RecurringExpense; prefill?: Prefill; onDone: () => void }) {
   const { data: categories } = useCategories();
   const { data: paymentMethods } = usePaymentMethods();
   const baseCurrency = useBaseCurrency();
+  // Editing starts from the series; creating from a suggestion, from it.
+  const from = initial ?? prefill;
 
-  const [description, setDescription] = useState(initial?.description ?? "");
-  const [amountStr, setAmountStr] = useState(initial ? String(initial.amount) : "");
-  const [currency, setCurrency] = useState<Currency>((initial?.currency as Currency) ?? baseCurrency);
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
-  const [paymentMethodId, setPaymentMethodId] = useState(initial?.paymentMethodId ?? "");
+  const [description, setDescription] = useState(from?.description ?? "");
+  const [amountStr, setAmountStr] = useState(from ? String(from.amount) : "");
+  const [currency, setCurrency] = useState<Currency>((from?.currency as Currency) ?? baseCurrency);
+  const [categoryId, setCategoryId] = useState(from?.categoryId ?? "");
+  const [paymentMethodId, setPaymentMethodId] = useState(from?.paymentMethodId ?? "");
   const [installments, setInstallments] = useState(initial?.installments ?? 1);
   const [frequency, setFrequency] = useState<Frequency>(initial?.frequency ?? "monthly");
   const [dayOfMonth, setDayOfMonth] = useState<number | null>(initial?.dayOfMonth ?? 1);
   const [dayOfWeek, setDayOfWeek] = useState<number | null>(initial?.dayOfWeek ?? 1);
   const [monthOfYear, setMonthOfYear] = useState<number | null>(initial?.monthOfYear ?? 1);
-  const [startsAt, setStartsAt] = useState(initial?.startsAt ?? isoToday());
+  const [startsAt, setStartsAt] = useState(from?.startsAt ?? isoToday());
   const [endsAt, setEndsAt] = useState(initial?.endsAt ?? "");
   // A variable bill (power, expensas, wifi): the amount is an estimate and
   // each month's charge waits for the real one. Always 1 installment, since
   // an unknown amount can't be split.
   const [amountIsVariable, setAmountIsVariable] = useState(initial?.amountIsVariable ?? false);
+  // Only a variable bill can go up on its own: the alert lives with it.
+  const [threshold, setThreshold] = useState<number | null>(initial?.alertThresholdPct ?? null);
+  const thresholds = threshold != null && !THRESHOLDS.includes(threshold) ? [...THRESHOLDS, threshold].sort((a, b) => a - b) : THRESHOLDS;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -652,6 +796,7 @@ function RecurringExpenseForm({ initial, onDone }: { initial?: RecurringExpense;
       monthOfYear: frequency === "yearly" ? monthOfYear : null,
       endsAt: endsAt || null,
       amountIsVariable,
+      alertThresholdPct: amountIsVariable ? threshold : null,
     };
     try {
       if (initial) await patchRecurringExpense(initial.id, base);
@@ -686,6 +831,25 @@ function RecurringExpenseForm({ initial, onDone }: { initial?: RecurringExpense;
         </div>
         <Switch id="amountIsVariable" checked={amountIsVariable} onCheckedChange={setAmountIsVariable} />
       </div>
+
+      {amountIsVariable && (
+        <Field label="Avisame si sube" htmlFor="rec-threshold">
+          <Select value={threshold == null ? "none" : String(threshold)} onValueChange={(v) => setThreshold(!v || v === "none" ? null : Number(v))}>
+            <SelectTrigger id="rec-threshold" className="w-full">
+              <SelectValue>{(v: string | null) => (!v || v === "none" ? "Sin aviso" : `Más de ${v}% que la anterior`)}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sin aviso</SelectItem>
+              {thresholds.map((t) => (
+                <SelectItem key={t} value={String(t)}>
+                  Más de {t}% que la anterior
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-caption text-ink-muted">Te avisamos cuando confirmás una factura que subió más que eso.</p>
+        </Field>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Field label="Categoría">
