@@ -51,7 +51,7 @@ const rows: Row[] = [
   ["upsertCreditCardPeriod", () => m.upsertCreditCardPeriod("p1", "2026-03", { closingDate: "2026-03-26", dueDate: "2026-04-07" }),
     "PUT", "/payment-methods/p1/credit-card/periods/2026-03", false, { closingDate: "2026-03-26", dueDate: "2026-04-07" }],
   ["deleteCreditCardPeriod", () => m.deleteCreditCardPeriod("p1", "2026-03"), "DELETE", "/payment-methods/p1/credit-card/periods/2026-03", false],
-  ["createHousehold", () => m.createHousehold({ name: "Casa", baseCurrency: "ARS" }), "POST", "/households", false],
+  ["createHousehold", () => m.createHousehold({ name: "Casa" }), "POST", "/households", false],
   ["patchHousehold", () => m.patchHousehold("h9", { name: "Casa" }), "PATCH", "/households/h9", false],
   ["deleteHousehold", () => m.deleteHousehold("h9"), "DELETE", "/households/h9", false],
   ["removeHouseholdMember", () => m.removeHouseholdMember("h9", "u2"), "DELETE", "/households/h9/members/u2", false],

@@ -12,7 +12,7 @@ const INGRESOS_HELP: InfoHelpContent = {
   ],
   consideraciones: [
     "Los ingresos fijos (sueldo, etc.) se generan solos desde Recurrentes; acá ves todos, los automáticos y los manuales.",
-    "Cada ingreso muestra su monto original; si fue en otra moneda, al lado ves cuánto es en tu moneda base. Los totales van en tu moneda base.",
+    "Cada ingreso muestra su monto original; si fue en otra moneda, al lado ves cuánto es en pesos. Los totales van en pesos.",
   ],
   relacionado: [
     { label: "Nuevo ingreso", href: "/ingresos/nuevo" },

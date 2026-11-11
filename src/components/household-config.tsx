@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { mutate as swrMutate } from "swr";
 import { useRouter } from "next/navigation";
-import { Coins, Copy, Home, LogOut, Mail, MoreHorizontal, Trash2, UserPlus } from "lucide-react";
+import { Copy, Home, LogOut, Mail, MoreHorizontal, Trash2, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MenuGroup, MenuItem, MenuRow } from "@/components/ui/menu-list";
 import { FxSourceSetting } from "@/components/fx-source-setting";
-import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHouseholdInvites, useHouseholdMembers, useHouseholds } from "@/lib/api/hooks";
 import {
@@ -26,18 +25,12 @@ import {
   transferHouseholdOwnership,
   type CreateInviteResponse,
 } from "@/lib/api/mutations";
-import type { Currency, Household } from "@/lib/api/schemas";
+import type { Household } from "@/lib/api/schemas";
 import { ApiError } from "@/lib/api/errors";
 import { confirm } from "@/lib/confirm";
 import { toast, toastError } from "@/lib/toast";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
-
-const CURRENCIES = [
-  { value: "ARS", label: "ARS" },
-  { value: "USD", label: "USD" },
-  { value: "EUR", label: "EUR" },
-] as const;
 
 function invalidateHouseholds() {
   swrMutate((k) => Array.isArray(k) && typeof k[0] === "string" && k[0].startsWith("/households"), undefined, { revalidate: true });
@@ -132,15 +125,9 @@ export function HouseholdConfig({ householdId, children }: { householdId: string
     <>
       <MenuGroup title="Hogar" footer={isOwner ? undefined : "Solo el dueño puede cambiarlo."}>
         {isOwner ? (
-          <>
-            <MenuItem icon={Home} label="Nombre" detail={household.name} onClick={() => setEditing(true)} />
-            <MenuItem icon={Coins} label="Moneda base" detail={household.baseCurrency} onClick={() => setEditing(true)} />
-          </>
+          <MenuItem icon={Home} label="Nombre" detail={household.name} onClick={() => setEditing(true)} />
         ) : (
-          <>
-            <ReadRow icon={Home} label="Nombre" value={household.name} />
-            <ReadRow icon={Coins} label="Moneda base" value={household.baseCurrency} />
-          </>
+          <ReadRow icon={Home} label="Nombre" value={household.name} />
         )}
       </MenuGroup>
 
@@ -229,10 +216,9 @@ function ReadRow({ icon: Icon, label, value }: { icon: typeof Home; label: strin
 
 function HouseholdSheet({ household, onOpenChange }: { household: Household; onOpenChange: (v: boolean) => void }) {
   const [name, setName] = useState(household.name);
-  const [currency, setCurrency] = useState<Currency>(household.baseCurrency as Currency);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const dirty = name.trim() !== household.name || currency !== household.baseCurrency;
+  const dirty = name.trim() !== household.name;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -240,7 +226,7 @@ function HouseholdSheet({ household, onOpenChange }: { household: Household; onO
     setSaving(true);
     setErr(null);
     try {
-      await patchHousehold(household.id, { name: name.trim(), baseCurrency: currency });
+      await patchHousehold(household.id, { name: name.trim() });
       invalidateHouseholds();
       toast.success("Hogar actualizado");
       onOpenChange(false);
@@ -255,16 +241,12 @@ function HouseholdSheet({ household, onOpenChange }: { household: Household; onO
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>El hogar</DialogTitle>
-          <DialogDescription>Los reportes del hogar se muestran en la moneda base.</DialogDescription>
+          <DialogDescription>El nombre que ven todos los miembros.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="hh-name">Nombre del hogar</Label>
             <Input id="hh-name" value={name} onChange={(e) => setName(e.target.value)} disabled={saving} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label id="hh-currency">Moneda base</Label>
-            <Segmented aria-labelledby="hh-currency" value={currency} onValueChange={setCurrency} options={CURRENCIES} />
           </div>
           {err && (
             <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">

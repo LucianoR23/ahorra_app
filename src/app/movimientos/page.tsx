@@ -14,7 +14,7 @@ const MOVIMIENTOS_HELP: InfoHelpContent = {
     "Las categorías y los medios de pago de los filtros se crean en otras pantallas (Categorías y Tarjetas): si te falta alguno, agregalo ahí primero.",
     "«Fijos» son los gastos generados por un recurrente y «Variables» el resto; los recurrentes se administran en Recurrentes.",
     "Eliminar un gasto desde su detalle no se puede deshacer.",
-    "Cada gasto muestra su monto original; si fue en otra moneda, al lado ves cuánto es en tu moneda base. Los totales del mes y de cada día van en tu moneda base.",
+    "Cada gasto muestra su monto original; si fue en otra moneda, al lado ves cuánto es en pesos. Los totales del mes y de cada día van en pesos.",
   ],
   relacionado: [
     { label: "Agregar gasto", href: "/agregar" },

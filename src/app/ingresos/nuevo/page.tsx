@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 const NUEVO_INGRESO_HELP: InfoHelpContent = {
   titulo: "Nuevo ingreso",
   acciones: [
-    "Escribí el monto arriba y elegí la moneda (con conversión estimada si no es tu moneda base).",
+    "Escribí el monto arriba y elegí la moneda (si no es en pesos, ves cuánto es en pesos).",
     "Elegí la fuente (salario, freelance, regalo…) o «Otro» para escribir una propia.",
     "Indicá la fecha, quién lo recibió (si son varios en el hogar) y, si querés, la cuenta donde entró.",
     "Guardalo con «Guardar ingreso»: te lleva a su detalle.",

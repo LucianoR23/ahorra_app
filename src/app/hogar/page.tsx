@@ -11,7 +11,7 @@ const HOGAR_HELP: InfoHelpContent = {
     "Cambiá cuánto le toca a cada uno en «Cómo se dividen los gastos». Al final podés salir del hogar, o eliminarlo si sos el dueño.",
   ],
   consideraciones: [
-    "El nombre y la moneda base del hogar, las reglas de división y la gestión de miembros solo los edita el dueño; el resto los ve como solo lectura.",
+    "El nombre del hogar, las reglas de división y la gestión de miembros solo los edita el dueño; el resto los ve como solo lectura.",
     "Las reglas de división deben sumar 100%.",
     "Mi plata es solo tuya: no se comparte ni se borra. Para compartir gastos usás el hogar, y podés estar en uno solo.",
     "Eliminar el hogar saca a todos los miembros y te pide escribir su nombre para confirmar. Soporte lo puede recuperar.",
