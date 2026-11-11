@@ -1,8 +1,10 @@
+import { CalendarDays } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { BanksConfig } from "@/components/banks-config";
 import { CardStatementsSummary } from "@/components/card-statements/card-statements-summary";
 import { PaymentMethodsConfig } from "@/components/payment-methods-config";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
+import { MenuGroup, MenuItem } from "@/components/ui/menu-list";
 import { PageHeader } from "@/components/ui/page-header";
 import { PesosNotice } from "@/components/view-currency";
 
@@ -22,7 +24,10 @@ const TARJETAS_HELP: InfoHelpContent = {
     "Un resumen junta las cuotas de esa tarjeta en Mi plata y en el Hogar.",
     "Desactivar un medio de pago lo oculta al cargar gastos, pero podés reactivarlo («Revivir») y su historial se mantiene.",
   ],
-  relacionado: [{ label: "Movimientos", href: "/movimientos" }],
+  relacionado: [
+    { label: "Movimientos", href: "/movimientos" },
+    { label: "Vencimientos", href: "/vencimientos" },
+  ],
 };
 
 export default function Page() {
@@ -36,6 +41,9 @@ export default function Page() {
       <div className="flex flex-col gap-4">
         <PesosNotice what="Los resúmenes y las cuotas" />
         <CardStatementsSummary />
+        <MenuGroup>
+          <MenuItem icon={CalendarDays} label="Ver vencimientos del mes" href="/vencimientos" />
+        </MenuGroup>
         <PaymentMethodsConfig />
         <BanksConfig />
       </div>

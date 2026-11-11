@@ -6,6 +6,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type {
   CreditCardPeriodStatus,
+  CalendarMonth,
   Committed,
   InstallmentPlanList,
   MonthlyReport,
@@ -172,6 +173,13 @@ export function useSeriesStats(id: string | null | undefined, limit = 6) {
     ? ([`/recurring-expenses/${id}/stats`, { query: { limit } }] as const)
     : null;
   return useSWR<SeriesStats>(key);
+}
+
+/** What is due or comes in, day by day, in a month YYYY-MM (plan 7.2). */
+export function useCalendar(month: string) {
+  const { token, householdId } = useReady();
+  const key = token && householdId ? (["/calendar", { query: { month } }] as const) : null;
+  return useSWR<CalendarMonth>(key);
 }
 
 export function useRecurringIncomes() {

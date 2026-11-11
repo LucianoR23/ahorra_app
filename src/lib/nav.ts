@@ -1,4 +1,5 @@
 import {
+  CalendarDays,
   ArrowLeftRight,
   Bell,
   ChartColumn,
@@ -59,6 +60,7 @@ export const MORE_GROUPS: NavGroup[] = [
     items: [
       { id: "incomes", label: "Ingresos", href: "/ingresos", icon: TrendingUp },
       { id: "recurring", label: "Recurrentes", href: "/recurrentes", icon: Repeat },
+      { id: "calendar", label: "Vencimientos", href: "/vencimientos", icon: CalendarDays },
       goals,
       { id: "simulate", label: "¿Me lo puedo comprar?", href: "/simular", icon: ShoppingBag },
       { id: "rates", label: "Cotizaciones", href: "/cotizaciones", icon: ChartLine },

@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 7.2 (app part): Vencimientos
+- New screen "Vencimientos" (`/vencimientos`), in Más > Tu plata and linked from Tarjetas: the month with a dot on each day with something (paid, comes in, a card closes) and the list below, by day. Tap a day to see only that day; arrows change the month.
+- Rows: fixed incomes, card due dates (statement totals per currency, installments, paid or overdue), fixed expenses (category, payment method, "monto estimado" when variable) and card closings. A statement row opens it; a fixed expense or income opens Recurrentes.
+- Card installments are inside each statement's total, not listed one by one. Amounts stay in their currency, like Tarjetas.
+
 ### 5.6 (app part): "Ver en" other currencies and crypto
 - The "$ / US$" switch on Inicio and Reportes becomes a "Ver en" picker: pesos, dólares, euros, reales, pesos chilenos, pesos uruguayos, USDT, bitcoin and ether. View only: movements are untouched.
 - The dollar keeps both modes (each movement's day or today). Every other currency is at today's rate; the note under the totals says which rate and price. Bitcoin and ether add "Precios cripto de CoinGecko" (CoinGecko's terms).
