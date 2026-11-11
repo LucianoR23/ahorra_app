@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 5.5 (app part): the base currency is always pesos
+- "Crear hogar" no longer asks for a currency, and Hogar drops the "Moneda base" row: a space always sums in pesos. Expenses and incomes are still loaded in ARS, USD or EUR.
+- The hogar dialog only edits the name. Help texts say "pesos" instead of "tu moneda base".
+- `createHousehold` and `patchHousehold` stop sending `baseCurrency` (needs api #71).
+
 ### 5.4 (app part): spending in today's pesos
 - Reportes · Tendencias: "Sin ajustar / Pesos de hoy" under the period, in pesos only (hidden with "US$" on or in a space kept in another currency). In today's pesos the chart and figures come adjusted by INDEC's CPI (`adjust=cpi`), with a line saying up to which month the index goes and that later months go unadjusted until their figure is out. Without an index yet, an alert offers the unadjusted view.
 - Reportes · Mensual: a past month shows "En pesos de hoy" under Gastado when the API sends it.

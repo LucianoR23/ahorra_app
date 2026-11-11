@@ -118,7 +118,7 @@ describe("FxSourceSetting", () => {
     expect(select).toHaveTextContent(/^MEP$/);
     await userEvent.click(select);
     await userEvent.click(await screen.findByRole("option", { name: "Oficial · $ 1.570" }));
-    await waitFor(() => expect(body("PATCH", `/households/${personalSpace.id}`)).toEqual({ name: "Mi plata", baseCurrency: "ARS", fxSource: "oficial" }));
+    await waitFor(() => expect(body("PATCH", `/households/${personalSpace.id}`)).toEqual({ name: "Mi plata", fxSource: "oficial" }));
   });
 
   it("a member who is not the owner only sees it", async () => {

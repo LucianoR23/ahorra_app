@@ -26,7 +26,7 @@ export function FxSourceSetting({ household, editable, title }: { household: Hou
     if (fxSource === current) return;
     setSaving(true);
     try {
-      await patchHousehold(household.id, { name: household.name, baseCurrency: household.baseCurrency, fxSource });
+      await patchHousehold(household.id, { name: household.name, fxSource });
       swrMutate((k) => Array.isArray(k) && typeof k[0] === "string" && k[0].startsWith("/households"), undefined, { revalidate: true });
       toast.success(`Ahora convierte al dólar ${rateSourceLabel(fxSource)}`);
     } catch (e) {

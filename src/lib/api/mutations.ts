@@ -482,7 +482,7 @@ export function deleteStatementAdjustment(paymentMethodId: string, ym: string, i
 
 // --- Households -----------------------------------------------------------
 
-export function createHousehold(input: { name: string; baseCurrency: Currency }) {
+export function createHousehold(input: { name: string }) {
   return apiMutate<Household>({
     method: "POST",
     path: "/households",
@@ -491,7 +491,7 @@ export function createHousehold(input: { name: string; baseCurrency: Currency })
   });
 }
 
-export function patchHousehold(id: string, input: { name?: string; baseCurrency?: Currency; fxSource?: string }) {
+export function patchHousehold(id: string, input: { name?: string; fxSource?: string }) {
   return apiMutate<Household>({
     method: "PATCH",
     path: `/households/${id}`,

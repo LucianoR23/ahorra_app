@@ -8,7 +8,7 @@ import { parsePrefill } from "@/lib/simulator";
 const AGREGAR_HELP: InfoHelpContent = {
   titulo: "Cargar gasto",
   acciones: [
-    "Escribí el monto arriba y elegí la moneda (ARS, USD o EUR); si no es tu moneda base, ves cuánto es en pesos.",
+    "Escribí el monto arriba y elegí la moneda (ARS, USD o EUR); si no es en pesos, ves cuánto es en pesos.",
     "Completá la descripción, la categoría (opcional), con qué pagaste y la fecha.",
     "Si el medio de pago admite cuotas, indicá cuántas; con tarjeta de crédito ves en qué resumen entra la primera.",
     "Activá «Compartido» para sumarlo al hogar y, si querés, personalizá cuánto pone cada miembro.",

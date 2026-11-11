@@ -35,7 +35,8 @@ describe("HogarSettings", () => {
     );
     render(<HogarSettings />, { wrapper: WithSWR });
     expect(await screen.findByRole("button", { name: /Nombre/ })).toHaveTextContent("Casa");
-    expect(screen.getByRole("button", { name: /Moneda base/ })).toHaveTextContent("ARS");
+    // Plan 5.5: a space always sums in pesos, nothing to pick.
+    expect(screen.queryByText("Moneda base")).not.toBeInTheDocument();
   });
 });
 

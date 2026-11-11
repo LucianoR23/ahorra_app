@@ -8,30 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui/page-header";
-import { Segmented } from "@/components/ui/segmented";
 import { createHousehold } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
 import { useHouseholdStore } from "@/stores/household";
-import type { Currency } from "@/lib/api/schemas";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
-
-const CURRENCIES = [
-  { value: "ARS", label: "ARS" },
-  { value: "USD", label: "USD" },
-  { value: "EUR", label: "EUR" },
-] as const;
 
 const NUEVO_HOGAR_HELP: InfoHelpContent = {
   titulo: "Crear nuevo hogar",
   acciones: [
     "Ponele un nombre al hogar (Casa, Familia, Depto…).",
-    "Elegí la moneda base (ARS, USD o EUR) en la que se mostrarán los reportes.",
     "Creá el hogar: quedás como dueño y pasa a ser tu hogar activo.",
   ],
   consideraciones: [
     "Vas a ser el dueño del hogar; podés invitar miembros después desde Hogar.",
-    "Todos los montos se convierten a la moneda base para los reportes.",
+    "Los totales van en pesos. Los gastos e ingresos en dólares o euros se cargan en su moneda y se suman convertidos.",
     "Al crearlo, se vuelve tu hogar activo y te lleva a Hogar.",
   ],
   relacionado: [{ label: "Volver al hogar", href: "/hogar" }],
@@ -50,7 +41,6 @@ function NewHouseholdInner() {
   const setCurrentId = useHouseholdStore((s) => s.setCurrentId);
 
   const [name, setName] = useState("");
-  const [currency, setCurrency] = useState<Currency>("ARS");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -64,7 +54,7 @@ function NewHouseholdInner() {
     setErr(null);
     setBusy(true);
     try {
-      const hh = await createHousehold({ name: trimmed, baseCurrency: currency });
+      const hh = await createHousehold({ name: trimmed });
       setCurrentId(hh.id);
       swrMutate(
         (k) => Array.isArray(k) && typeof k[0] === "string" && k[0].startsWith("/households"),
@@ -103,11 +93,6 @@ function NewHouseholdInner() {
             disabled={busy}
             aria-invalid={!!err}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label id="hh-currency">Moneda base</Label>
-          <Segmented aria-labelledby="hh-currency" value={currency} onValueChange={setCurrency} options={CURRENCIES} />
-          <p className="text-caption text-ink-muted">Los reportes del hogar se muestran en esta moneda.</p>
         </div>
         {err && (
           <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
