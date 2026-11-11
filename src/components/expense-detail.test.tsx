@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExpenseDetailView, installmentProgress, visibleInstallments } from "./expense-detail";
 import type { Installment } from "@/lib/api/schemas";
 import { confirm } from "@/lib/confirm";
+import { useHouseholdStore } from "@/stores/household";
 import { API, server, signIn } from "@/test/msw";
 import { hogarSpace, personalSpace, WithSWR } from "@/test/spaces";
 
@@ -184,6 +185,71 @@ describe("ExpenseDetailView", () => {
     expect(screen.getByText("Espacio", { selector: "dt" }).nextElementSibling).toHaveTextContent("Casa");
     // Cash in one payment: no schedule.
     expect(screen.queryByText("Cuota")).not.toBeInTheDocument();
+  });
+});
+
+describe("Compartido (plan 9.1)", () => {
+  function onMove() {
+    const moves: unknown[] = [];
+    server.use(
+      http.post(`${API}/expenses/e1/move`, async ({ request }) => {
+        moves.push(await request.json());
+        return HttpResponse.json({ expense: { ...expense, householdId: hogarSpace.id, isShared: true }, installments: twelve });
+      }),
+    );
+    return moves;
+  }
+
+  it("passes a Mi plata expense to the hogar after confirming, and follows it there", async () => {
+    handlers();
+    const moves = onMove();
+    vi.mocked(confirm).mockResolvedValueOnce(true);
+    render(<ExpenseDetailView id="e1" />, { wrapper: WithSWR });
+    const sw = await screen.findByRole("switch", { name: "Compartido" });
+    expect(sw).not.toBeChecked();
+    expect(screen.getByText("Activalo para pasarlo al Hogar.")).toBeInTheDocument();
+    await userEvent.click(sw);
+    expect(confirm).toHaveBeenLastCalledWith(expect.objectContaining({ title: "¿Pasar este gasto al Hogar?", confirmLabel: "Pasar al Hogar" }));
+    await vi.waitFor(() => expect(moves).toEqual([{ householdId: hogarSpace.id }]));
+    await vi.waitFor(() => expect(useHouseholdStore.getState().currentId).toBe(hogarSpace.id));
+  });
+
+  it("asks before taking it out of the hogar, and does nothing on cancel", async () => {
+    signIn({ householdId: hogarSpace.id });
+    handlers({ expense: { ...expense, householdId: hogarSpace.id, isShared: true }, installments: twelve });
+    const moves = onMove();
+    vi.mocked(confirm).mockResolvedValueOnce(false);
+    render(<ExpenseDetailView id="e1" />, { wrapper: WithSWR });
+    const sw = await screen.findByRole("switch", { name: "Compartido" });
+    expect(sw).toBeChecked();
+    expect(screen.getByText("Está en Casa y se divide según sus reglas.")).toBeInTheDocument();
+    await userEvent.click(sw);
+    expect(confirm).toHaveBeenLastCalledWith(expect.objectContaining({ title: "¿Pasar este gasto a Mi plata?" }));
+    expect(moves).toEqual([]);
+    expect(useHouseholdStore.getState().currentId).toBe(hogarSpace.id);
+  });
+
+  it("is hidden for someone else's expense, a draft, or without a hogar", async () => {
+    handlers({ expense: { ...expense, createdBy: "u2" }, installments: twelve });
+    const { unmount } = render(<ExpenseDetailView id="e1" />, { wrapper: WithSWR });
+    // Households loaded: the space row is filled in.
+    expect(await screen.findByText("Mi plata", { selector: "dd" })).toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: "Compartido" })).not.toBeInTheDocument();
+    unmount();
+
+    handlers({ expense: { ...expense, status: "draft" }, installments: twelve });
+    const draft = render(<ExpenseDetailView id="e1" />, { wrapper: WithSWR });
+    // Households loaded: the space row is filled in.
+    expect(await screen.findByText("Mi plata", { selector: "dd" })).toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: "Compartido" })).not.toBeInTheDocument();
+    draft.unmount();
+
+    handlers();
+    server.use(http.get(`${API}/households`, () => HttpResponse.json([personalSpace])));
+    render(<ExpenseDetailView id="e1" />, { wrapper: WithSWR });
+    // Households loaded: the space row is filled in.
+    expect(await screen.findByText("Mi plata", { selector: "dd" })).toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: "Compartido" })).not.toBeInTheDocument();
   });
 });
 

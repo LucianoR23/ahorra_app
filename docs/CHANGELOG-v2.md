@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 9.1 (app part): move expenses and incomes between Mi plata and the hogar
+- Detalle of an expense: the "Compartido" switch of the `Detalle` design. On, the expense is in the hogar and splits by its rules; off, it is in Mi plata. Toggling asks first (going back to Mi plata warns that the split, and so "Cuentas entre ustedes", changes), calls `POST /expenses/{id}/move` and opens the space the expense went to, so the same screen shows it there.
+- Detalle of an income: "Pasar al Hogar" / "Pasar a Mi plata" with the same confirmation and `POST /incomes/{id}/move`.
+- Only the author of the expense (or whoever received the income) sees them, once the user has a hogar; a draft expense is confirmed first. Help texts explain the split and the category matched by name.
+- Plan 9.1 rescoped with the user: no private items inside the hogar; Mi plata is the private space.
+
 ### 11.1 (app part): download in Excel
 - Movimientos and Ingresos have a download button next to the help: "Descargar en Excel" offers the month on screen (Movimientos keeps its filters: type, category, payment method, search, and says "con los filtros") or the whole year of that month ("Todo 2026", without filters).
 - The file comes from the API (`/exports/expenses.xlsx`, `/exports/incomes.xlsx`) and is saved as `gastos-2026-11.xlsx`, `gastos-2026.xlsx`, `ingresos-...`. A toast confirms it, or shows the error.

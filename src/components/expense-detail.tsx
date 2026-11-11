@@ -26,21 +26,25 @@ import { Label } from "@/components/ui/label";
 import { Money } from "@/components/ui/money";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useCategories, useExpense, useHouseholdMembers, useHouseholds, usePaymentMethods } from "@/lib/api/hooks";
 import { ApiError } from "@/lib/api/errors";
-import { deleteExpense, patchExpense, patchInstallment, type InstallmentPatchInput } from "@/lib/api/mutations";
+import { deleteExpense, moveExpense, patchExpense, patchInstallment, type InstallmentPatchInput } from "@/lib/api/mutations";
 import type { Expense, Installment } from "@/lib/api/schemas";
 import { confirm } from "@/lib/confirm";
 import { isoToday } from "@/lib/format";
+import { selectSpace, useSpaces } from "@/lib/spaces";
 import { dayMonth } from "@/lib/statements";
-import { toast } from "@/lib/toast";
+import { toast, toastError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth";
 
 const DETALLE_HELP: InfoHelpContent = {
   titulo: "Detalle del gasto",
   acciones: [
     "Editá la descripción, la fecha y la categoría con el lápiz de arriba.",
     "Tocá una cuota para marcarla como pagada o impaga, cambiar sus fechas o ver cómo se divide.",
+    "Pasalo al Hogar o a Mi plata con «Compartido», si lo cargaste vos.",
     "Eliminá el gasto con «Eliminar gasto», al final.",
   ],
   consideraciones: [
@@ -48,6 +52,7 @@ const DETALLE_HELP: InfoHelpContent = {
     "El monto, la moneda, las cuotas y el medio de pago no se editan: si te equivocaste, eliminalo y cargalo de nuevo.",
     "Si necesitás una categoría que no aparece en la lista, creala primero en Categorías.",
     "En los gastos del hogar ves cuánto le toca a cada miembro.",
+    "Al pasarlo al Hogar se divide según sus reglas; al pasarlo a Mi plata deja de dividirse y solo lo ves vos. Queda en la categoría con el mismo nombre, si existe.",
   ],
   relacionado: [
     { label: "Volver a Movimientos", href: "/movimientos" },
@@ -218,6 +223,7 @@ export function ExpenseDetailView({ id }: { id: string }) {
 
       {schedule && <Schedule expense={expense} installments={installments} />}
       <Split householdId={expense.householdId} installments={installments} currency={expense.baseCurrency} />
+      <SharedSwitch expense={expense} />
 
       <Button
         variant="ghost"
@@ -324,6 +330,65 @@ function Schedule({ expense, installments }: { expense: Expense; installments: I
           onOpenChange={(o) => !o && setOpen(null)}
         />
       )}
+    </Card>
+  );
+}
+
+/**
+ * "Compartido" (design `Detalle`, plan 9.1): moves the expense between Mi
+ * plata and the hogar. Only its author sees it, once the user has a hogar;
+ * a draft is confirmed first. The screen follows the expense to its space.
+ */
+export function SharedSwitch({ expense }: { expense: Expense }) {
+  const me = useAuthStore((s) => s.user?.id);
+  const { personal, hogar } = useSpaces();
+  const [busy, setBusy] = useState(false);
+  if (!hogar || !personal || expense.createdBy !== me || expense.status === "draft") return null;
+  const shared = expense.householdId === hogar.id;
+
+  async function onChange(toHogar: boolean) {
+    if (!hogar || !personal) return;
+    const ok = await confirm(
+      toHogar
+        ? {
+            title: "¿Pasar este gasto al Hogar?",
+            description: `Lo van a ver en ${hogar.name} y se divide según sus reglas.`,
+            confirmLabel: "Pasar al Hogar",
+          }
+        : {
+            title: "¿Pasar este gasto a Mi plata?",
+            description: "Solo lo vas a ver vos. Deja de dividirse, así que cambian las cuentas entre ustedes.",
+            confirmLabel: "Pasar a Mi plata",
+          },
+    );
+    if (!ok) return;
+    const target = toHogar ? hogar : personal;
+    setBusy(true);
+    try {
+      await moveExpense(expense.id, target.id);
+      // The expense now lives there: open that space (refetches everything).
+      selectSpace(target.id);
+      toast.success(toHogar ? "Listo, ahora está en el Hogar" : "Listo, ahora está en Mi plata");
+    } catch (e) {
+      toastError(e, "No se pudo mover el gasto");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between gap-4">
+        <div>
+          <Label htmlFor="expense-shared" className="text-heading font-semibold">
+            Compartido
+          </Label>
+          <p className="text-caption text-ink-muted">
+            {shared ? `Está en ${hogar.name} y se divide según sus reglas.` : "Activalo para pasarlo al Hogar."}
+          </p>
+        </div>
+        <Switch id="expense-shared" checked={shared} disabled={busy} onCheckedChange={(v) => void onChange(v)} />
+      </CardContent>
     </Card>
   );
 }

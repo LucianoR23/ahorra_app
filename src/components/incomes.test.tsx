@@ -6,6 +6,7 @@ import { IncomeDetailView } from "./income-detail";
 import { IncomeForm } from "./income-form";
 import { IncomesList } from "./incomes-list";
 import { confirm } from "@/lib/confirm";
+import { useHouseholdStore } from "@/stores/household";
 import { API, server, signIn } from "@/test/msw";
 import { hogarSpace, personalSpace, WithSWR } from "@/test/spaces";
 
@@ -129,6 +130,47 @@ describe("IncomeDetailView", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Eliminar ingreso" }));
     await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/ingresos"));
     expect(sent).toContainEqual({ method: "DELETE", body: null });
+  });
+
+  it("passes it to the hogar after confirming, and follows it there (plan 9.1)", async () => {
+    handlers();
+    const moves: unknown[] = [];
+    server.use(
+      http.get(`${API}/households`, () => HttpResponse.json([personalSpace, hogarSpace])),
+      http.post(`${API}/incomes/i1/move`, async ({ request }) => {
+        moves.push(await request.json());
+        return HttpResponse.json(income("i1", { householdId: hogarSpace.id }));
+      }),
+    );
+    vi.mocked(confirm).mockResolvedValueOnce(true);
+    render(<IncomeDetailView id="i1" />, { wrapper: WithSWR });
+    await userEvent.click(await screen.findByRole("button", { name: "Pasar al Hogar" }));
+    expect(confirm).toHaveBeenLastCalledWith(expect.objectContaining({ title: "¿Pasar este ingreso al Hogar?" }));
+    await vi.waitFor(() => expect(moves).toEqual([{ householdId: hogarSpace.id }]));
+    await vi.waitFor(() => expect(useHouseholdStore.getState().currentId).toBe(hogarSpace.id));
+  });
+
+  it("offers Mi plata from the hogar, only to whoever received it", async () => {
+    signIn({ householdId: hogarSpace.id });
+    handlers();
+    server.use(
+      http.get(`${API}/households`, () => HttpResponse.json([personalSpace, hogarSpace])),
+      http.get(`${API}/incomes/i1`, () => HttpResponse.json(income("i1", { householdId: hogarSpace.id }))),
+      http.get(`${API}/incomes/i2`, () => HttpResponse.json(income("i2", { householdId: hogarSpace.id, receivedBy: "u2" }))),
+    );
+    const { unmount } = render(<IncomeDetailView id="i1" />, { wrapper: WithSWR });
+    expect(await screen.findByRole("button", { name: "Pasar a Mi plata" })).toBeInTheDocument();
+    unmount();
+    render(<IncomeDetailView id="i2" />, { wrapper: WithSWR });
+    expect(await screen.findByText("Casa", { selector: "dd" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Pasar a/ })).not.toBeInTheDocument();
+  });
+
+  it("has nothing to move without a hogar", async () => {
+    handlers();
+    render(<IncomeDetailView id="i1" />, { wrapper: WithSWR });
+    expect(await screen.findByText("Mi plata", { selector: "dd" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Pasar a/ })).not.toBeInTheDocument();
   });
 });
 

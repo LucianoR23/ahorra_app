@@ -27,11 +27,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHouseholdMembers, useHouseholds, useIncome, usePaymentMethods } from "@/lib/api/hooks";
 import { ApiError } from "@/lib/api/errors";
-import { deleteIncome, patchIncome } from "@/lib/api/mutations";
+import { deleteIncome, moveIncome, patchIncome } from "@/lib/api/mutations";
 import type { Income } from "@/lib/api/schemas";
 import { confirm } from "@/lib/confirm";
 import { INCOME_SOURCES, incomeSourceLabel } from "@/lib/labels";
-import { toast } from "@/lib/toast";
+import { selectSpace, useSpaces } from "@/lib/spaces";
+import { toast, toastError } from "@/lib/toast";
 import { useAuthStore } from "@/stores/auth";
 
 const INGRESO_DETALLE_HELP: InfoHelpContent = {
@@ -39,8 +40,10 @@ const INGRESO_DETALLE_HELP: InfoHelpContent = {
   acciones: [
     "Editá la fuente, la descripción y la fecha con el lápiz de arriba.",
     "Eliminá el ingreso con «Eliminar ingreso», al final, si lo cargaste por error.",
+    "Pasalo al Hogar o a Mi plata, si lo recibiste vos.",
   ],
   consideraciones: [
+    "En Mi plata solo lo ves vos; en el Hogar lo ven todos sus miembros.",
     "El monto, la moneda y quién lo recibió no se cambian: si te equivocaste, eliminalo y cargalo de nuevo.",
     "Eliminar un ingreso no se puede deshacer.",
   ],
@@ -77,6 +80,33 @@ export function IncomeDetailView({ id }: { id: string }) {
   const { data: methods } = usePaymentMethods();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const { personal, hogar } = useSpaces();
+
+  async function onMove(target: { id: string; kind: string }) {
+    const toHogar = target.kind === "shared";
+    const ok = await confirm(
+      toHogar
+        ? {
+            title: "¿Pasar este ingreso al Hogar?",
+            description: "Lo van a ver todos los miembros del Hogar.",
+            confirmLabel: "Pasar al Hogar",
+          }
+        : { title: "¿Pasar este ingreso a Mi plata?", description: "Solo lo vas a ver vos.", confirmLabel: "Pasar a Mi plata" },
+    );
+    if (!ok) return;
+    setMoving(true);
+    try {
+      await moveIncome(id, target.id);
+      // The income now lives there: open that space (refetches everything).
+      selectSpace(target.id);
+      toast.success(toHogar ? "Listo, ahora está en el Hogar" : "Listo, ahora está en Mi plata");
+    } catch (e) {
+      toastError(e, "No se pudo mover el ingreso");
+    } finally {
+      setMoving(false);
+    }
+  }
 
   async function onDelete() {
     const ok = await confirm({
@@ -124,6 +154,9 @@ export function IncomeDetailView({ id }: { id: string }) {
   const space = households?.find((h) => h.id === income.householdId);
   const account = income.paymentMethodId ? methods?.find((p) => p.id === income.paymentMethodId)?.name : undefined;
   const foreign = income.currency !== income.baseCurrency;
+  // Plan 9.1: whoever received it moves it between Mi plata and the hogar.
+  const moveTo =
+    hogar && personal && income.receivedBy === me ? (income.householdId === hogar.id ? personal : hogar) : undefined;
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4 pb-4">
@@ -166,6 +199,12 @@ export function IncomeDetailView({ id }: { id: string }) {
           </dl>
         </CardContent>
       </Card>
+
+      {moveTo && (
+        <Button variant="secondary" className="self-center" onClick={() => void onMove(moveTo)} disabled={moving}>
+          {moving ? "Moviendo…" : moveTo.kind === "shared" ? "Pasar al Hogar" : "Pasar a Mi plata"}
+        </Button>
+      )}
 
       <Button
         variant="ghost"
