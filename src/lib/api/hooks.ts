@@ -512,6 +512,69 @@ export function useAdminDeletedHouseholds(enabled = true) {
   );
 }
 
+/** Superadmin panel (plan 1.11): counts only, never amounts. */
+export type AdminOverview = {
+  accounts: { total: number; newWeek: number; newMonth: number; verified: number; active: number };
+  households: { active: number; deleted: number };
+  waitlist: number;
+  /** Last 6 months, oldest first; month is YYYY-MM. */
+  movements: { month: string; expenses: number; incomes: number }[];
+};
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+  verifiedAt: string | null;
+  onboardedAt: string | null;
+  deletedAt: string | null;
+  lastSeenAt: string | null;
+  isSuperadmin: boolean;
+  households: number;
+};
+
+export type AdminUserDetail = AdminUser & {
+  pendingEmail: string | null;
+  hasPassword: boolean;
+  providers: string[] | null;
+  activeSessions: number;
+  spaces: { id: string; name: string; kind: "personal" | "shared"; role: string; joinedAt: string; deletedAt: string | null; members: number }[] | null;
+};
+
+export type AdminAuditEvent = {
+  id: string;
+  action: string;
+  userId: string | null;
+  userEmail: string | null;
+  actorId: string | null;
+  actorEmail: string | null;
+  target: string;
+  device: string;
+  ip?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type AdminAuditGroup = "" | "sessions" | "failed" | "account" | "household" | "admin";
+
+function useIsSuperadmin() {
+  const token = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
+  return !!token && !!user?.isSuperadmin;
+}
+
+export function useAdminOverview() {
+  const ok = useIsSuperadmin();
+  return useSWR<AdminOverview>(ok ? (["/admin/overview", { householdScoped: false }] as const) : null);
+}
+
+export function useAdminUser(id: string) {
+  const ok = useIsSuperadmin();
+  return useSWR<AdminUserDetail>(ok ? ([`/admin/users/${id}`, { householdScoped: false }] as const) : null);
+}
+
 /** One security event of the account (plan 0.17, GET /me/activity). */
 export type ActivityItem = {
   action: string;

@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BOTTOM_NAV, MORE_GROUPS, SIDEBAR_NAV, isActive, visibleFor, type NavItem } from "./nav";
+import { ADMIN_NAV, BOTTOM_NAV, MORE_GROUPS, SIDEBAR_NAV, isActive, isAdminActive, visibleFor, type NavItem } from "./nav";
 
 const all: NavItem[] = [...BOTTOM_NAV.left, ...BOTTOM_NAV.right, ...SIDEBAR_NAV, ...MORE_GROUPS.flatMap((g) => g.items)];
 
@@ -48,5 +48,20 @@ describe("navigation (plan 1.10a)", () => {
     const admin = all.find((i) => i.adminOnly)!;
     expect(visibleFor(admin, solo)).toBe(false);
     expect(visibleFor(admin, { isAdmin: true, hasHogar: false })).toBe(true);
+  });
+});
+
+describe("ADMIN_NAV (plan 1.11)", () => {
+  it("lights up Resumen only on /admin, the rest on their subpages", () => {
+    expect(isAdminActive("/admin", "/admin")).toBe(true);
+    expect(isAdminActive("/admin/cuentas", "/admin")).toBe(false);
+    expect(isAdminActive("/admin/cuentas/u2", "/admin/cuentas")).toBe(true);
+    expect(isAdminActive("/admin/cuentasx", "/admin/cuentas")).toBe(false);
+  });
+
+  it("every section has a page", () => {
+    for (const n of ADMIN_NAV) {
+      expect(existsSync(join(process.cwd(), "src/app", n.href, "page.tsx")), n.href).toBe(true);
+    }
   });
 });
