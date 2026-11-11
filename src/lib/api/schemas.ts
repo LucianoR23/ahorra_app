@@ -812,3 +812,26 @@ export const cardStatementDetailSchema = cardStatementSchema.extend({
   adjustments: z.array(statementAdjustmentSchema),
 });
 export type CardStatementDetail = z.infer<typeof cardStatementDetailSchema>;
+
+/** One thing on one day of the calendar (plan 7.2). */
+export const calendarEventSchema = z.object({
+  date: z.string(),
+  kind: z.enum(["recurring_income", "card_due", "recurring_expense", "card_closing"]),
+  title: z.string(),
+  /** A recurring expense or income; the estimate when `variable`. */
+  amount: z.number().optional(),
+  currency: z.string().optional(),
+  /** A card's due date: its statement total per currency. */
+  totals: z.array(currencyAmountSchema).optional(),
+  status: z.string().optional(),
+  installmentCount: z.number().optional(),
+  paymentMethodId: z.string().optional(),
+  periodYm: z.string().optional(),
+  recurringId: z.string().optional(),
+  categoryId: z.string().optional(),
+  variable: z.boolean().optional(),
+});
+export type CalendarEvent = z.infer<typeof calendarEventSchema>;
+
+export const calendarMonthSchema = z.object({ month: z.string(), events: z.array(calendarEventSchema) });
+export type CalendarMonth = z.infer<typeof calendarMonthSchema>;
