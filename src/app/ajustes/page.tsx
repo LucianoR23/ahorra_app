@@ -40,7 +40,7 @@ export default function Page() {
         <PersonalFxSource />
         <AppearanceCard />
         <MenuGroup title="Avisos">
-          <MenuItem icon={Bell} label="Notificaciones" detail="Qué te avisamos y cuándo" href="/ajustes/notificaciones" />
+          <MenuItem icon={Bell} label="Notificaciones" href="/ajustes/notificaciones" />
         </MenuGroup>
       </div>
     </AppShell>
