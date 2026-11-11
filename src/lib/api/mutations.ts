@@ -752,6 +752,16 @@ export function adminSendTestPush() {
   });
 }
 
+/** Confirmed waitlist entries as CSV (plan B.5, audited by the API). */
+export function adminExportWaitlist(): Promise<Blob> {
+  return apiDownload({ path: "/admin/waitlist.csv", accept: "text/csv" });
+}
+
+/** Removes an address from the waitlist on request (Ley 25.326). */
+export function adminDeleteWaitlistEmail(email: string) {
+  return apiMutate<void>({ method: "DELETE", path: "/admin/waitlist", query: { email }, householdScoped: false });
+}
+
 // --- Categories -----------------------------------------------------------
 
 export type CategoryInput = {

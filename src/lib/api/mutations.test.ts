@@ -112,6 +112,12 @@ describe("mutation wrappers", () => {
     await m.adminSendTestPush();
     expect(lastRequest()).toMatchObject({ method: "POST", path: "/admin/push/test" });
   });
+
+  it("adminDeleteWaitlistEmail sends the address as a query, outside any space", async () => {
+    await m.adminDeleteWaitlistEmail("a+b@example.test");
+    expect(lastRequest()).toMatchObject({ method: "DELETE", path: "/admin/waitlist", query: { email: "a+b@example.test" } });
+    expect(lastRequest().headers.get("x-household-id")).toBeNull();
+  });
 });
 
 describe("patchInstallment builds a tri-state body", () => {
