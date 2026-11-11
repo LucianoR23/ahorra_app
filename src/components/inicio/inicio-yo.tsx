@@ -6,7 +6,7 @@ import { CardsDue, CommittedWidget } from "@/components/committed/committed-widg
 import { CardPeriodNudges } from "@/components/card-statements/period-nudge";
 import { CategoryIcon } from "@/components/category-icon";
 import { DiscreetToggle } from "@/components/discreet-toggle";
-import { CurrencyToggle, UsdViewNote } from "@/components/view-currency";
+import { ViewCurrencyPicker, ViewCurrencyNote } from "@/components/view-currency";
 import { reportCurrency } from "@/lib/fx";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -112,7 +112,7 @@ function MonthHero() {
         <h2 id="month-spent" className="text-label uppercase text-ink-muted">
           Gastaste en {MONTHS[now.getMonth()]}
         </h2>
-        <CurrencyToggle />
+        <ViewCurrencyPicker />
       </div>
       {isLoading ? (
         <Skeleton className="h-12 w-56" />
@@ -152,7 +152,7 @@ function MonthHero() {
           <p className="text-caption text-ink-muted">Gastaste el {pct}% de lo que entró este mes.</p>
         </div>
       )}
-      <UsdViewNote />
+      <ViewCurrencyNote />
     </section>
   );
 }

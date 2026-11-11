@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 5.6 (app part): "Ver en" other currencies and crypto
+- The "$ / US$" switch on Inicio and Reportes becomes a "Ver en" picker: pesos, dólares, euros, reales, pesos chilenos, pesos uruguayos, USDT, bitcoin and ether. View only: movements are untouched.
+- The dollar keeps both modes (each movement's day or today). Every other currency is at today's rate; the note under the totals says which rate and price. Bitcoin and ether add "Precios cripto de CoinGecko" (CoinGecko's terms).
+- Only currencies the API has a quote for are listed, so bitcoin and ether show up once the API has its CoinGecko key. A currency picked before its quote vanished stays listed, and the note offers pesos back.
+- Amounts: R$, $U, CLP, USDT; bitcoin and ether with up to 8 decimals ("BTC 0,000396").
+- The per-device choice is migrated: the old dollars switch on becomes "Dólares".
+
 ### 5.5 (app part): the base currency is always pesos
 - "Crear hogar" no longer asks for a currency, and Hogar drops the "Moneda base" row: a space always sums in pesos. Expenses and incomes are still loaded in ARS, USD or EUR.
 - The hogar dialog only edits the name. Help texts say "pesos" instead of "tu moneda base".

@@ -105,12 +105,16 @@ export const registerInputSchema = z.object({
 });
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 
-/** What a report's amounts are in (plan 5.3); older payloads lack it. */
+/** What a report's amounts are in (plan 5.3, 5.6); older payloads lack it. */
 const reportCurrencyFields = {
   currency: z.string().optional(),
   rateSource: z.string().optional(),
   rateMode: z.enum(["day", "today"]).optional(),
   usdRate: z.number().optional(),
+  /** Today's pesos per unit of `currency`; absent in pesos. */
+  rate: z.number().optional(),
+  /** Decimals the amounts keep: 8 for bitcoin and ether. */
+  scale: z.number().optional(),
 };
 
 export const monthlyReportSchema = z.object({

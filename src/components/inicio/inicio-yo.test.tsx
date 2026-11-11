@@ -147,25 +147,27 @@ describe("InicioYo", () => {
   });
 
   it("switches to dollars and back (plan 5.3)", async () => {
-    useViewCurrencyStore.setState({ usd: false, today: false });
+    useViewCurrencyStore.setState({ currency: "ARS", today: false });
     handlers();
     render(<InicioYo />, { wrapper: WithSWR });
     const hero = await screen.findByRole("region", { name: /Gastaste en/ });
     expect(await within(hero).findByText("$ 486.320")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("radio", { name: "US$" }));
+    await userEvent.click(screen.getByRole("combobox", { name: "Ver montos en" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Dólares" }));
     expect(await within(hero).findByText("US$ 303,95")).toBeInTheDocument();
     expect(within(hero).getByText("+ US$ 719,46")).toBeInTheDocument();
     expect(within(hero).getByText(/al dólar MEP del día de cada movimiento\. Tarjetas y deudas siguen en pesos\./)).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.viewCurrency) ?? "{}")).toMatchObject({ state: { usd: true } });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.viewCurrency) ?? "{}")).toMatchObject({ state: { currency: "USD" } });
 
     await userEvent.click(within(hero).getByRole("button", { name: "Usar el de hoy" }));
     expect(await within(hero).findByText("US$ 243,16")).toBeInTheDocument();
     expect(within(hero).getByText(/al dólar MEP de hoy, a/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("radio", { name: "$" }));
+    await userEvent.click(screen.getByRole("combobox", { name: "Ver montos en" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Pesos" }));
     expect(await within(hero).findByText("$ 486.320")).toBeInTheDocument();
-    useViewCurrencyStore.setState({ usd: false, today: false });
+    useViewCurrencyStore.setState({ currency: "ARS", today: false });
   });
 
   it("says when the month went over what came in", async () => {

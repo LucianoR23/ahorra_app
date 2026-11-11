@@ -72,7 +72,10 @@ export function shiftMonth(ym: string, n: number): string {
 
 export type MoneyCents = "auto" | "always" | "never";
 
-const CURRENCY_PREFIX: Record<string, string> = { ARS: "$", USD: "US$", EUR: "€" };
+const CURRENCY_PREFIX: Record<string, string> = { ARS: "$", USD: "US$", EUR: "€", BRL: "R$", CLP: "CLP", UYU: "$U" };
+
+/** Crypto shown with up to 8 decimals ("Ver en", plan 5.6): 0,000396 BTC. */
+const FINE_DECIMALS: Record<string, number> = { BTC: 8, ETH: 8 };
 
 /**
  * `$ 128.450,50`: es-AR digits, a space after the symbol, US$ for dollars.
@@ -88,6 +91,11 @@ export function formatAmount(
   const value = Math.abs(amount);
   const sign = amount < 0 ? "-" : income ? "+ " : "";
   const prefix = currencyPrefix(currency);
+  const fine = FINE_DECIMALS[currency];
+  if (fine) {
+    const digits = value.toLocaleString("es-AR", { maximumFractionDigits: fine });
+    return `${sign}${prefix} ${digits}`;
+  }
   if (compact && value >= 1000 && value < 1_000_000) {
     const k = value / 1000;
     const digits = k.toLocaleString("es-AR", { maximumFractionDigits: k >= 100 ? 0 : 1 });
@@ -99,7 +107,8 @@ export function formatAmount(
   return `${sign}${prefix} ${digits}`;
 }
 
-function currencyPrefix(currency: string): string {
+/** A currency's symbol: "$", "US$", "€", "BTC". */
+export function currencyPrefix(currency: string): string {
   return CURRENCY_PREFIX[currency] ?? currency;
 }
 

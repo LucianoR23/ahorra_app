@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Rate } from "@/lib/api/schemas";
-import { convert, isStale, periodChange, rateFor, rateSourceLabel, sourceOf } from "./fx";
+import { availableViewCurrencies, convert, isStale, periodChange, pricedByCoinGecko, rateFor, rateSourceLabel, sourceOf, viewCurrencyOf } from "./fx";
 
 const rate = (currency: string, source: string, rateSell: number, rateAvg = rateSell - 10): Rate => ({
   currency, source, rateSell, rateAvg, rateBuy: rateSell - 20, lastUpdate: "2026-11-10T12:00:00Z", fetchedAt: "2026-11-10T12:00:00Z",
@@ -74,5 +74,18 @@ describe("periodChange (plan 5.2b)", () => {
     expect(periodChange([{ rateSell: 1500, rateAvg: 0 }, { rateSell: 1587.9, rateAvg: 0 }])).toBeCloseTo(5.86, 2);
     expect(periodChange([{ rateSell: 0, rateAvg: 1000 }, { rateSell: 900, rateAvg: 0 }])).toBe(-10);
     expect(periodChange([{ rateSell: 1500, rateAvg: 0 }])).toBeNull();
+  });
+});
+
+describe("Ver en currencies (plan 5.6)", () => {
+  it("offers the dollar always and the rest with a quote", () => {
+    expect(availableViewCurrencies(undefined).map((c) => c.value)).toEqual(["USD"]);
+    expect(availableViewCurrencies([rate("BTC", "cripto", 1e8), rate("EUR", "oficial", 1100)]).map((c) => c.value)).toEqual(["USD", "EUR", "BTC"]);
+  });
+
+  it("knows each currency and which need CoinGecko's mention", () => {
+    expect(viewCurrencyOf("CLP")?.label).toBe("Pesos chilenos");
+    expect(viewCurrencyOf("ARS")).toBeUndefined();
+    expect(["USDT", "BTC", "ETH", "EUR"].map(pricedByCoinGecko)).toEqual([false, true, true, false]);
   });
 });

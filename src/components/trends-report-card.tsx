@@ -66,10 +66,10 @@ function PendingMonths({ months }: { months: string[] }) {
 export function TrendsReportCard() {
   const [months, setMonths] = useState<"3" | "6" | "12">("6");
   const [real, setReal] = useState(false);
-  const { usd } = useViewCurrency();
+  const { foreign } = useViewCurrency();
   const { data, error, isLoading } = useTrendsReport(Number(months) as 3 | 6 | 12, real);
   // Today's pesos (plan 5.4) only make sense in pesos, in a space kept in pesos.
-  const canAdjust = !usd && (data ? data.baseCurrency === "ARS" : real);
+  const canAdjust = !foreign && (data ? data.baseCurrency === "ARS" : real);
   const cur = reportCurrency(data);
   const points = data?.points ?? [];
   const chartData = points.map((p) => ({
@@ -93,7 +93,7 @@ export function TrendsReportCard() {
         />
       )}
 
-      {real && error && !usd ? (
+      {real && error && !foreign ? (
         <Alert variant="error">
           Todavía no tenemos el índice de inflación del INDEC.{" "}
           <Button variant="link" onClick={() => setReal(false)}>

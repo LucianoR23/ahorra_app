@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { PayDebtDialog } from "@/components/debts-manager";
 import { DiscreetToggle } from "@/components/discreet-toggle";
-import { CurrencyToggle, UsdViewNote } from "@/components/view-currency";
+import { ViewCurrencyPicker, ViewCurrencyNote } from "@/components/view-currency";
 import { reportCurrency } from "@/lib/fx";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { InstallPrompt } from "@/components/install-prompt";
@@ -136,7 +136,7 @@ function SharedHero({ people }: { people: People }) {
         <h2 id="shared-spent" className="text-label uppercase text-ink-muted">
           Gastaron juntos{report ? ` en ${monthName(report.month)}` : ""}
         </h2>
-        <CurrencyToggle />
+        <ViewCurrencyPicker />
       </div>
       {isLoading ? (
         <Skeleton className="h-12 w-56" />
@@ -157,7 +157,7 @@ function SharedHero({ people }: { people: People }) {
           ))}
         </dl>
       )}
-      <UsdViewNote />
+      <ViewCurrencyNote />
     </section>
   );
 }

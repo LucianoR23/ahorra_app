@@ -7,7 +7,7 @@ import { TrendsReportCard } from "@/components/trends-report-card";
 import { AiExportCard } from "@/components/ai-export-card";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
 import { PageHeader } from "@/components/ui/page-header";
-import { CurrencyToggle, UsdViewNote } from "@/components/view-currency";
+import { ViewCurrencyPicker, ViewCurrencyNote } from "@/components/view-currency";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const REPORTES_HELP: InfoHelpContent = {
@@ -59,9 +59,9 @@ export default function Page() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <span className="text-caption text-ink-muted">Ver montos en</span>
-              <CurrencyToggle />
+              <ViewCurrencyPicker />
             </div>
-            <UsdViewNote />
+            <ViewCurrencyNote />
           </div>
         )}
         {tab === "monthly" && <MonthlyReportCard />}
