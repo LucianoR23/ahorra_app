@@ -64,7 +64,7 @@ export function useHouseholdMembers(householdId?: string | null) {
   );
 }
 
-/** The month's report, in pesos or dollars per "Ver en dólares" (plan 5.3). */
+/** The month's report, in pesos or the currency of "Ver en" (plan 5.3, 5.6). */
 export function useMonthlyReport(month?: string) {
   const { token, householdId } = useReady();
   const view = viewQuery(useViewCurrency());

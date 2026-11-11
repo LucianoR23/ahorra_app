@@ -15,7 +15,17 @@ describe("formatAmount (design README §6)", () => {
 
   it("uses US$ for dollars and the code for unknown currencies", () => {
     expect(formatAmount(1200, "USD")).toBe("US$ 1.200");
-    expect(formatAmount(10, "BRL")).toBe("BRL 10");
+    expect(formatAmount(10, "XYZ")).toBe("XYZ 10");
+  });
+
+  it("writes the view currencies of plan 5.6, crypto with up to 8 decimals", () => {
+    expect(formatAmount(123.75, "BRL")).toBe("R$ 123,75");
+    expect(formatAmount(1500, "UYU")).toBe("$U 1.500");
+    expect(formatAmount(30.8, "USDT")).toBe("USDT 30,80");
+    expect(formatAmount(0.000396, "BTC")).toBe("BTC 0,000396");
+    expect(formatAmount(1.5, "ETH", { compact: true })).toBe("ETH 1,5");
+    expect(formatAmount(-0.123456789, "BTC")).toBe("-BTC 0,12345679");
+    expect(maskedAmount("BTC")).toBe("BTC ••••••");
   });
 
   it("signs incomes with + and negatives with -", () => {

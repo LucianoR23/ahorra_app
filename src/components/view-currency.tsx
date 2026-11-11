@@ -3,47 +3,56 @@
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Money } from "@/components/ui/money";
-import { Segmented } from "@/components/ui/segmented";
-import { useMonthlyReport } from "@/lib/api/hooks";
-import { rateSourceLabel } from "@/lib/fx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useExchangeRates, useMonthlyReport } from "@/lib/api/hooks";
+import { currencyPrefix } from "@/lib/format";
+import { availableViewCurrencies, pricedByCoinGecko, rateSourceLabel, viewCurrencyOf } from "@/lib/fx";
 import { useViewCurrency, useViewCurrencyStore } from "@/stores/view-currency";
 
-const OPTIONS = [
-  { value: "ARS", label: "$" },
-  { value: "USD", label: "US$" },
-] as const;
-
-/** "$ / US$" on top of Inicio and Reportes (plan 5.3). */
-export function CurrencyToggle() {
-  const { usd } = useViewCurrency();
-  const setUsd = useViewCurrencyStore((s) => s.setUsd);
+/** "Ver en" on top of Inicio and Reportes (plan 5.3, 5.6): pesos or another currency. */
+export function ViewCurrencyPicker() {
+  const { currency } = useViewCurrency();
+  const setCurrency = useViewCurrencyStore((s) => s.setCurrency);
+  const { data: rates } = useExchangeRates();
+  const options = availableViewCurrencies(rates);
+  // A currency picked before its quote vanished stays listed, so the
+  // trigger still names it and the note offers pesos.
+  const picked = viewCurrencyOf(currency);
+  if (picked && !options.includes(picked)) options.push(picked);
   return (
-    <Segmented
-      aria-label="Ver montos en"
-      value={usd ? "USD" : "ARS"}
-      onValueChange={(v) => setUsd(v === "USD")}
-      options={OPTIONS}
-      className="w-auto"
-    />
+    <Select value={currency} onValueChange={(v) => v && setCurrency(v)}>
+      <SelectTrigger aria-label="Ver montos en" className="h-11 w-auto min-w-0 gap-1 px-3">
+        <SelectValue>{(v: string | null) => currencyPrefix(v || "ARS")}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="ARS">Pesos</SelectItem>
+        {options.map((c) => (
+          <SelectItem key={c.value} value={c.value}>
+            {c.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
 /**
- * Under the totals while viewing dollars: which dollar converts them, the
- * switch between each movement's day and today, and what stays in pesos.
+ * Under the totals while viewing another currency: which rate converts
+ * them, for the dollar the switch between each movement's day and today, and
+ * what stays in pesos.
  */
-export function UsdViewNote() {
-  const { usd, today } = useViewCurrency();
-  const setUsd = useViewCurrencyStore((s) => s.setUsd);
+export function ViewCurrencyNote() {
+  const { currency, foreign, today } = useViewCurrency();
+  const setCurrency = useViewCurrencyStore((s) => s.setCurrency);
   const setToday = useViewCurrencyStore((s) => s.setToday);
   const { data, error } = useMonthlyReport();
-  if (!usd) return null;
+  if (!foreign) return null;
 
   if (error) {
     return (
       <Alert variant="error">
-        Todavía no tenemos la cotización de tu dólar para pasar a dólares.{" "}
-        <Button variant="link" onClick={() => setUsd(false)}>
+        Todavía no tenemos la cotización para pasar a esa moneda.{" "}
+        <Button variant="link" onClick={() => setCurrency("ARS")}>
           Ver en pesos
         </Button>
       </Alert>
@@ -51,33 +60,69 @@ export function UsdViewNote() {
   }
   if (!data?.rateSource) return null;
 
-  const dollar = `dólar ${rateSourceLabel(data.rateSource)}`;
+  const stays = "Tarjetas y deudas siguen en pesos.";
+  if (currency === "USD") {
+    const dollar = `dólar ${rateSourceLabel(data.rateSource)}`;
+    return (
+      <p className="text-caption text-ink-muted">
+        {today ? (
+          <>
+            En dólares al {dollar} de hoy
+            {data.usdRate ? (
+              <>
+                , a <Money amount={data.usdRate} cents="always" />
+              </>
+            ) : null}
+            .{" "}
+          </>
+        ) : (
+          <>En dólares al {dollar} del día de cada movimiento. </>
+        )}
+        {stays}{" "}
+        <Button variant="link" className="text-caption" onClick={() => setToday(!today)}>
+          {today ? "Usar el de cada movimiento" : "Usar el de hoy"}
+        </Button>
+      </p>
+    );
+  }
+
+  const vc = viewCurrencyOf(currency);
+  const name = vc?.name ?? currency;
+  const price = data.rate ? (
+    <>
+      : <Money amount={data.rate} cents="always" /> por {name}
+    </>
+  ) : null;
   return (
     <p className="text-caption text-ink-muted">
-      {today ? (
-        <>
-          En dólares al {dollar} de hoy
-          {data.usdRate ? (
-            <>
-              , a <Money amount={data.usdRate} cents="always" />
-            </>
-          ) : null}
-          .{" "}
-        </>
+      {currency === "USDT" ? (
+        <>En USDT al dólar cripto de hoy{price}. </>
+      ) : vc?.crypto ? (
+        <>En {name} al precio de hoy{price}. </>
       ) : (
-        <>En dólares al {dollar} del día de cada movimiento. </>
+        <>
+          En {vc?.label.toLowerCase() ?? currency} a la cotización de hoy{price}, con el dólar{" "}
+          {rateSourceLabel(data.rateSource)}.{" "}
+        </>
       )}
-      Tarjetas y deudas siguen en pesos.{" "}
-      <Button variant="link" className="text-caption" onClick={() => setToday(!today)}>
-        {today ? "Usar el de cada movimiento" : "Usar el de hoy"}
-      </Button>
+      {stays}
+      {pricedByCoinGecko(currency) && (
+        <>
+          {" "}
+          Precios cripto de{" "}
+          <a href="https://www.coingecko.com" target="_blank" rel="noopener noreferrer" className="underline">
+            CoinGecko
+          </a>
+          .
+        </>
+      )}
     </p>
   );
 }
 
-/** On screens that stay in pesos while viewing dollars (Tarjetas, Deudas). */
+/** On screens that stay in pesos while viewing another currency (Tarjetas, Deudas). */
 export function PesosNotice({ what }: { what: string }) {
-  const { usd } = useViewCurrency();
-  if (!usd) return null;
+  const { foreign } = useViewCurrency();
+  if (!foreign) return null;
   return <Alert>{what} se muestran en pesos, porque así se pagan.</Alert>;
 }

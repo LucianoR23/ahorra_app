@@ -5,43 +5,65 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { useIsClient } from "@/lib/hooks";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 
-// "Ver en dólares" (plan 5.3): Inicio and Reportes in pesos or dollars. A
-// per-device choice, like discreet mode.
+// "Ver en" (plan 5.3, 5.6): Inicio and Reportes in pesos or another
+// currency, view only. A per-device choice, like discreet mode.
 
 type ViewCurrencyState = {
-  usd: boolean;
-  /** Convert at today's dollar instead of each movement's day. */
+  /** "ARS", or a code of VIEW_CURRENCIES (lib/fx). */
+  currency: string;
+  /** The dollar at today's rate instead of each movement's day. */
   today: boolean;
-  setUsd: (usd: boolean) => void;
+  setCurrency: (currency: string) => void;
   setToday: (today: boolean) => void;
 };
+
+/** Version 0 stored `usd: boolean` (plan 5.3). */
+type V0 = { usd?: boolean; today?: boolean };
 
 export const useViewCurrencyStore = create<ViewCurrencyState>()(
   persist(
     (set) => ({
-      usd: false,
+      currency: "ARS",
       today: false,
-      setUsd: (usd) => set({ usd }),
+      setCurrency: (currency) => set({ currency }),
       setToday: (today) => set({ today }),
     }),
     {
       name: STORAGE_KEYS.viewCurrency,
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ usd: s.usd, today: s.today }),
+      version: 1,
+      // Only runs for an older version, and 0 is the only one.
+      migrate: (persisted) => {
+        const old = (persisted ?? {}) as V0;
+        return { currency: old.usd ? "USD" : "ARS", today: !!old.today };
+      },
+      partialize: (s) => ({ currency: s.currency, today: s.today }),
     },
   ),
 );
 
+export type View = {
+  /** "ARS" or the currency picked. */
+  currency: string;
+  /** Not pesos: Tarjetas and Deudas warn they stay in pesos. */
+  foreign: boolean;
+  /** Only the dollar converts day by day or at today's rate. */
+  today: boolean;
+};
+
 /** What reports ask for. Pesos on the server and first client render. */
-export function useViewCurrency(): { usd: boolean; today: boolean } {
+export function useViewCurrency(): View {
   const isClient = useIsClient();
-  const usd = useViewCurrencyStore((s) => s.usd);
+  const stored = useViewCurrencyStore((s) => s.currency);
   const today = useViewCurrencyStore((s) => s.today);
-  return { usd: isClient && usd, today: isClient && usd && today };
+  const currency = isClient && stored ? stored : "ARS";
+  const foreign = currency !== "ARS";
+  return { currency, foreign, today: foreign && currency === "USD" && today };
 }
 
 /** The reports query for the current view. */
-export function viewQuery(view: { usd: boolean; today: boolean }): Record<string, string> {
-  if (!view.usd) return {};
-  return view.today ? { currency: "USD", rate: "today" } : { currency: "USD" };
+export function viewQuery(view: View): Record<string, string> {
+  if (!view.foreign) return {};
+  if (view.currency === "USD" && view.today) return { currency: "USD", rate: "today" };
+  return { currency: view.currency };
 }

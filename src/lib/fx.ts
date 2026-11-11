@@ -16,6 +16,41 @@ export type RateSource = (typeof RATE_SOURCES)[number]["value"];
 
 export const DEFAULT_RATE_SOURCE: RateSource = "bolsa";
 
+/**
+ * "Ver en" (plan 5.6): what Inicio and Reportes can be shown in besides
+ * pesos. View only: movements still take pesos, dollars or euros. crypto:
+ * priced at its market price (source cripto), not the household's dollar.
+ */
+export const VIEW_CURRENCIES = [
+  { value: "USD", label: "Dólares", name: "dólar", crypto: false },
+  { value: "EUR", label: "Euros", name: "euro", crypto: false },
+  { value: "BRL", label: "Reales", name: "real", crypto: false },
+  { value: "CLP", label: "Pesos chilenos", name: "peso chileno", crypto: false },
+  { value: "UYU", label: "Pesos uruguayos", name: "peso uruguayo", crypto: false },
+  { value: "USDT", label: "USDT", name: "USDT", crypto: true },
+  { value: "BTC", label: "Bitcoin", name: "bitcoin", crypto: true },
+  { value: "ETH", label: "Ether", name: "ether", crypto: true },
+] as const;
+
+export type ViewCurrencyOption = (typeof VIEW_CURRENCIES)[number];
+
+export function viewCurrencyOf(code: string): ViewCurrencyOption | undefined {
+  return VIEW_CURRENCIES.find((c) => c.value === code);
+}
+
+/**
+ * The currencies "Ver en" offers: the dollar always, the rest once the API
+ * has a quote for them (bitcoin and ether need its CoinGecko key).
+ */
+export function availableViewCurrencies(rates: Rate[] | undefined): ViewCurrencyOption[] {
+  return VIEW_CURRENCIES.filter((c) => c.value === "USD" || rates?.some((r) => r.currency === c.value));
+}
+
+/** Prices from CoinGecko need a mention (its terms, plan 5.6). */
+export function pricedByCoinGecko(code: string): boolean {
+  return code === "BTC" || code === "ETH";
+}
+
 /** "MEP", "Tarjeta"; the raw value for one the app does not know. */
 export function rateSourceLabel(source: string | null | undefined): string {
   return RATE_SOURCES.find((s) => s.value === source)?.label ?? source ?? "";
