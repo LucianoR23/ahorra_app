@@ -62,6 +62,7 @@ const rows: Row[] = [
   ["acceptInvite", () => m.acceptInvite("tok"), "POST", "/invites/accept", false, { token: "tok" }],
   ["patchMe", () => m.patchMe({ firstName: "Ana" }), "PATCH", "/me", false, { firstName: "Ana" }],
   ["deleteMe", () => m.deleteMe(), "DELETE", "/me", false],
+  ["putNotificationPreferences", () => m.putNotificationPreferences({ kinds: [], quietHours: { enabled: true, start: "23:00", end: "08:00" } }), "PUT", "/me/notification-preferences", false, { kinds: [], quietHours: { enabled: true, start: "23:00", end: "08:00" } }],
   ["deletePushSubscriptionById", () => m.deletePushSubscriptionById("s1"), "DELETE", "/push/subscriptions/s1", false],
   ["restoreAdminHousehold", () => m.restoreAdminHousehold("h9"), "POST", "/admin/households/h9/restore", false],
   ["purgeAdminHousehold", () => m.purgeAdminHousehold("h9"), "DELETE", "/admin/households/h9/purge", false],

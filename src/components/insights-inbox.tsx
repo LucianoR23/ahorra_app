@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { mutate as swrMutate } from "swr";
-import { AlertTriangle, Bell, CheckCheck, Info, Search, Sparkles, X } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Bell, CheckCheck, Info, Search, Settings, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
@@ -149,6 +150,15 @@ export function InsightsInbox() {
               disabled={markingAll || unread === 0}
             >
               <CheckCheck aria-hidden strokeWidth={1.75} />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Preferencias de notificaciones"
+              nativeButton={false}
+              render={<Link href="/ajustes/notificaciones" />}
+            >
+              <Settings aria-hidden strokeWidth={1.75} />
             </Button>
           </div>
         }

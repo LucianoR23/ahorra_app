@@ -3,6 +3,7 @@
 import { apiFetch, apiFetchBlob, type ApiRequest } from "./client";
 import { ApiError } from "./errors";
 import { refreshOnce } from "./refresh";
+import type { NotificationPreferences } from "./hooks";
 import { useAuthStore } from "@/stores/auth";
 import { useHouseholdStore } from "@/stores/household";
 import type {
@@ -652,6 +653,16 @@ export function deleteMe() {
   return apiMutate<void>({
     method: "DELETE",
     path: "/me",
+    householdScoped: false,
+  });
+}
+
+/** Saves the notification preferences (plan 10.1); returns what was stored. */
+export function putNotificationPreferences(prefs: NotificationPreferences) {
+  return apiMutate<NotificationPreferences>({
+    method: "PUT",
+    path: "/me/notification-preferences",
+    body: { kinds: prefs.kinds, quietHours: prefs.quietHours },
     householdScoped: false,
   });
 }

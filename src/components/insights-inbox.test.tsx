@@ -52,6 +52,11 @@ describe("InsightsInbox", () => {
     expect(await screen.findByText("Objetivo al 105%")).toBeInTheDocument();
   });
 
+  it("links to the notification preferences (plan 10.1)", async () => {
+    renderInbox();
+    expect(await screen.findByRole("link", { name: "Preferencias de notificaciones" })).toHaveAttribute("href", "/ajustes/notificaciones");
+  });
+
   // Audit section 10, bug 3 (fixed in 0.1): the filter used to look for types
   // the API never emits; it now asks the API for type=alert.
   it("the Alertas filter asks the API for its goal alerts", async () => {
