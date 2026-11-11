@@ -6,10 +6,12 @@ import {
   ChartLine,
   CreditCard,
   House,
+  LayoutDashboard,
   LayoutGrid,
   LifeBuoy,
   List,
   Repeat,
+  ScrollText,
   Settings,
   ShoppingBag,
   Shield,
@@ -18,6 +20,7 @@ import {
   Target,
   TrendingUp,
   Users,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -87,6 +90,21 @@ export const MORE_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+/** The superadmin area (plan 1.11): its own layout, apart from the app. */
+export const ADMIN_NAV: NavItem[] = [
+  { id: "admin-home", label: "Resumen", href: "/admin", icon: LayoutDashboard },
+  { id: "admin-accounts", label: "Cuentas", href: "/admin/cuentas", icon: Users },
+  { id: "admin-audit", label: "Auditoría", href: "/admin/auditoria", icon: ScrollText },
+  { id: "admin-households", label: "Hogares", href: "/admin/hogares", icon: House },
+  { id: "admin-tools", label: "Herramientas", href: "/admin/herramientas", icon: Wrench },
+];
+
+/** Active admin section: "/admin" only lights up on itself. */
+export function isAdminActive(pathname: string, href: string): boolean {
+  if (href === "/admin") return pathname === "/admin";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 /** Routes with their own tab; any other screen lights up "Más". */
 const TAB_ROUTES = ["/", "/movimientos", "/agregar", "/tarjetas"];

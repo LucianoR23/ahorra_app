@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 1.11 (app part): superadmin area
+- `/admin` is now its own area with its own layout: a sidebar on desktop and a row of tabs on phones, "Superadmin" in the header and "Volver a la app". None of the app's navigation, so the superadmin uses the app like anyone else. Still reached from Más. For anyone who isn't a superadmin it is the regular 404 page.
+- Resumen: accounts (new in 7 days and this month, active in 30 days, verified), hogares (and deleted ones), confirmed waitlist, and movements loaded per month. Counts only, no amounts (plan §8b).
+- Cuentas: search by email or name, newest first, with badges for superadmin, unverified and deleted accounts. Each account shows its metadata (sign-up, verified, sign-in methods, last seen, open sessions), its spaces by name, role and size, and its activity.
+- Auditoría: the security events of every account and every superadmin action, filtered by Sesiones, Fallidos, Cuenta, Hogares or Superadmin, 50 at a time. Each event names the account and, when someone else did it, who.
+- Hogares borrados and Herramientas (regenerate insights, test push) moved from the old single page into their own sections, unchanged.
+
 ### 10.1 (app part): notification preferences
 - New screen "Preferencias de notificaciones" (`/ajustes/notificaciones`), reachable from Ajustes (Avisos > Notificaciones) and from a gear in Notificaciones. Per person, for every space.
 - "Qué te avisamos": each kind with a switch only for the channels it really uses (App, Push, Email). Changes save right away and go back if saving fails.
