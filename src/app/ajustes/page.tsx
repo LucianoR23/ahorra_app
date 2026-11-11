@@ -2,7 +2,9 @@ import { AppShell } from "@/components/app-shell";
 import { AppearanceCard } from "@/components/appearance-card";
 import { PersonalFxSource } from "@/components/personal-fx-source";
 import { ProfileConfig } from "@/components/profile-config";
+import { Bell } from "lucide-react";
 import { InfoHelp, type InfoHelpContent } from "@/components/ui/info-help";
+import { MenuGroup, MenuItem } from "@/components/ui/menu-list";
 import { PageHeader } from "@/components/ui/page-header";
 
 const AJUSTES_HELP: InfoHelpContent = {
@@ -11,6 +13,7 @@ const AJUSTES_HELP: InfoHelpContent = {
     "Tocá tu nombre o tu email para editarlos.",
     "Elegí con qué dólar se pasan a pesos tus gastos e ingresos en otra moneda (MEP por defecto).",
     "Elegí el tema: por defecto sigue el de tu dispositivo.",
+    "En Notificaciones elegís qué avisos te llegan y tu horario de silencio.",
   ],
   consideraciones: [
     "Las tarjetas y medios de pago están en Tarjetas; el hogar y sus miembros, en Hogar.",
@@ -36,6 +39,9 @@ export default function Page() {
         <ProfileConfig />
         <PersonalFxSource />
         <AppearanceCard />
+        <MenuGroup title="Avisos">
+          <MenuItem icon={Bell} label="Notificaciones" href="/ajustes/notificaciones" />
+        </MenuGroup>
       </div>
     </AppShell>
   );

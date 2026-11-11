@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 10.1 (app part): notification preferences
+- New screen "Preferencias de notificaciones" (`/ajustes/notificaciones`), reachable from Ajustes (Avisos > Notificaciones) and from a gear in Notificaciones. Per person, for every space.
+- "Qué te avisamos": each kind with a switch only for the channels it really uses (App, Push, Email). Changes save right away and go back if saving fails.
+- "Horario de silencio": on by default from 23:00 to 08:00; times in half hours. Pushes that fall inside wait until it ends; in the app they show up as usual.
+- Built from the existing settings list, switch and select components (no design export for this screen).
+
 ### 9.1 (app part): move expenses and incomes between Mi plata and the hogar
 - Detalle of an expense: the "Compartido" switch of the `Detalle` design. On, the expense is in the hogar and splits by its rules; off, it is in Mi plata. Toggling asks first (going back to Mi plata warns that the split, and so "Cuentas entre ustedes", changes), calls `POST /expenses/{id}/move` and opens the space the expense went to, so the same screen shows it there.
 - Detalle of an income: "Pasar al Hogar" / "Pasar a Mi plata" with the same confirmation and `POST /incomes/{id}/move`.

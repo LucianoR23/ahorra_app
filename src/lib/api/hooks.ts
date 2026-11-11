@@ -540,3 +540,30 @@ export function usePushSubscriptions() {
     }[]
   >(token ? (["/push/subscriptions", { householdScoped: false }] as const) : null);
 }
+
+export type NotificationKind =
+  | "shared_expense"
+  | "settlement"
+  | "cards"
+  | "installments"
+  | "goals"
+  | "recurring"
+  | "weekly_review"
+  | "monthly_report";
+export type NotificationChannel = "in_app" | "push" | "email";
+
+/** What the person wants to hear about, in every space (plan 10.1). */
+export type NotificationPreferences = {
+  /** Each kind with only the channels it really uses; true = on. */
+  kinds: { kind: NotificationKind; channels: Partial<Record<NotificationChannel, boolean>> }[];
+  /** Pushes wait until `end`; times are HH:MM in `timezone`. */
+  quietHours: { enabled: boolean; start: string; end: string };
+  timezone?: string;
+};
+
+export const NOTIFICATION_PREFERENCES_KEY = ["/me/notification-preferences", { householdScoped: false }] as const;
+
+export function useNotificationPreferences() {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<NotificationPreferences>(token ? NOTIFICATION_PREFERENCES_KEY : null);
+}
