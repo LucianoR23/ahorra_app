@@ -4,6 +4,12 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 11.1 (app part): download in Excel
+- Movimientos and Ingresos have a download button next to the help: "Descargar en Excel" offers the month on screen (Movimientos keeps its filters: type, category, payment method, search, and says "con los filtros") or the whole year of that month ("Todo 2026", without filters).
+- The file comes from the API (`/exports/expenses.xlsx`, `/exports/incomes.xlsx`) and is saved as `gastos-2026-11.xlsx`, `gastos-2026.xlsx`, `ingresos-...`. A toast confirms it, or shows the error.
+- `apiFetchBlob` (client) and `apiDownload` (mutations) fetch files with the session and the 401 refresh-and-retry that mutations already had (now shared in `withRefresh`). `saveFile` hands the blob to the browser.
+- Help texts of both screens explain the download; Movimientos says drafts are left out and other members' payment methods stay blank.
+
 ### 7.3 (app part): subscription suggestions and price-increase alert
 - Recurrentes, Gastos fijos tab: "¿Son gastos fijos?" lists expenses loaded by hand that repeat every month (from `GET /recurring-expenses/suggestions`), with how many of the last 4 months, the day and the last amount (and the earlier one when it went up).
 - "Agregar como fijo" opens the new fixed expense filled in: description, amount, currency, category, payment method (left empty when it is another member's) and a start on its day, the month after the last one paid and never before today, so nothing loaded by hand is booked twice. Once created it stops being suggested.

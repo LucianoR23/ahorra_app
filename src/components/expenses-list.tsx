@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, Receipt, Search, X } from "lucide-react";
 import { CategoryIcon } from "@/components/category-icon";
+import { ExportMenu } from "@/components/export-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
@@ -21,6 +22,7 @@ import { MonthNavigator } from "@/components/ui/month-navigator";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories, useExpenses, usePaymentMethods } from "@/lib/api/hooks";
+import { exportExpenses, type ExpenseExportFilters } from "@/lib/api/mutations";
 import type { Category, Expense } from "@/lib/api/schemas";
 import { currentMonth, dayLabel, monthEnd, monthStart } from "@/lib/format";
 import { groupByDay as groupByDayOf } from "@/lib/group-by-day";
@@ -82,6 +84,14 @@ export function ExpensesList({ help }: { help?: React.ReactNode }) {
     limit: rows,
   });
 
+  const filters: ExpenseExportFilters = {
+    categoryId: categoryId || undefined,
+    paymentMethodId: paymentMethodId || undefined,
+    q: debouncedQuery || undefined,
+    kind: kind === "all" ? undefined : kind,
+  };
+  const filtered = Object.values(filters).some(Boolean);
+
   const items = data?.items ?? [];
   const total = data?.totalCount ?? 0;
   const baseCurrency = current?.baseCurrency ?? "ARS";
@@ -108,6 +118,12 @@ export function ExpensesList({ help }: { help?: React.ReactNode }) {
         action={
           <div className="flex items-center gap-2">
             {help}
+            <ExportMenu
+              prefix="gastos"
+              month={month}
+              filtered={filtered}
+              download={(range, withFilters) => exportExpenses(range, withFilters ? filters : {})}
+            />
             <Button
               variant="secondary"
               size="icon"

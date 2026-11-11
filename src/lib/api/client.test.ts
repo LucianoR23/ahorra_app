@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { describe, expect, it, vi } from "vitest";
 import { API, lastRequest, server } from "@/test/msw";
-import { API_URL, apiFetch } from "./client";
+import { API_URL, apiFetch, apiFetchBlob } from "./client";
 import { ApiError } from "./errors";
 
 describe("apiFetch", () => {
@@ -162,5 +162,33 @@ describe("ApiError.fromResponse", () => {
 
   it("network errors have their own default message", () => {
     expect(ApiError.network()).toMatchObject({ code: "network", status: 0, message: "Sin conexión con el servidor", name: "ApiError" });
+  });
+});
+
+describe("apiFetchBlob", () => {
+  it("returns the file and asks for the given type", async () => {
+    server.use(
+      http.get(`${API}/exports/expenses.xlsx`, () =>
+        HttpResponse.arrayBuffer(new Uint8Array([0x50, 0x4b]).buffer, { headers: { "Content-Type": "application/zip" } }),
+      ),
+    );
+    const blob = await apiFetchBlob({ path: "/exports/expenses.xlsx", token: "tk", householdId: "h1", query: { from: "2026-11-01" } }, "application/zip");
+    expect(new Uint8Array(await blob.arrayBuffer())).toEqual(new Uint8Array([0x50, 0x4b]));
+    const r = lastRequest();
+    expect(r.query).toEqual({ from: "2026-11-01" });
+    expect(r.headers.get("accept")).toBe("application/zip");
+    expect(r.headers.get("authorization")).toBe("Bearer tk");
+    expect(r.headers.get("x-household-id")).toBe("h1");
+  });
+
+  it("turns an error body into ApiError", async () => {
+    server.use(
+      http.get(`${API}/exports/expenses.xlsx`, () =>
+        HttpResponse.json({ code: "validation", message: "es obligatorio (YYYY-MM-DD)", field: "to" }, { status: 422 }),
+      ),
+    );
+    const err = await apiFetchBlob({ path: "/exports/expenses.xlsx" }).catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err).toMatchObject({ code: "validation", status: 422, field: "to" });
   });
 });
