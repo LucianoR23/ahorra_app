@@ -22,6 +22,26 @@ export type ApiRequest = {
 };
 
 export async function apiFetch<T = unknown>(req: ApiRequest): Promise<T> {
+  const res = await send(req, "application/json");
+  if (res.status === 204) return undefined as T;
+
+  const text = await res.text();
+  const json = text ? safeJson(text) : null;
+  if (!res.ok) throw toError(res, json);
+  return json as T;
+}
+
+/** Like apiFetch, for endpoints that answer with a file (plan 11.1 exports). */
+export async function apiFetchBlob(req: ApiRequest, accept = "*/*"): Promise<Blob> {
+  const res = await send(req, accept);
+  if (!res.ok) {
+    const text = await res.text();
+    throw toError(res, text ? safeJson(text) : null);
+  }
+  return res.blob();
+}
+
+async function send(req: ApiRequest, accept: string): Promise<Response> {
   const url = new URL(req.path.startsWith("http") ? req.path : `${API_URL}${req.path}`);
   if (req.query) {
     for (const [k, v] of Object.entries(req.query)) {
@@ -33,14 +53,13 @@ export async function apiFetch<T = unknown>(req: ApiRequest): Promise<T> {
   // pone `multipart/form-data` con su boundary — ni serializamos a JSON.
   const isFormData = typeof FormData !== "undefined" && req.body instanceof FormData;
 
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = { Accept: accept };
   if (req.body !== undefined && !isFormData) headers["Content-Type"] = "application/json";
   if (req.token) headers["Authorization"] = `Bearer ${req.token}`;
   if (req.householdId) headers["X-Household-ID"] = req.householdId;
 
-  let res: Response;
   try {
-    res = await fetch(url.toString(), {
+    return await fetch(url.toString(), {
       method: req.method ?? "GET",
       headers,
       credentials: req.credentials ?? "include",
@@ -56,21 +75,15 @@ export async function apiFetch<T = unknown>(req: ApiRequest): Promise<T> {
   } catch (e) {
     throw ApiError.network(e instanceof Error ? e.message : "fetch failed");
   }
+}
 
-  if (res.status === 204) return undefined as T;
-
-  const text = await res.text();
-  const json = text ? safeJson(text) : null;
-
-  if (!res.ok) {
-    if (res.status === 429) {
-      throw ApiError.fromResponse(res.status, json, {
-        retryAfterSeconds: parseRetryAfter(res.headers.get("Retry-After")),
-      });
-    }
-    throw ApiError.fromResponse(res.status, json);
+function toError(res: Response, json: unknown): ApiError {
+  if (res.status === 429) {
+    return ApiError.fromResponse(res.status, json, {
+      retryAfterSeconds: parseRetryAfter(res.headers.get("Retry-After")),
+    });
   }
-  return json as T;
+  return ApiError.fromResponse(res.status, json);
 }
 
 function parseRetryAfter(header: string | null): number | undefined {

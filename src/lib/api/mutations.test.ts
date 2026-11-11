@@ -147,3 +147,40 @@ describe("contract with the API (audit section 10)", () => {
     await expect(m.transferHouseholdOwnership("h9", "u2")).resolves.toBeUndefined();
   });
 });
+
+describe("exports (plan 11.1)", () => {
+  const xlsx = () => HttpResponse.arrayBuffer(new Uint8Array([0x50, 0x4b]).buffer, { headers: { "Content-Type": m.XLSX_TYPE } });
+
+  it("asks for the expenses file with the range and filters, in the current space", async () => {
+    server.use(http.get(`${API}/exports/expenses.xlsx`, xlsx));
+    const blob = await m.exportExpenses({ from: "2026-11-01", to: "2026-11-30" }, { categoryId: "c1", kind: "fixed", q: "" });
+    expect(blob.size).toBe(2);
+    const r = lastRequest();
+    expect(r.path).toBe("/exports/expenses.xlsx");
+    expect(r.query).toEqual({ from: "2026-11-01", to: "2026-11-30", categoryId: "c1", kind: "fixed" });
+    expect(r.headers.get("accept")).toBe(m.XLSX_TYPE);
+    expect(r.headers.get("x-household-id")).toBe("h1");
+  });
+
+  it("asks for the incomes file with the range", async () => {
+    server.use(http.get(`${API}/exports/incomes.xlsx`, xlsx));
+    await m.exportIncomes({ from: "2026-01-01", to: "2026-12-31" });
+    expect(lastRequest().query).toEqual({ from: "2026-01-01", to: "2026-12-31" });
+  });
+
+  it("refreshes an expired session once and retries", async () => {
+    let calls = 0;
+    server.use(
+      http.post(`${API}/auth/refresh`, () => HttpResponse.json({ accessToken: "fresh", accessExpiresAt: "2099-01-01T00:00:00Z" })),
+      http.get(`${API}/exports/incomes.xlsx`, ({ request }) => {
+        calls++;
+        return request.headers.get("authorization") === "Bearer fresh"
+          ? xlsx()
+          : HttpResponse.json({ code: "unauthorized", message: "x" }, { status: 401 });
+      }),
+    );
+    const blob = await m.exportIncomes({ from: "2026-11-01", to: "2026-11-30" });
+    expect(blob.size).toBe(2);
+    expect(calls).toBe(2);
+  });
+});

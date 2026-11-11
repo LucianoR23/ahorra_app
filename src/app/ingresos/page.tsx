@@ -9,6 +9,7 @@ const INGRESOS_HELP: InfoHelpContent = {
     "Mirá el total de ingresos del mes.",
     "Cargá un ingreso nuevo con el botón +.",
     "Tocá un ingreso para ver su detalle, editarlo o eliminarlo.",
+    "Bajá tus ingresos en Excel con el botón de descarga: el mes que estás viendo o el año entero.",
   ],
   consideraciones: [
     "Los ingresos fijos (sueldo, etc.) se generan solos desde Recurrentes; acá ves todos, los automáticos y los manuales.",

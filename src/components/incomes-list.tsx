@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, TrendingUp } from "lucide-react";
+import { ExportMenu } from "@/components/export-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,6 +13,7 @@ import { MonthNavigator } from "@/components/ui/month-navigator";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHouseholdMembers, useIncomes, useTotalIncome } from "@/lib/api/hooks";
+import { exportIncomes } from "@/lib/api/mutations";
 import { currentMonth, dayLabel, monthEnd, monthStart } from "@/lib/format";
 import { groupByDay } from "@/lib/group-by-day";
 import { incomeSourceLabel } from "@/lib/labels";
@@ -62,6 +64,7 @@ export function IncomesList({ help }: { help?: React.ReactNode }) {
         action={
           <div className="flex items-center gap-2">
             {help}
+            <ExportMenu prefix="ingresos" month={month} download={(range) => exportIncomes(range)} />
             <Button size="icon" aria-label="Nuevo ingreso" nativeButton={false} render={<Link href="/ingresos/nuevo" />}>
               <Plus aria-hidden strokeWidth={2} />
             </Button>

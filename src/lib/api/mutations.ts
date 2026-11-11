@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch, type ApiRequest } from "./client";
+import { apiFetch, apiFetchBlob, type ApiRequest } from "./client";
 import { ApiError } from "./errors";
 import { refreshOnce } from "./refresh";
 import { useAuthStore } from "@/stores/auth";
@@ -47,21 +47,29 @@ type MutateOpts = {
 /** Centralized mutation runner with 401-refresh-retry. */
 export async function apiMutate<T = unknown>(opts: MutateOpts): Promise<T> {
   const householdScoped = opts.householdScoped ?? true;
-  const token = useAuthStore.getState().accessToken;
   const householdId = opts.householdId ?? (householdScoped ? useHouseholdStore.getState().currentId : null);
-
-  const run = (tk: string | null) =>
+  return withRefresh((token) =>
     apiFetch<T>({
       method: opts.method,
       path: opts.path,
       body: opts.body,
       query: opts.query,
-      token: tk,
+      token,
       householdId,
-    });
+    }),
+  );
+}
 
+/** Downloads a file from the current space (same 401-refresh-retry). */
+export async function apiDownload(opts: { path: string; query?: ApiRequest["query"]; accept?: string }): Promise<Blob> {
+  const householdId = useHouseholdStore.getState().currentId;
+  return withRefresh((token) => apiFetchBlob({ path: opts.path, query: opts.query, token, householdId }, opts.accept));
+}
+
+/** Runs a request with the access token; on 401 refreshes it once and retries. */
+async function withRefresh<T>(run: (token: string | null) => Promise<T>): Promise<T> {
   try {
-    return await run(token);
+    return await run(useAuthStore.getState().accessToken);
   } catch (e) {
     if (e instanceof ApiError && e.code === "unauthorized") {
       const fresh = await refreshOnce();
@@ -740,4 +748,27 @@ export function patchCategory(id: string, input: CategoryInput) {
 
 export function deleteCategory(id: string) {
   return apiMutate<void>({ method: "DELETE", path: `/categories/${id}` });
+}
+
+// --- Exports (plan 11.1) --------------------------------------------------
+
+export const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+export type ExportRange = { from: string; to: string };
+
+export type ExpenseExportFilters = {
+  categoryId?: string;
+  paymentMethodId?: string;
+  kind?: "fixed" | "variable";
+  q?: string;
+};
+
+/** The space's confirmed expenses in the range as an Excel file. */
+export function exportExpenses(range: ExportRange, filters: ExpenseExportFilters = {}): Promise<Blob> {
+  return apiDownload({ path: "/exports/expenses.xlsx", query: { ...range, ...filters }, accept: XLSX_TYPE });
+}
+
+/** The space's incomes in the range as an Excel file. */
+export function exportIncomes(range: ExportRange): Promise<Blob> {
+  return apiDownload({ path: "/exports/incomes.xlsx", query: range, accept: XLSX_TYPE });
 }
