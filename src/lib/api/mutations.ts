@@ -129,6 +129,14 @@ export function deleteExpense(id: string) {
   return apiMutate<void>({ method: "DELETE", path: `/expenses/${id}` });
 }
 
+/**
+ * Takes the expense to another space of its author (plan 9.1): to the hogar,
+ * where it splits by its rules, or back to Mi plata. The id stays the same.
+ */
+export function moveExpense(id: string, householdId: string) {
+  return apiMutate<ExpenseDetail>({ method: "POST", path: `/expenses/${id}/move`, body: { householdId } });
+}
+
 // confirmDraftExpense: el usuario carga el monto real de una factura variable
 // (luz/expensas/wifi) y el draft pasa a confirmed. El backend chequea el
 // threshold y dispara insight recurring_spike si supera.
@@ -195,6 +203,11 @@ export function patchIncome(id: string, input: IncomePatchInput) {
 
 export function deleteIncome(id: string) {
   return apiMutate<void>({ method: "DELETE", path: `/incomes/${id}` });
+}
+
+/** Takes the income to another space of whoever received it (plan 9.1). */
+export function moveIncome(id: string, householdId: string) {
+  return apiMutate<Income>({ method: "POST", path: `/incomes/${id}/move`, body: { householdId } });
 }
 
 // --- Recurring expenses ---------------------------------------------------
