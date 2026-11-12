@@ -275,3 +275,144 @@ describe("ExpenseForm auto-categorization (plan 8.4)", () => {
     expect(suggestPosts()).toHaveLength(0);
   });
 });
+
+describe("ExpenseForm natural-language entry (plan 3.1)", () => {
+  const method = (id: string, name: string, kind: string, allowsInstallments = false) => ({
+    ...cash, id, name, kind, allowsInstallments,
+  });
+  const methods = [
+    cash,
+    method("pm-mp", "Mercado Pago", "wallet", true),
+    method("pm-vg", "Visa Galicia", "debit"),
+    method("pm-vs", "Visa Santander", "debit"),
+  ];
+  const empty = {
+    understood: true, notFinance: false, source: "rules", amount: null, currency: null, spentAt: null,
+    installments: null, description: null, paymentMethodId: null, paymentCandidates: [], shared: false,
+    categoryId: null, categorySource: null,
+  };
+  function parses(answer: Partial<typeof empty> | Record<string, unknown>) {
+    server.use(
+      http.get(`${API}/payment-methods`, () => HttpResponse.json(methods)),
+      http.post(`${API}/expenses/parse`, () => HttpResponse.json({ ...empty, ...answer })),
+    );
+  }
+  const parsePosts = () => requests().filter((r) => r.method === "POST" && r.path === "/expenses/parse");
+  const box = () => screen.findByLabelText("Contalo como te salga");
+
+  it("fills the rows from the sentence on Enter, and saves them", async () => {
+    api([personalSpace]);
+    parses({
+      amount: 120000, currency: "USD", spentAt: "2026-11-11", installments: 6, description: "Zapatillas",
+      paymentMethodId: "pm-mp", categoryId: "c-p", categorySource: "history",
+    });
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await box(), "zapatillas 120 mil en 6 cuotas con mp ayer{Enter}");
+    expect(await screen.findByText("Lo entendimos así. Tocá un dato para cambiarlo.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Monto")).toHaveValue("120000");
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Zapatillas");
+    expect(screen.getByLabelText("Pago")).toHaveTextContent("Mercado Pago");
+    expect(screen.getByLabelText("Cuotas")).toHaveValue(6);
+    expect(screen.getByLabelText("Categoría")).toHaveTextContent("Mis gustos");
+    expect(screen.getByText("Como la última vez")).toBeInTheDocument();
+
+    const post = parsePosts()[0];
+    expect(post.headers.get("x-household-id")).toBe(personalSpace.id);
+    expect(JSON.parse(post.body || "{}")).toEqual({ text: "zapatillas 120 mil en 6 cuotas con mp ayer" });
+    // The category came with the sentence: no second request.
+    expect(requests().filter((r) => r.path === "/categories/suggest")).toHaveLength(0);
+
+    await userEvent.click(screen.getByRole("button", { name: "Guardar gasto" }));
+    await waitFor(() => expect(expensePost()).toBeDefined());
+    expect(JSON.parse(expensePost()!.body || "{}")).toMatchObject({
+      amount: 120000, currency: "USD", spentAt: "2026-11-11", installments: 6, description: "Zapatillas",
+      paymentMethodId: "pm-mp", categoryId: "c-p",
+    });
+  });
+
+  it("leaves Pago empty when the words fit several methods, and lists those first", async () => {
+    api([personalSpace]);
+    parses({ amount: 2500, description: "Café", paymentCandidates: ["pm-vg", "pm-vs"] });
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await box(), "café 2500 visa{Enter}");
+    expect(await screen.findByText("Tenés 2 Visa: elegí cuál")).toBeInTheDocument();
+    expect(screen.getByLabelText("Pago")).toHaveTextContent("Elegí");
+
+    await userEvent.click(screen.getByLabelText("Pago"));
+    const options = await screen.findAllByRole("option");
+    expect(options.slice(0, 2).map((o) => o.textContent)).toEqual([
+      expect.stringContaining("Visa Galicia"),
+      expect.stringContaining("Visa Santander"),
+    ]);
+    await userEvent.click(options[1]);
+    expect(screen.getByLabelText("Pago")).toHaveTextContent("Visa Santander");
+    expect(screen.queryByText("Tenés 2 Visa: elegí cuál")).not.toBeInTheDocument();
+  });
+
+  it("reads each sentence once, also when the box loses focus", async () => {
+    api([personalSpace]);
+    parses({ amount: 2500, description: "Café" });
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await box(), "café 2500");
+    await userEvent.tab();
+    await waitFor(() => expect(parsePosts()).toHaveLength(1));
+    await userEvent.click(await box());
+    await userEvent.tab();
+    expect(parsePosts()).toHaveLength(1);
+    // Shift+Enter is a new line, not a request.
+    await userEvent.type(await box(), "{Shift>}{Enter}{/Shift}");
+    expect(parsePosts()).toHaveLength(1);
+  });
+
+  it("keeps what the sentence does not mention", async () => {
+    api([personalSpace]);
+    parses({ amount: 900, understood: true });
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await screen.findByLabelText("Descripción"), "Kiosco");
+    await userEvent.type(await box(), "900{Enter}");
+    await waitFor(() => expect(screen.getByLabelText("Monto")).toHaveValue("900"));
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Kiosco");
+  });
+
+  it("says when there is no amount, or it is not an expense", async () => {
+    api([personalSpace]);
+    parses({ understood: false, description: "Café" });
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await box(), "café{Enter}");
+    expect(await screen.findByText("No encontramos el monto: completalo abajo.")).toBeInTheDocument();
+
+    parses({ understood: false, notFinance: true });
+    await userEvent.clear(await box());
+    await userEvent.type(await box(), "contame un chiste{Enter}");
+    expect(await screen.findByText("Solo puedo cargar gastos. Probá: «súper 15000 débito».")).toBeInTheDocument();
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Café");
+
+    server.use(http.post(`${API}/expenses/parse`, () => HttpResponse.json({ error: "x" }, { status: 500 })));
+    await userEvent.type(await box(), " ya{Enter}");
+    expect(await screen.findByText("No pudimos leerlo. Completá los datos abajo.")).toBeInTheDocument();
+  });
+
+  it("turns Compartido on when the sentence says so, and asks the hogar's category", async () => {
+    api([personalSpace, hogarSpace]);
+    parses({ amount: 15000, description: "Súper", shared: true, categoryId: "c-p", categorySource: "history" });
+    server.use(
+      http.post(`${API}/categories/suggest`, ({ request }) =>
+        HttpResponse.json({ categoryId: request.headers.get("x-household-id") === hogarSpace.id ? "c-h" : "c-p", source: "history" }),
+      ),
+    );
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await box(), "súper 15 mil compartido{Enter}");
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Compartido" })).toBeChecked());
+    await waitFor(() => expect(screen.getByLabelText("Categoría")).toHaveTextContent("Súper del hogar"));
+    const suggest = requests().find((r) => r.path === "/categories/suggest");
+    expect(suggest?.headers.get("x-household-id")).toBe(hogarSpace.id);
+  });
+});
+
+describe("candidatesHint", () => {
+  it("names the shared word, or counts", async () => {
+    const { candidatesHint } = await import("./expense-form");
+    expect(candidatesHint(["Visa Galicia", "Visa Santander"])).toBe("Tenés 2 Visa: elegí cuál");
+    expect(candidatesHint(["Débito Galicia", "Visa Galicia"])).toBe("Coinciden 2 medios de pago: elegí cuál");
+  });
+});

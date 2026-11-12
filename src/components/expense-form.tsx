@@ -1,12 +1,13 @@
 "use client";
 
 import { CardPeriodNudge } from "@/components/card-statements/period-nudge";
-import { Check, TriangleAlert } from "lucide-react";
+import { Check, Sparkles, TriangleAlert } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate as swrMutate } from "swr";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
@@ -21,7 +22,7 @@ import {
 } from "@/lib/api/hooks";
 import { selectSpace, useSpaces } from "@/lib/spaces";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { createExpense, suggestCategory, type ExpenseCreateInput } from "@/lib/api/mutations";
+import { createExpense, parseExpense, suggestCategory, type ExpenseCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { isoToday, projectBillingMonth } from "@/lib/format";
 import { monthName } from "@/lib/committed";
@@ -44,6 +45,22 @@ const CURRENCIES = [
   { value: "EUR", label: "EUR" },
 ] as const;
 
+type NlStatus = "loading" | "ok" | "partial" | "not_finance" | "error";
+
+const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
+  loading: "Leyendo…",
+  partial: "No encontramos el monto: completalo abajo.",
+  not_finance: "Solo puedo cargar gastos. Probá: «súper 15000 débito».",
+  error: "No pudimos leerlo. Completá los datos abajo.",
+};
+
+/** "Tenés 2 Visa: elegí cuál", from the word the names share. */
+export function candidatesHint(names: string[]): string {
+  const first = names.map((n) => n.split(/\s+/)[0]);
+  const shared = first.every((w) => w.toLowerCase() === first[0]?.toLowerCase()) ? first[0] : "";
+  return shared ? `Tenés ${names.length} ${shared}: elegí cuál` : `Coinciden ${names.length} medios de pago: elegí cuál`;
+}
+
 /** Last "Compartido" choice (plan 1.2). The form renders only on the client. */
 function readSharedPref(): boolean {
   try {
@@ -64,7 +81,8 @@ function writeSharedPref(v: boolean) {
 /**
  * Cargar gasto (design `CargarGasto`, plan 1.10b): the amount big on top
  * with its currency, the data as rows, "Compartido", and "Guardar gasto"
- * pinned at the bottom. The natural-language box of the design is 3.1.
+ * pinned at the bottom. On top, "Contalo como te salga" (plan 3.1) fills
+ * the rows from one sentence.
  *
  * `onCreated` replaces the default jump to the new expense's detail
  * (onboarding's first expense, plan 1.3). `initial` fills the form in, as
@@ -86,6 +104,13 @@ export function ExpenseForm({
   const { data: paymentMethods } = usePaymentMethods();
   const { data: rates } = useExchangeRates();
   const { data: members } = useHouseholdMembers(hogar?.id);
+
+  // Natural-language entry (plan 3.1).
+  const [nlText, setNlText] = useState("");
+  const [nlStatus, setNlStatus] = useState<NlStatus | null>(null);
+  const nlAsked = useRef("");
+  // Methods that fit an ambiguous word ("visa"): listed first, none picked.
+  const [paymentCandidates, setPaymentCandidates] = useState<string[]>([]);
 
   const [description, setDescription] = useState("");
   const [amountStr, setAmountStr] = useState(initial.amount ? String(initial.amount).replace(".", ",") : "");
@@ -150,8 +175,8 @@ export function ExpenseForm({
 
   // Asks once per description and space, when the description loses focus
   // or the space changes. `fresh` skips the checks of the old space.
-  async function suggest(spaceId: string | undefined, fresh = false) {
-    const text = description.trim();
+  async function suggest(spaceId: string | undefined, fresh = false, desc = description) {
+    const text = desc.trim();
     const key = `${spaceId}|${text.toLowerCase()}`;
     if (!spaceId || text.length < 2) return;
     if (!fresh && (categoryPicked || key === lastAsked.current)) return;
@@ -165,6 +190,57 @@ export function ExpenseForm({
       // No suggestion: the person picks the category as always.
     }
   }
+
+  // Reads the sentence once, on Enter or when it loses focus, and fills
+  // the rows it mentions; the rest stay as they are (decided with the user).
+  async function interpret() {
+    const text = nlText.trim();
+    if (!text || text === nlAsked.current || !target) return;
+    nlAsked.current = text;
+    setNlStatus("loading");
+    try {
+      const r = await parseExpense(text, target.id);
+      if (nlAsked.current !== text) return;
+      if (r.notFinance) {
+        setNlStatus("not_finance");
+        return;
+      }
+      if (r.amount) setAmountStr(String(r.amount).replace(".", ","));
+      if (r.currency) setCurrency(r.currency);
+      if (r.spentAt) setSpentAt(r.spentAt);
+      if (r.paymentMethodId || r.paymentCandidates.length > 0) {
+        setPaymentMethodId(r.paymentMethodId ?? "");
+        setPaymentCandidates(r.paymentMethodId ? [] : r.paymentCandidates);
+        setInstallments(r.installments ?? 1);
+      } else if (r.installments) {
+        setInstallments(r.installments);
+      }
+      const desc = r.description ?? description;
+      if (r.description) setDescription(r.description);
+      if (r.shared && hogar && !isShared) {
+        // The category was read for Mi plata: ask again in the hogar.
+        setCompartido(true);
+        setCategoryId("");
+        setCategoryPicked(false);
+        void suggest(hogar.id, true, desc);
+      } else if (r.categoryId && r.categorySource) {
+        setSuggestion({ spaceId: target.id, categoryId: r.categoryId, source: r.categorySource });
+        lastAsked.current = `${target.id}|${desc.trim().toLowerCase()}`;
+      } else if (r.description) {
+        void suggest(target.id, false, desc);
+      }
+      setNlStatus(r.understood ? "ok" : "partial");
+    } catch {
+      if (nlAsked.current === text) setNlStatus("error");
+    }
+  }
+
+  const candidateNames = paymentCandidates
+    .map((id) => paymentMethods?.find((p) => p.id === id)?.name)
+    .filter((n): n is string => !!n);
+  const activeMethods = (paymentMethods ?? [])
+    .filter((p) => p.isActive)
+    .sort((a, b) => Number(paymentCandidates.includes(b.id)) - Number(paymentCandidates.includes(a.id)));
 
   function validate() {
     const e: Record<string, string> = {};
@@ -230,6 +306,42 @@ export function ExpenseForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      {/* Contalo como te salga (plan 3.1). */}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="nl" className="font-semibold">
+          Contalo como te salga
+        </Label>
+        <Textarea
+          id="nl"
+          rows={2}
+          maxLength={300}
+          value={nlText}
+          placeholder="Ej.: café 2500 visa 3 cuotas ayer"
+          onChange={(e) => setNlText(e.target.value)}
+          onBlur={() => void interpret()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              void interpret();
+            }
+          }}
+          aria-describedby={nlStatus ? "nl-status" : undefined}
+          className="min-h-0 resize-none rounded-2xl text-body"
+        />
+        {nlStatus && (
+          <p id="nl-status" role="status" className="flex items-center gap-1.5 text-caption text-ink-muted">
+            {nlStatus === "ok" ? (
+              <>
+                <Sparkles aria-hidden className="size-4 shrink-0 text-brand-ink" strokeWidth={1.75} />
+                Lo entendimos así. Tocá un dato para cambiarlo.
+              </>
+            ) : (
+              NL_MESSAGES[nlStatus]
+            )}
+          </p>
+        )}
+      </div>
+
       {/* The amount, big, with its currency. */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
@@ -325,11 +437,17 @@ export function ExpenseForm({
             />
           </Row>
 
-          <Row label="Pago" htmlFor="paymentMethod" error={errors.paymentMethodId}>
+          <Row
+            label="Pago"
+            htmlFor="paymentMethod"
+            error={errors.paymentMethodId}
+            hint={candidateNames.length > 1 && !paymentMethodId ? candidatesHint(candidateNames) : undefined}
+          >
             <Select
               value={paymentMethodId}
               onValueChange={(v) => {
                 setPaymentMethodId(v ?? "");
+                setPaymentCandidates([]);
                 setInstallments(1);
               }}
             >
@@ -339,9 +457,7 @@ export function ExpenseForm({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {paymentMethods
-                  ?.filter((p) => p.isActive)
-                  .map((p) => (
+                {activeMethods.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name} · {PAYMENT_METHOD_KIND_LABELS[p.kind]}
                     </SelectItem>
