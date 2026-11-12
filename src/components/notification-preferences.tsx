@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { MenuGroup, MenuRow } from "@/components/ui/menu-list";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,12 +37,23 @@ function timeOptions(current: string) {
   return HALF_HOURS.includes(current) ? HALF_HOURS : [...HALF_HOURS, current].sort();
 }
 
+/** Whether "HH:MM" falls inside the quiet window (which may cross midnight). */
+function inQuiet(at: string, q: Prefs["quietHours"]) {
+  if (!q.enabled) return false;
+  return q.start < q.end ? at >= q.start && at < q.end : at >= q.start || at < q.end;
+}
+
+const REMINDER_DEFAULT = { enabled: false, at: "21:00" };
+
 /** "America/Argentina/Buenos_Aires" -> "Buenos Aires". */
 function cityOf(tz?: string) {
   return tz ? (tz.split("/").pop() ?? tz).replaceAll("_", " ") : "";
 }
 
-/** Notification preferences (plan 10.1): per kind and channel, plus quiet hours. Saves on every change. */
+/**
+ * Notification preferences (plan 10.1): per kind and channel, the daily
+ * reminder (plan 10.2) and quiet hours. Saves on every change.
+ */
 export function NotificationPreferences() {
   const { data, mutate, error } = useNotificationPreferences();
 
@@ -81,7 +93,12 @@ export function NotificationPreferences() {
     void save({ ...data!, quietHours });
   }
 
+  function setReminder(patch: Partial<NonNullable<Prefs["dailyReminder"]>>) {
+    void save({ ...data!, dailyReminder: { ...reminder, ...patch } });
+  }
+
   const q = data.quietHours;
+  const reminder = data.dailyReminder ?? REMINDER_DEFAULT;
   const city = cityOf(data.timezone);
 
   return (
@@ -113,6 +130,35 @@ export function NotificationPreferences() {
             </div>
           </MenuRow>
         ))}
+      </MenuGroup>
+
+      <MenuGroup
+        title="Recordatorio diario"
+        footer="Llega como push, solo los días que no cargaste ningún gasto ni ingreso. Los recurrentes que se cargan solos no cuentan."
+      >
+        <MenuRow>
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="reminder-enabled" className="text-body font-normal">
+              Recordarme cargar lo que gasté
+            </Label>
+            <p className="text-caption text-ink-muted">
+              {reminder.enabled ? `A las ${reminder.at}: «¿Hoy no gastaste nada?»` : "Apagado."}
+            </p>
+          </div>
+          <Switch id="reminder-enabled" checked={reminder.enabled} onCheckedChange={(enabled) => setReminder({ enabled })} />
+        </MenuRow>
+        {reminder.enabled ? (
+          <>
+            <TimeRow id="reminder-at" label="A qué hora" value={reminder.at} onChange={(at) => setReminder({ at })} />
+            {inQuiet(reminder.at, q) ? (
+              <MenuRow>
+                <Alert className="w-full">
+                  Esa hora cae en tu horario de silencio, así que no te va a llegar. Elegí otra o cambiá el silencio.
+                </Alert>
+              </MenuRow>
+            ) : null}
+          </>
+        ) : null}
       </MenuGroup>
 
       <MenuGroup

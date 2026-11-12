@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 10.2 (app part): daily logging reminder
+- "Recordatorio diario" in Preferencias de notificaciones: a switch (off by default) and the time, in half hours (21:00 by default). It sends a push asking "¿Hoy no gastaste nada?" only on days nothing was loaded.
+- If the chosen time falls inside the quiet hours, a notice says it won't arrive, since quiet hours drop the reminder instead of holding it.
+- The help panel explains both. Saving sends `dailyReminder`; with an API that doesn't return it yet, the switch shows off.
+
 ### 1.11 (app part): superadmin area
 - `/admin` is now its own area with its own layout: a sidebar on desktop and a row of tabs on phones, "Superadmin" in the header and "Volver a la app". None of the app's navigation, so the superadmin uses the app like anyone else. Still reached from Más. For anyone who isn't a superadmin it is the regular 404 page.
 - Resumen: accounts (new in 7 days and this month, active in 30 days, verified), hogares (and deleted ones), confirmed waitlist, and movements loaded per month. Counts only, no amounts (plan §8b).
