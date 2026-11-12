@@ -65,5 +65,8 @@ describe("insightLink", () => {
     expect(insightLink({ insightType: "settlement" })?.href).toBe("/deudas");
     expect(insightLink({ insightType: "shared_expense", metadata: { expenseId: "e1" } })).toEqual({ href: "/movimientos/e1", label: "Ver gasto" });
     expect(insightLink({ insightType: "daily_summary" })).toBeUndefined();
+    // Plan 8.2: the summaries lead to the numbers behind them.
+    expect(insightLink({ insightType: "weekly_review" })).toEqual({ href: "/movimientos", label: "Ver movimientos" });
+    expect(insightLink({ insightType: "monthly_review" })).toEqual({ href: "/reportes", label: "Ver reportes" });
   });
 });

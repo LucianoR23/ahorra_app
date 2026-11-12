@@ -3,6 +3,7 @@
 const TYPE_LABELS: Record<string, string> = {
   daily_summary: "Resumen diario",
   weekly_review: "Resumen semanal",
+  monthly_review: "Resumen mensual",
   card_closing_soon: "Cierre de tarjeta",
   card_due_soon: "Vencimiento de tarjeta",
   credit_period_reminder: "Cierre de tarjeta",
@@ -48,6 +49,10 @@ export function insightLink(insight: {
         : { href: "/deudas", label: "Ver cuentas" };
     case "settlement":
       return { href: "/deudas", label: "Ver cuentas" };
+    case "weekly_review":
+      return { href: "/movimientos", label: "Ver movimientos" };
+    case "monthly_review":
+      return { href: "/reportes", label: "Ver reportes" };
     default:
       return undefined;
   }
