@@ -21,6 +21,7 @@ function defaults(): Prefs {
       { kind: "monthly_report", channels: { email: true } },
     ],
     quietHours: { enabled: true, start: "23:00", end: "08:00" },
+    dailyReminder: { enabled: false, at: "21:00" },
     timezone: "America/Argentina/Buenos_Aires",
   };
 }
@@ -95,5 +96,37 @@ describe("NotificationPreferences (plan 10.1)", () => {
     const sw = await screen.findByRole("switch", { name: "Pagos entre ustedes: App" });
     await user.click(sw);
     await waitFor(() => expect(screen.getByRole("switch", { name: "Pagos entre ustedes: App" })).toBeChecked());
+  });
+
+  describe("daily reminder (plan 10.2)", () => {
+    it("is off by default and turns on at 21:00", async () => {
+      const puts = serve();
+      const user = userEvent.setup();
+      renderScreen();
+      const sw = await screen.findByRole("switch", { name: "Recordarme cargar lo que gasté" });
+      expect(sw).not.toBeChecked();
+      expect(screen.queryByLabelText("A qué hora")).not.toBeInTheDocument();
+      await user.click(sw);
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0].dailyReminder).toEqual({ enabled: true, at: "21:00" });
+      expect(puts[0].quietHours).toEqual({ enabled: true, start: "23:00", end: "08:00" });
+      expect(await screen.findByText("A las 21:00: «¿Hoy no gastaste nada?»")).toBeInTheDocument();
+      expect(screen.getByLabelText("A qué hora")).toBeInTheDocument();
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("warns when the time falls in the quiet hours", async () => {
+      serve({ ...defaults(), quietHours: { enabled: true, start: "20:00", end: "08:00" }, dailyReminder: { enabled: true, at: "21:00" } });
+      renderScreen();
+      expect(await screen.findByRole("status")).toHaveTextContent("cae en tu horario de silencio");
+    });
+
+    it("works with an API that does not send it yet", async () => {
+      const old = defaults();
+      delete old.dailyReminder;
+      serve(old);
+      renderScreen();
+      expect(await screen.findByRole("switch", { name: "Recordarme cargar lo que gasté" })).not.toBeChecked();
+    });
   });
 });

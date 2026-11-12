@@ -621,6 +621,8 @@ export type NotificationPreferences = {
   kinds: { kind: NotificationKind; channels: Partial<Record<NotificationChannel, boolean>> }[];
   /** Pushes wait until `end`; times are HH:MM in `timezone`. */
   quietHours: { enabled: boolean; start: string; end: string };
+  /** Optional push at `at` on days with nothing loaded (plan 10.2). Off by default. */
+  dailyReminder?: { enabled: boolean; at: string };
   timezone?: string;
 };
 

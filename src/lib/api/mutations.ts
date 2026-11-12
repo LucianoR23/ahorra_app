@@ -657,12 +657,15 @@ export function deleteMe() {
   });
 }
 
-/** Saves the notification preferences (plan 10.1); returns what was stored. */
+/**
+ * Saves the notification preferences (plan 10.1); returns what was stored.
+ * Without dailyReminder (plan 10.2) the API keeps the stored one.
+ */
 export function putNotificationPreferences(prefs: NotificationPreferences) {
   return apiMutate<NotificationPreferences>({
     method: "PUT",
     path: "/me/notification-preferences",
-    body: { kinds: prefs.kinds, quietHours: prefs.quietHours },
+    body: { kinds: prefs.kinds, quietHours: prefs.quietHours, dailyReminder: prefs.dailyReminder },
     householdScoped: false,
   });
 }
