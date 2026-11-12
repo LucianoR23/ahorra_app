@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 0.15d: Node 26 LTS, pnpm 12, minor/patch refresh
+- Node 26.13.1 (LTS since 2026-10-28; Node 24 is in maintenance): `.nvmrc` 26, `engines.node` `>=26`, Docker `node:26.13.1-alpine3.24`.
+- pnpm 12.18.0 in `packageManager`. Every `pnpm-workspace.yaml` setting is still recognized; the lockfile stays at version 9.0 and now records the pinned pnpm in a first YAML document.
+- Node 26 ships no corepack: the Dockerfile installs with npm the pnpm that `package.json` pins (npm 11 skips its install script, so pnpm runs through Node). README prerequisites updated.
+- Minor and patch updates: next 16.4.6, react and react-dom 19.3.1, @sentry/browser 11.12.0, lucide-react 1.72.0, @playwright/test 1.65.0, msw 3.0.5, @testing-library/user-event 14.6.9, @vitejs/plugin-react 6.3.0, eslint-config-next 16.4.6, `@types/node` 26 to match the runtime. Replaces Dependabot #32, #33 and #35.
+- CI Postgres `18.7-alpine3.24`.
+- The majors stay as their own items: TypeScript 7, ESLint 10 (ESLint 9 is now unsupported upstream), react-day-picker 10, jsdom 31.
+
 ### 3.2 (app part): voice entry
 - The mic of the design inside "Contalo como te salga". Tap to start, tap to stop (decided with the user); it stops by itself at 30 s and shows the time left. The note goes to `POST /expenses/parse-audio` as recorded (WebM in Chrome and Edge, MP4 in Safari, Ogg in Firefox, about 32 kbps) and is not kept anywhere.
 - What was heard is written into the box and the rows fill as for a typed sentence. A wrong word is fixed in the box and Enter reads it again as text, without sending the audio again (decided with the user).

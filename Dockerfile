@@ -1,19 +1,23 @@
 # syntax=docker/dockerfile:1.7
 
 # ── Stage 1: deps ─────────────────────────────────────────────────────────────
-FROM node:24.22.2-alpine3.24 AS deps
+FROM node:26.13.1-alpine3.24 AS deps
 WORKDIR /app
-RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Node 26 ships no corepack: install the pnpm that package.json pins. npm 11
+# skips its install script, so pnpm runs through Node (no native binary).
+RUN npm install -g --no-fund --no-audit "$(node -p 'require("./package.json").packageManager')"
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --config.strict-dep-builds=false
 
 # ── Stage 2: builder ──────────────────────────────────────────────────────────
-FROM node:24.22.2-alpine3.24 AS builder
+FROM node:26.13.1-alpine3.24 AS builder
 WORKDIR /app
-RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Node 26 ships no corepack: install the pnpm that package.json pins. npm 11
+# skips its install script, so pnpm runs through Node (no native binary).
+RUN npm install -g --no-fund --no-audit "$(node -p 'require("./package.json").packageManager')"
 
 # Build-time env vars (public — safe to bake in)
 ARG NEXT_PUBLIC_APP_URL
@@ -42,7 +46,7 @@ ENV NODE_ENV=production
 RUN pnpm build
 
 # ── Stage 3: runner ───────────────────────────────────────────────────────────
-FROM node:24.22.2-alpine3.24 AS runner
+FROM node:26.13.1-alpine3.24 AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

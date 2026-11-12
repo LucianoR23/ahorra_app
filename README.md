@@ -109,13 +109,13 @@ src/
 
 ## Local Development
 
-**Prerequisites:** Node 24 (see `.nvmrc`), pnpm via corepack (version pinned in `packageManager`), Go (see the API's `go.mod`), Docker
+**Prerequisites:** Node 26 (see `.nvmrc`), pnpm 12 or newer installed globally (it switches to the version pinned in `packageManager`; Node 26 ships no corepack), Go (see the API's `go.mod`), Docker
 
 ```bash
 # 1. Clone and install
 git clone <repo>
 cd valuo_app
-corepack pnpm install
+pnpm install
 
 # 2. Environment
 cp .env.example .env.local
@@ -128,16 +128,16 @@ go run ./cmd/api
 cd ../valuo_app
 
 # 4. Run frontend
-corepack pnpm dev   # http://localhost:3005
+pnpm dev   # http://localhost:3005
 ```
 
-**Before pushing:** `corepack pnpm check` runs what CI runs (lint, typecheck, unit tests, build, `pnpm audit --audit-level high` on production and on all dependencies). CI (`.github/workflows/ci.yml`) also scans the git history with gitleaks and, on PRs, runs the E2E. Dependabot opens weekly update PRs against `next`.
+**Before pushing:** `pnpm check` runs what CI runs (lint, typecheck, unit tests, build, `pnpm audit --audit-level high` on production and on all dependencies). CI (`.github/workflows/ci.yml`) also scans the git history with gitleaks and, on PRs, runs the E2E. Dependabot opens weekly update PRs against `next`.
 
 ### Tests
 
-- **Unit and component (Vitest):** `corepack pnpm test` (`test:watch`, `test:coverage`). The API is mocked with MSW (`src/test/msw.ts`); a request without a handler fails the test.
-- **E2E (Playwright):** `corepack pnpm test:e2e` starts the API (`go run ./cmd/api` in `../valuo_api`, migrating on start) and the app, against the database in `E2E_DATABASE_URL` (default `postgres://valuo:valuo_dev_pw@localhost:5433/valuo_e2e`, the dev compose role; the database must exist, be owned by that role and be disposable; never your dev data). Ports 8080 and 3005 must be free, or the running servers are reused. First time: `corepack pnpm exec playwright install chromium`.
-- **Screenshots:** `corepack pnpm test:screens` saves every screen in light/dark and mobile/desktop to `test-results/screens/` (same setup as E2E; its own run because the API allows 5 sign-ups per hour per IP). CI uploads them as the `screens` artifact.
+- **Unit and component (Vitest):** `pnpm test` (`test:watch`, `test:coverage`). The API is mocked with MSW (`src/test/msw.ts`); a request without a handler fails the test.
+- **E2E (Playwright):** `pnpm test:e2e` starts the API (`go run ./cmd/api` in `../valuo_api`, migrating on start) and the app, against the database in `E2E_DATABASE_URL` (default `postgres://valuo:valuo_dev_pw@localhost:5433/valuo_e2e`, the dev compose role; the database must exist, be owned by that role and be disposable; never your dev data). Ports 8080 and 3005 must be free, or the running servers are reused. First time: `pnpm exec playwright install chromium`.
+- **Screenshots:** `pnpm test:screens` saves every screen in light/dark and mobile/desktop to `test-results/screens/` (same setup as E2E; its own run because the API allows 5 sign-ups per hour per IP). CI uploads them as the `screens` artifact.
 - **Visual regression:** in CI (`VISUAL=1`) each shot is compared with its baseline in `e2e/__screenshots__` (dates, months, times and emails masked). A changed screen fails the PR and uploads `visual-diffs`. If the change is wanted, run the `ci` workflow by hand on the branch (`gh workflow run ci.yml --ref <branch>`), then `gh run download <run> -n visual-baselines -D e2e/__screenshots__` and commit. Baselines come only from CI's Linux runner; local runs just save the shots.
   - Flows covered (plan 0.21h): sign up → household → session kept on reload → log in again; an expense in installments shared with the household reaching the balances; a variable monthly bill confirmed from its draft.
   - In CI the API (branch `next`) is checked out with a read-only deploy key (secret `API_DEPLOY_KEY`).
