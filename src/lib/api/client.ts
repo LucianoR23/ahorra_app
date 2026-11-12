@@ -3,7 +3,8 @@ import { ApiError } from "./errors";
 // Set NEXT_PUBLIC_API_URL at build time. The fallback is the local API, never
 // a deployed one: a misconfigured build fails visibly instead of silently
 // talking to another environment.
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export type ApiRequest = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -12,7 +13,7 @@ export type ApiRequest = {
   token?: string | null;
   /** Forwarded as X-Household-ID. */
   householdId?: string | null;
-  /** Sent as JSON body. Skip for GET. */
+  /** Sent as JSON body, as is for FormData, or raw with its own type for a Blob (voice notes). Skip for GET. */
   body?: unknown;
   /** Append to query string. */
   query?: Record<string, string | number | boolean | undefined | null>;
@@ -32,7 +33,10 @@ export async function apiFetch<T = unknown>(req: ApiRequest): Promise<T> {
 }
 
 /** Like apiFetch, for endpoints that answer with a file (plan 11.1 exports). */
-export async function apiFetchBlob(req: ApiRequest, accept = "*/*"): Promise<Blob> {
+export async function apiFetchBlob(
+  req: ApiRequest,
+  accept = "*/*",
+): Promise<Blob> {
   const res = await send(req, accept);
   if (!res.ok) {
     const text = await res.text();
@@ -42,19 +46,29 @@ export async function apiFetchBlob(req: ApiRequest, accept = "*/*"): Promise<Blo
 }
 
 async function send(req: ApiRequest, accept: string): Promise<Response> {
-  const url = new URL(req.path.startsWith("http") ? req.path : `${API_URL}${req.path}`);
+  const url = new URL(
+    req.path.startsWith("http") ? req.path : `${API_URL}${req.path}`,
+  );
   if (req.query) {
     for (const [k, v] of Object.entries(req.query)) {
-      if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
+      if (v !== undefined && v !== null && v !== "")
+        url.searchParams.set(k, String(v));
     }
   }
 
   // FormData (uploads de adjuntos): NO seteamos Content-Type — el browser
   // pone `multipart/form-data` con su boundary — ni serializamos a JSON.
-  const isFormData = typeof FormData !== "undefined" && req.body instanceof FormData;
+  const isFormData =
+    typeof FormData !== "undefined" && req.body instanceof FormData;
+  // A Blob (voice note, plan 3.2) goes raw with its own type.
+  const isBlob = typeof Blob !== "undefined" && req.body instanceof Blob;
 
   const headers: Record<string, string> = { Accept: accept };
-  if (req.body !== undefined && !isFormData) headers["Content-Type"] = "application/json";
+  if (isBlob)
+    headers["Content-Type"] =
+      (req.body as Blob).type || "application/octet-stream";
+  else if (req.body !== undefined && !isFormData)
+    headers["Content-Type"] = "application/json";
   if (req.token) headers["Authorization"] = `Bearer ${req.token}`;
   if (req.householdId) headers["X-Household-ID"] = req.householdId;
 
@@ -66,8 +80,8 @@ async function send(req: ApiRequest, accept: string): Promise<Response> {
       body:
         req.body === undefined
           ? undefined
-          : isFormData
-            ? (req.body as FormData)
+          : isFormData || isBlob
+            ? (req.body as FormData | Blob)
             : JSON.stringify(req.body),
       signal: req.signal,
       cache: "no-store",

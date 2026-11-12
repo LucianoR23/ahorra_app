@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 3.2 (app part): voice entry
+- The mic of the design inside "Contalo como te salga". Tap to start, tap to stop (decided with the user); it stops by itself at 30 s and shows the time left. The note goes to `POST /expenses/parse-audio` as recorded (WebM in Chrome and Edge, MP4 in Safari, Ogg in Firefox, about 32 kbps) and is not kept anywhere.
+- What was heard is written into the box and the rows fill as for a typed sentence. A wrong word is fixed in the box and Enter reads it again as text, without sending the audio again (decided with the user).
+- Messages for a note that was not heard, a microphone that is not allowed or fails, and "Escuchando…" while it is read. Browsers that cannot record show no mic. Leaving the screen mid-recording drops it and frees the microphone.
+- `Permissions-Policy` now allows the microphone for the app's own pages (`microphone=(self)`); it was blocked for everyone. Camera, location, payment and USB stay blocked.
+- The API client sends a `Blob` body raw with its own type.
+
 ### 3.1 (app part): natural-language entry
 - Cargar gasto gets the "Contalo como te salga" box of the design on top. A sentence such as "zapatillas 120 mil en 6 cuotas con master" is read on Enter or when the box loses focus (once per sentence; Shift+Enter is a new line) through `POST /expenses/parse`, and fills the rows it mentions: amount, currency, date, installments, description, payment method, category and Compartido. Rows the sentence does not mention keep what the person typed (decided with the user). Nothing is saved until "Guardar gasto".
 - "Lo entendimos así. Tocá un dato para cambiarlo." when it read the amount; otherwise it says the amount is missing, that only expenses can be loaded (with an example), or that it could not read it, and the rows stay editable as always.

@@ -8,7 +8,7 @@ import { parsePrefill } from "@/lib/simulator";
 const AGREGAR_HELP: InfoHelpContent = {
   titulo: "Cargar gasto",
   acciones: [
-    "Contalo en una frase en «Contalo como te salga» (por ejemplo «café 2500 visa galicia 3 cuotas ayer») y apretá Enter: completa los datos de abajo para que los revises.",
+    "Contalo en una frase en «Contalo como te salga» (por ejemplo «café 2500 visa galicia 3 cuotas ayer») y apretá Enter, o tocá el micrófono y decilo (hasta 30 segundos): completa los datos de abajo para que los revises.",
     "Escribí el monto arriba y elegí la moneda (ARS, USD o EUR); si no es en pesos, ves cuánto es en pesos.",
     "Completá la descripción, la categoría (opcional), con qué pagaste y la fecha.",
     "Si el medio de pago admite cuotas, indicá cuántas; con tarjeta de crédito ves en qué resumen entra la primera.",

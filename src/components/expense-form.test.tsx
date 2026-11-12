@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ExpenseForm } from "./expense-form";
 import { API, requests, resetRequests, server, signIn } from "@/test/msw";
 import { hogarSpace, personalSpace, WithSWR } from "@/test/spaces";
@@ -406,6 +406,92 @@ describe("ExpenseForm natural-language entry (plan 3.1)", () => {
     await waitFor(() => expect(screen.getByLabelText("Categoría")).toHaveTextContent("Súper del hogar"));
     const suggest = requests().find((r) => r.path === "/categories/suggest");
     expect(suggest?.headers.get("x-household-id")).toBe(hogarSpace.id);
+  });
+
+  describe("voice (plan 3.2)", () => {
+    class FakeRecorder {
+      static isTypeSupported = (t: string) => t === "audio/mp4";
+      state = "inactive";
+      mimeType: string;
+      ondataavailable: ((e: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      constructor(_s: unknown, o?: { mimeType?: string }) {
+        this.mimeType = o?.mimeType ?? "";
+      }
+      start() {
+        this.state = "recording";
+      }
+      stop() {
+        this.state = "inactive";
+        this.ondataavailable?.({ data: new Blob(["voz"], { type: this.mimeType }) });
+        this.onstop?.();
+      }
+    }
+    function withMic(getUserMedia = vi.fn().mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] })) {
+      vi.stubGlobal("MediaRecorder", FakeRecorder);
+      Object.defineProperty(navigator, "mediaDevices", { value: { getUserMedia }, configurable: true });
+    }
+    function hears(answer: Record<string, unknown>) {
+      server.use(http.post(`${API}/expenses/parse-audio`, () => HttpResponse.json({ ...empty, transcript: null, ...answer })));
+    }
+    const audioPosts = () => requests().filter((r) => r.method === "POST" && r.path === "/expenses/parse-audio");
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      Reflect.deleteProperty(navigator, "mediaDevices");
+    });
+
+    it("has no mic where the browser cannot record", async () => {
+      api([personalSpace]);
+      render(<ExpenseForm />, { wrapper: WithSWR });
+      await box();
+      expect(screen.queryByRole("button", { name: "Dictar por audio" })).not.toBeInTheDocument();
+    });
+
+    it("tap, talk, tap: what was heard goes into the box and fills the rows", async () => {
+      api([personalSpace]);
+      parses({ amount: 3500, description: "Café" });
+      hears({ transcript: "café 2500 con mercado pago", amount: 2500, description: "Café", paymentMethodId: "pm-mp" });
+      withMic();
+      render(<ExpenseForm />, { wrapper: WithSWR });
+      await userEvent.click(await screen.findByRole("button", { name: "Dictar por audio" }));
+      expect(await screen.findByText("0:30")).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Terminar de grabar" }));
+
+      expect(await screen.findByText("Lo entendimos así. Tocá un dato para cambiarlo.")).toBeInTheDocument();
+      expect(screen.getByLabelText("Contalo como te salga")).toHaveValue("café 2500 con mercado pago");
+      expect(screen.getByLabelText("Monto")).toHaveValue("2500");
+      expect(screen.getByLabelText("Pago")).toHaveTextContent("Mercado Pago");
+      const post = audioPosts()[0];
+      expect(post.headers.get("content-type")).toBe("audio/mp4");
+      expect(post.headers.get("x-household-id")).toBe(personalSpace.id);
+
+      // Enter on the same words does not ask again; a correction does, as text.
+      await userEvent.type(screen.getByLabelText("Contalo como te salga"), "{Enter}");
+      expect(parsePosts()).toHaveLength(0);
+      const nl = screen.getByLabelText("Contalo como te salga");
+      await userEvent.clear(nl);
+      await userEvent.type(nl, "café 3500 con mercado pago{Enter}");
+      await waitFor(() => expect(screen.getByLabelText("Monto")).toHaveValue("3500"));
+      expect(parsePosts()).toHaveLength(1);
+    });
+
+    it("says when the audio was not heard, or the mic is not allowed", async () => {
+      api([personalSpace]);
+      hears({ transcript: null, understood: false });
+      withMic();
+      render(<ExpenseForm />, { wrapper: WithSWR });
+      await userEvent.click(await screen.findByRole("button", { name: "Dictar por audio" }));
+      await userEvent.click(await screen.findByRole("button", { name: "Terminar de grabar" }));
+      expect(await screen.findByText("No pudimos entender el audio. Probá de nuevo o escribilo.")).toBeInTheDocument();
+      expect(screen.getByLabelText("Contalo como te salga")).toHaveValue("");
+
+      withMic(vi.fn().mockRejectedValue(new DOMException("no", "NotAllowedError")));
+      await userEvent.click(screen.getByRole("button", { name: "Dictar por audio" }));
+      expect(
+        await screen.findByText("Sin permiso para el micrófono. Activalo en el navegador o escribilo."),
+      ).toBeInTheDocument();
+    });
   });
 });
 

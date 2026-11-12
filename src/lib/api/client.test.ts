@@ -10,7 +10,9 @@ describe("apiFetch", () => {
   });
 
   it("builds the URL, drops empty query values and sends the session headers", async () => {
-    server.use(http.get(`${API}/expenses`, () => HttpResponse.json({ items: [] })));
+    server.use(
+      http.get(`${API}/expenses`, () => HttpResponse.json({ items: [] })),
+    );
 
     const out = await apiFetch({
       path: "/expenses",
@@ -34,13 +36,22 @@ describe("apiFetch", () => {
     server.use(http.get(`${API}/me`, () => HttpResponse.json({})));
     const spy = vi.spyOn(globalThis, "fetch");
     await apiFetch({ path: "/me" });
-    expect(spy.mock.calls[0][1]).toMatchObject({ credentials: "include", cache: "no-store" });
+    expect(spy.mock.calls[0][1]).toMatchObject({
+      credentials: "include",
+      cache: "no-store",
+    });
   });
 
   it("sends JSON bodies and omits auth headers when there is no session", async () => {
-    server.use(http.post(`${API}/auth/login`, () => HttpResponse.json({ ok: true })));
+    server.use(
+      http.post(`${API}/auth/login`, () => HttpResponse.json({ ok: true })),
+    );
 
-    await apiFetch({ method: "POST", path: "/auth/login", body: { email: "a@b.c" } });
+    await apiFetch({
+      method: "POST",
+      path: "/auth/login",
+      body: { email: "a@b.c" },
+    });
 
     const r = lastRequest();
     expect(r.headers.get("content-type")).toBe("application/json");
@@ -62,13 +73,36 @@ describe("apiFetch", () => {
 
     await apiFetch({ method: "POST", path: "/support/tickets", body: form });
 
-    expect(lastRequest().headers.get("content-type")).toMatch(/^multipart\/form-data; boundary=/);
+    expect(lastRequest().headers.get("content-type")).toMatch(
+      /^multipart\/form-data; boundary=/,
+    );
     expect(received?.get("subject")).toBe("No anda");
+  });
+
+  it("sends a Blob raw with its own type (voice notes, plan 3.2)", async () => {
+    let received = "";
+    server.use(
+      http.post(`${API}/expenses/parse-audio`, async ({ request }) => {
+        received = await request.text();
+        return HttpResponse.json({});
+      }),
+    );
+    await apiFetch({
+      method: "POST",
+      path: "/expenses/parse-audio",
+      body: new Blob(["voz"], { type: "audio/webm;codecs=opus" }),
+    });
+    expect(lastRequest().headers.get("content-type")).toBe(
+      "audio/webm;codecs=opus",
+    );
+    expect(received).toBe("voz");
   });
 
   it("accepts absolute URLs as path", async () => {
     server.use(http.get("http://elsewhere.test/x", () => HttpResponse.json(1)));
-    await expect(apiFetch({ path: "http://elsewhere.test/x" })).resolves.toBe(1);
+    await expect(apiFetch({ path: "http://elsewhere.test/x" })).resolves.toBe(
+      1,
+    );
   });
 
   it("returns undefined on 204 and null on an empty or non-JSON body", async () => {
@@ -77,7 +111,9 @@ describe("apiFetch", () => {
       http.get(`${API}/b`, () => new HttpResponse("", { status: 200 })),
       http.get(`${API}/c`, () => new HttpResponse("<html>", { status: 200 })),
     );
-    await expect(apiFetch({ method: "DELETE", path: "/a" })).resolves.toBeUndefined();
+    await expect(
+      apiFetch({ method: "DELETE", path: "/a" }),
+    ).resolves.toBeUndefined();
     await expect(apiFetch({ path: "/b" })).resolves.toBeNull();
     await expect(apiFetch({ path: "/c" })).resolves.toBeNull();
   });
@@ -85,46 +121,94 @@ describe("apiFetch", () => {
   it("turns error bodies into ApiError with code, message and field", async () => {
     server.use(
       http.post(`${API}/expenses`, () =>
-        HttpResponse.json({ code: "validation", message: "debe ser > 0", field: "amount" }, { status: 422 }),
+        HttpResponse.json(
+          { code: "validation", message: "debe ser > 0", field: "amount" },
+          { status: 422 },
+        ),
       ),
     );
-    const err = await apiFetch({ method: "POST", path: "/expenses", body: {} }).catch((e) => e);
+    const err = await apiFetch({
+      method: "POST",
+      path: "/expenses",
+      body: {},
+    }).catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
-    expect(err).toMatchObject({ code: "validation", status: 422, field: "amount", message: "debe ser > 0" });
+    expect(err).toMatchObject({
+      code: "validation",
+      status: 422,
+      field: "amount",
+      message: "debe ser > 0",
+    });
   });
 
   it("falls back to the status when the error has no body", async () => {
-    server.use(http.get(`${API}/x`, () => new HttpResponse(null, { status: 404 })));
+    server.use(
+      http.get(`${API}/x`, () => new HttpResponse(null, { status: 404 })),
+    );
     const err = await apiFetch({ path: "/x" }).catch((e) => e);
-    expect(err).toMatchObject({ code: "not_found", status: 404, message: "No encontrado" });
+    expect(err).toMatchObject({
+      code: "not_found",
+      status: 404,
+      message: "No encontrado",
+    });
   });
 
   it("reads Retry-After in seconds or as an HTTP date on 429", async () => {
     server.use(
       http.post(`${API}/auth/login`, () =>
-        HttpResponse.json({}, { status: 429, headers: { "Retry-After": "30" } }),
+        HttpResponse.json(
+          {},
+          { status: 429, headers: { "Retry-After": "30" } },
+        ),
       ),
     );
-    const seconds = await apiFetch({ method: "POST", path: "/auth/login", body: {} }).catch((e) => e);
-    expect(seconds).toMatchObject({ code: "rate_limited", retryAfterSeconds: 30, message: "Demasiados intentos. Reintentá en 30s." });
+    const seconds = await apiFetch({
+      method: "POST",
+      path: "/auth/login",
+      body: {},
+    }).catch((e) => e);
+    expect(seconds).toMatchObject({
+      code: "rate_limited",
+      retryAfterSeconds: 30,
+      message: "Demasiados intentos. Reintentá en 30s.",
+    });
 
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-03-01T12:00:00Z"));
     server.use(
       http.post(`${API}/auth/login`, () =>
-        HttpResponse.json({}, { status: 429, headers: { "Retry-After": "Sun, 01 Mar 2026 12:01:00 GMT" } }),
+        HttpResponse.json(
+          {},
+          {
+            status: 429,
+            headers: { "Retry-After": "Sun, 01 Mar 2026 12:01:00 GMT" },
+          },
+        ),
       ),
     );
-    const date = (await apiFetch({ method: "POST", path: "/auth/login", body: {} }).catch((e) => e)) as ApiError;
+    const date = (await apiFetch({
+      method: "POST",
+      path: "/auth/login",
+      body: {},
+    }).catch((e) => e)) as ApiError;
     vi.useRealTimers();
     expect(date.retryAfterSeconds).toBe(60);
   });
 
   it("ignores a missing or unusable Retry-After", async () => {
-    server.use(http.get(`${API}/x`, () => HttpResponse.json({}, { status: 429, headers: { "Retry-After": "soon" } })));
+    server.use(
+      http.get(`${API}/x`, () =>
+        HttpResponse.json(
+          {},
+          { status: 429, headers: { "Retry-After": "soon" } },
+        ),
+      ),
+    );
     const err = (await apiFetch({ path: "/x" }).catch((e) => e)) as ApiError;
     expect(err.retryAfterSeconds).toBeUndefined();
-    expect(err.message).toBe("Demasiados intentos. Esperá unos minutos e intentá de nuevo.");
+    expect(err.message).toBe(
+      "Demasiados intentos. Esperá unos minutos e intentá de nuevo.",
+    );
   });
 
   it("fails a request that no handler mocks (nothing reaches the network)", async () => {
@@ -147,21 +231,36 @@ describe("ApiError.fromResponse", () => {
     [403, "forbidden", "No tenés permisos"],
     [404, "not_found", "No encontrado"],
     [409, "conflict", "Conflicto con el estado actual"],
-    [413, "file_too_large", "Alguno de los archivos supera el límite (5 MB imágenes, 20 MB video)."],
+    [
+      413,
+      "file_too_large",
+      "Alguno de los archivos supera el límite (5 MB imágenes, 20 MB video).",
+    ],
     [415, "unsupported_format", "Solo se aceptan PNG, JPG, WebP y MP4."],
     [422, "validation", "Datos inválidos"],
     [500, "internal", "Error interno"],
     [418, "internal", "Error interno"],
   ])("status %i → %s", (status, code, message) => {
-    expect(ApiError.fromResponse(status, null)).toMatchObject({ status, code, message });
+    expect(ApiError.fromResponse(status, null)).toMatchObject({
+      status,
+      code,
+      message,
+    });
   });
 
   it("prefers the body's code and message", () => {
-    expect(ApiError.fromResponse(400, { code: "conflict", message: "ya existe" })).toMatchObject({ code: "conflict", message: "ya existe" });
+    expect(
+      ApiError.fromResponse(400, { code: "conflict", message: "ya existe" }),
+    ).toMatchObject({ code: "conflict", message: "ya existe" });
   });
 
   it("network errors have their own default message", () => {
-    expect(ApiError.network()).toMatchObject({ code: "network", status: 0, message: "Sin conexión con el servidor", name: "ApiError" });
+    expect(ApiError.network()).toMatchObject({
+      code: "network",
+      status: 0,
+      message: "Sin conexión con el servidor",
+      name: "ApiError",
+    });
   });
 });
 
@@ -169,11 +268,23 @@ describe("apiFetchBlob", () => {
   it("returns the file and asks for the given type", async () => {
     server.use(
       http.get(`${API}/exports/expenses.xlsx`, () =>
-        HttpResponse.arrayBuffer(new Uint8Array([0x50, 0x4b]).buffer, { headers: { "Content-Type": "application/zip" } }),
+        HttpResponse.arrayBuffer(new Uint8Array([0x50, 0x4b]).buffer, {
+          headers: { "Content-Type": "application/zip" },
+        }),
       ),
     );
-    const blob = await apiFetchBlob({ path: "/exports/expenses.xlsx", token: "tk", householdId: "h1", query: { from: "2026-11-01" } }, "application/zip");
-    expect(new Uint8Array(await blob.arrayBuffer())).toEqual(new Uint8Array([0x50, 0x4b]));
+    const blob = await apiFetchBlob(
+      {
+        path: "/exports/expenses.xlsx",
+        token: "tk",
+        householdId: "h1",
+        query: { from: "2026-11-01" },
+      },
+      "application/zip",
+    );
+    expect(new Uint8Array(await blob.arrayBuffer())).toEqual(
+      new Uint8Array([0x50, 0x4b]),
+    );
     const r = lastRequest();
     expect(r.query).toEqual({ from: "2026-11-01" });
     expect(r.headers.get("accept")).toBe("application/zip");
@@ -184,10 +295,19 @@ describe("apiFetchBlob", () => {
   it("turns an error body into ApiError", async () => {
     server.use(
       http.get(`${API}/exports/expenses.xlsx`, () =>
-        HttpResponse.json({ code: "validation", message: "es obligatorio (YYYY-MM-DD)", field: "to" }, { status: 422 }),
+        HttpResponse.json(
+          {
+            code: "validation",
+            message: "es obligatorio (YYYY-MM-DD)",
+            field: "to",
+          },
+          { status: 422 },
+        ),
       ),
     );
-    const err = await apiFetchBlob({ path: "/exports/expenses.xlsx" }).catch((e) => e);
+    const err = await apiFetchBlob({ path: "/exports/expenses.xlsx" }).catch(
+      (e) => e,
+    );
     expect(err).toBeInstanceOf(ApiError);
     expect(err).toMatchObject({ code: "validation", status: 422, field: "to" });
   });

@@ -54,5 +54,7 @@ describe("security headers", () => {
     expect(h["X-Content-Type-Options"]).toBe("nosniff");
     expect(h["Referrer-Policy"]).toBe("strict-origin-when-cross-origin");
     expect(h["X-Frame-Options"]).toBe("DENY");
+    // Only our own pages may use the microphone (voice entry, plan 3.2).
+    expect(h["Permissions-Policy"]).toBe("camera=(), microphone=(self), geolocation=(), payment=(), usb=()");
   });
 });
