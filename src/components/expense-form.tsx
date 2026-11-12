@@ -316,7 +316,7 @@ export function ExpenseForm({
           rows={2}
           maxLength={300}
           value={nlText}
-          placeholder="café 2500 visa 3 cuotas ayer"
+          placeholder="Ej.: café 2500 visa 3 cuotas ayer"
           onChange={(e) => setNlText(e.target.value)}
           onBlur={() => void interpret()}
           onKeyDown={(e) => {
@@ -326,7 +326,7 @@ export function ExpenseForm({
             }
           }}
           aria-describedby={nlStatus ? "nl-status" : undefined}
-          className="min-h-0 rounded-2xl text-body"
+          className="min-h-0 resize-none rounded-2xl text-body"
         />
         {nlStatus && (
           <p id="nl-status" role="status" className="flex items-center gap-1.5 text-caption text-ink-muted">
