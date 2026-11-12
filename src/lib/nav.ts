@@ -15,6 +15,7 @@ import {
   ScrollText,
   Settings,
   ShoppingBag,
+  Sparkles,
   Shield,
   ShieldCheck,
   Tag,
@@ -99,6 +100,7 @@ export const ADMIN_NAV: NavItem[] = [
   { id: "admin-audit", label: "Auditoría", href: "/admin/auditoria", icon: ScrollText },
   { id: "admin-households", label: "Hogares", href: "/admin/hogares", icon: House },
   { id: "admin-waitlist", label: "Lista de espera", href: "/admin/lista-de-espera", icon: ListChecks },
+  { id: "admin-ai", label: "IA", href: "/admin/ia", icon: Sparkles },
   { id: "admin-tools", label: "Herramientas", href: "/admin/herramientas", icon: Wrench },
 ];
 

@@ -557,6 +557,16 @@ export type AdminAuditEvent = {
   createdAt: string;
 };
 
+/** AI spend (plan 8.1). Amounts are millionths of a dollar. */
+export type AdminAI = {
+  enabled: boolean;
+  limits: { dailyBudgetMicroUsd: number; userDailyMicroUsd: number; perMinute: number; perDay: number };
+  today: { costMicroUsd: number; calls: number; errors: number; blocked: number; avgLatencyMs: number };
+  month: { costMicroUsd: number; calls: number };
+  byTask: { task: string; calls: number; errors: number; blocked: number; costMicroUsd: number }[];
+  topUsers: { userId: string; email: string; calls: number; blocked: number; costMicroUsd: number }[];
+};
+
 export type AdminAuditGroup = "" | "sessions" | "failed" | "account" | "household" | "admin";
 
 function useIsSuperadmin() {
@@ -568,6 +578,11 @@ function useIsSuperadmin() {
 export function useAdminOverview() {
   const ok = useIsSuperadmin();
   return useSWR<AdminOverview>(ok ? (["/admin/overview", { householdScoped: false }] as const) : null);
+}
+
+export function useAdminAI() {
+  const ok = useIsSuperadmin();
+  return useSWR<AdminAI>(ok ? (["/admin/ai", { householdScoped: false }] as const) : null);
 }
 
 export function useAdminUser(id: string) {
