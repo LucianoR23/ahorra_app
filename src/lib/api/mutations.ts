@@ -112,6 +112,32 @@ export function suggestCategory(description: string, householdId?: string) {
   return apiMutate<CategorySuggestion>({ method: "POST", path: "/categories/suggest", body: { description }, householdId });
 }
 
+/** What a sentence said (plan 3.1); nulls for what it did not. */
+export type ExpenseParse = {
+  understood: boolean;
+  notFinance: boolean;
+  source: "rules" | "ai";
+  amount: number | null;
+  currency: "ARS" | "USD" | "EUR" | null;
+  spentAt: string | null;
+  installments: number | null;
+  description: string | null;
+  paymentMethodId: string | null;
+  /** Several methods fit ("visa" with two Visa cards): the person picks. */
+  paymentCandidates: string[];
+  shared: boolean;
+  categoryId: string | null;
+  categorySource: "history" | "ai" | null;
+};
+
+/**
+ * Reads "café 2500 visa 3 cuotas ayer" into expense fields (plan 3.1).
+ * Saves nothing: the form shows them to confirm.
+ */
+export function parseExpense(text: string, householdId?: string) {
+  return apiMutate<ExpenseParse>({ method: "POST", path: "/expenses/parse", body: { text }, householdId });
+}
+
 export type PurchaseSimulationInput = {
   paymentMethodId: string;
   categoryId?: string | null;

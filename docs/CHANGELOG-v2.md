@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 3.1 (app part): natural-language entry
+- Cargar gasto gets the "Contalo como te salga" box of the design on top. A sentence such as "zapatillas 120 mil en 6 cuotas con master" is read on Enter or when the box loses focus (once per sentence; Shift+Enter is a new line) through `POST /expenses/parse`, and fills the rows it mentions: amount, currency, date, installments, description, payment method, category and Compartido. Rows the sentence does not mention keep what the person typed (decided with the user). Nothing is saved until "Guardar gasto".
+- "Lo entendimos así. Tocá un dato para cambiarlo." when it read the amount; otherwise it says the amount is missing, that only expenses can be loaded (with an example), or that it could not read it, and the rows stay editable as always.
+- A word that fits several payment methods ("visa" with Visa Galicia and Visa Santander) leaves Pago empty with "Tenés 2 Visa: elegí cuál", and those methods come first in the list (decided with the user: never guess the card).
+- "compartido" or "hogar" in the sentence turns Compartido on when there is a hogar, and the category is asked again in the hogar.
+- The help of Cargar gasto explains the box. The microphone of the design arrives with voice entry (3.2).
+
 ### 8.4 (app part): auto-categorization
 - Cargar gasto fills the category by itself when the description loses focus, with `POST /categories/suggest` in the space the expense goes to. A quiet note under the row says where it came from: "Como la última vez" (history) or "Sugerida automáticamente" (AI). Asked once per description and space.
 - The person always wins: once they pick a category, even "Sin categoría", nothing is suggested again. A category that came filled in (Cargar compra from the simulator) is never replaced. Changing Compartido asks again in the new space.

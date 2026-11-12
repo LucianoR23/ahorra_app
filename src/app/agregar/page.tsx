@@ -8,6 +8,7 @@ import { parsePrefill } from "@/lib/simulator";
 const AGREGAR_HELP: InfoHelpContent = {
   titulo: "Cargar gasto",
   acciones: [
+    "Contalo en una frase en «Contalo como te salga» (por ejemplo «café 2500 visa galicia 3 cuotas ayer») y apretá Enter: completa los datos de abajo para que los revises.",
     "Escribí el monto arriba y elegí la moneda (ARS, USD o EUR); si no es en pesos, ves cuánto es en pesos.",
     "Completá la descripción, la categoría (opcional), con qué pagaste y la fecha.",
     "Si el medio de pago admite cuotas, indicá cuántas; con tarjeta de crédito ves en qué resumen entra la primera.",
@@ -15,6 +16,7 @@ const AGREGAR_HELP: InfoHelpContent = {
     "Guardalo con «Guardar gasto»: te lleva al detalle del movimiento.",
   ],
   consideraciones: [
+    "La frase solo cambia los datos que menciona. Si nombrás una tarjeta que coincide con varias (por ejemplo «visa» y tenés dos Visa), Pago queda vacío para que elijas cuál.",
     "El monto (mayor a 0), la descripción y el medio de pago son obligatorios.",
     "Solo aparecen las categorías y los medios de pago activos que ya tengas creados: si falta alguno, agregalo en Categorías o en Tarjetas.",
     "Las cuotas aparecen solo si el medio de pago las admite.",
