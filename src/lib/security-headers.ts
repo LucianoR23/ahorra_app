@@ -58,7 +58,8 @@ export function securityHeaders(opts: SecurityHeadersOptions): { key: string; va
     { key: "X-Frame-Options", value: "DENY" },
     // same-origin-allow-popups: Google Sign-In may open a popup.
     { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
-    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+    // microphone=(self): voice entry (plan 3.2), our own pages only.
+    { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=()" },
   ];
   if (!opts.dev) {
     headers.push({ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" });

@@ -33,7 +33,6 @@ import type {
 } from "./schemas";
 import { userSchema } from "./schemas";
 
-
 type MutateOpts = {
   method: NonNullable<ApiRequest["method"]>;
   path: string;
@@ -48,7 +47,9 @@ type MutateOpts = {
 /** Centralized mutation runner with 401-refresh-retry. */
 export async function apiMutate<T = unknown>(opts: MutateOpts): Promise<T> {
   const householdScoped = opts.householdScoped ?? true;
-  const householdId = opts.householdId ?? (householdScoped ? useHouseholdStore.getState().currentId : null);
+  const householdId =
+    opts.householdId ??
+    (householdScoped ? useHouseholdStore.getState().currentId : null);
   return withRefresh((token) =>
     apiFetch<T>({
       method: opts.method,
@@ -62,13 +63,24 @@ export async function apiMutate<T = unknown>(opts: MutateOpts): Promise<T> {
 }
 
 /** Downloads a file from the current space (same 401-refresh-retry). */
-export async function apiDownload(opts: { path: string; query?: ApiRequest["query"]; accept?: string }): Promise<Blob> {
+export async function apiDownload(opts: {
+  path: string;
+  query?: ApiRequest["query"];
+  accept?: string;
+}): Promise<Blob> {
   const householdId = useHouseholdStore.getState().currentId;
-  return withRefresh((token) => apiFetchBlob({ path: opts.path, query: opts.query, token, householdId }, opts.accept));
+  return withRefresh((token) =>
+    apiFetchBlob(
+      { path: opts.path, query: opts.query, token, householdId },
+      opts.accept,
+    ),
+  );
 }
 
 /** Runs a request with the access token; on 401 refreshes it once and retries. */
-async function withRefresh<T>(run: (token: string | null) => Promise<T>): Promise<T> {
+async function withRefresh<T>(
+  run: (token: string | null) => Promise<T>,
+): Promise<T> {
   try {
     return await run(useAuthStore.getState().accessToken);
   } catch (e) {
@@ -99,17 +111,30 @@ export type ExpenseCreateInput = {
 
 /** Creates the expense in `householdId` ("Mi plata" or the hogar), or in the current space. */
 export function createExpense(input: ExpenseCreateInput, householdId?: string) {
-  return apiMutate<ExpenseDetail>({ method: "POST", path: "/expenses", body: input, householdId });
+  return apiMutate<ExpenseDetail>({
+    method: "POST",
+    path: "/expenses",
+    body: input,
+    householdId,
+  });
 }
 
-export type CategorySuggestion = { categoryId: string | null; source: "history" | "ai" | null };
+export type CategorySuggestion = {
+  categoryId: string | null;
+  source: "history" | "ai" | null;
+};
 
 /**
  * A category for a description (plan 8.4): from the space's history, or
  * the AI when history has nothing. Nulls when nothing is confident.
  */
 export function suggestCategory(description: string, householdId?: string) {
-  return apiMutate<CategorySuggestion>({ method: "POST", path: "/categories/suggest", body: { description }, householdId });
+  return apiMutate<CategorySuggestion>({
+    method: "POST",
+    path: "/categories/suggest",
+    body: { description },
+    householdId,
+  });
 }
 
 /** What a sentence said (plan 3.1); nulls for what it did not. */
@@ -128,6 +153,8 @@ export type ExpenseParse = {
   shared: boolean;
   categoryId: string | null;
   categorySource: "history" | "ai" | null;
+  /** What a voice note said (plan 3.2); null for typed text or when it was not heard. */
+  transcript?: string | null;
 };
 
 /**
@@ -135,7 +162,25 @@ export type ExpenseParse = {
  * Saves nothing: the form shows them to confirm.
  */
 export function parseExpense(text: string, householdId?: string) {
-  return apiMutate<ExpenseParse>({ method: "POST", path: "/expenses/parse", body: { text }, householdId });
+  return apiMutate<ExpenseParse>({
+    method: "POST",
+    path: "/expenses/parse",
+    body: { text },
+    householdId,
+  });
+}
+
+/**
+ * Reads a voice note of up to 30 s (plan 3.2): the API hears it and returns
+ * the same fields plus the transcript. Saves nothing; the audio is not kept.
+ */
+export function parseExpenseAudio(audio: Blob, householdId?: string) {
+  return apiMutate<ExpenseParse>({
+    method: "POST",
+    path: "/expenses/parse-audio",
+    body: audio,
+    householdId,
+  });
 }
 
 export type PurchaseSimulationInput = {
@@ -148,8 +193,16 @@ export type PurchaseSimulationInput = {
 };
 
 /** "¿Me lo puedo comprar?" (plan 4.8): a POST that saves nothing. */
-export function simulatePurchase(input: PurchaseSimulationInput, householdId?: string) {
-  return apiMutate<PurchaseSimulation>({ method: "POST", path: "/simulations/purchase", body: input, householdId });
+export function simulatePurchase(
+  input: PurchaseSimulationInput,
+  householdId?: string,
+) {
+  return apiMutate<PurchaseSimulation>({
+    method: "POST",
+    path: "/simulations/purchase",
+    body: input,
+    householdId,
+  });
 }
 
 export type ExpensePatchInput = {
@@ -159,7 +212,11 @@ export type ExpensePatchInput = {
 };
 
 export function patchExpense(id: string, input: ExpensePatchInput) {
-  return apiMutate<Expense>({ method: "PATCH", path: `/expenses/${id}`, body: input });
+  return apiMutate<Expense>({
+    method: "PATCH",
+    path: `/expenses/${id}`,
+    body: input,
+  });
 }
 
 export function deleteExpense(id: string) {
@@ -171,7 +228,11 @@ export function deleteExpense(id: string) {
  * where it splits by its rules, or back to Mi plata. The id stays the same.
  */
 export function moveExpense(id: string, householdId: string) {
-  return apiMutate<ExpenseDetail>({ method: "POST", path: `/expenses/${id}/move`, body: { householdId } });
+  return apiMutate<ExpenseDetail>({
+    method: "POST",
+    path: `/expenses/${id}/move`,
+    body: { householdId },
+  });
 }
 
 // confirmDraftExpense: el usuario carga el monto real de una factura variable
@@ -198,7 +259,11 @@ export type InstallmentPatchInput = {
   isPaid?: boolean;
 };
 
-export function patchInstallment(expenseId: string, n: number, input: InstallmentPatchInput) {
+export function patchInstallment(
+  expenseId: string,
+  n: number,
+  input: InstallmentPatchInput,
+) {
   const body: Record<string, unknown> = {};
   if ("billingDate" in input) body.billingDate = input.billingDate;
   if ("dueDate" in input) body.dueDate = input.dueDate;
@@ -235,7 +300,11 @@ export type IncomePatchInput = {
 };
 
 export function patchIncome(id: string, input: IncomePatchInput) {
-  return apiMutate<Income>({ method: "PATCH", path: `/incomes/${id}`, body: input });
+  return apiMutate<Income>({
+    method: "PATCH",
+    path: `/incomes/${id}`,
+    body: input,
+  });
 }
 
 export function deleteIncome(id: string) {
@@ -244,7 +313,11 @@ export function deleteIncome(id: string) {
 
 /** Takes the income to another space of whoever received it (plan 9.1). */
 export function moveIncome(id: string, householdId: string) {
-  return apiMutate<Income>({ method: "POST", path: `/incomes/${id}/move`, body: { householdId } });
+  return apiMutate<Income>({
+    method: "POST",
+    path: `/incomes/${id}/move`,
+    body: { householdId },
+  });
 }
 
 // --- Recurring expenses ---------------------------------------------------
@@ -268,10 +341,17 @@ export type RecurringExpenseInput = {
 };
 
 export function createRecurringExpense(input: RecurringExpenseInput) {
-  return apiMutate<RecurringExpense>({ method: "POST", path: "/recurring-expenses", body: input });
+  return apiMutate<RecurringExpense>({
+    method: "POST",
+    path: "/recurring-expenses",
+    body: input,
+  });
 }
 
-export function patchRecurringExpense(id: string, input: Partial<RecurringExpenseInput>) {
+export function patchRecurringExpense(
+  id: string,
+  input: Partial<RecurringExpenseInput>,
+) {
   return apiMutate<RecurringExpense>({
     method: "PATCH",
     path: `/recurring-expenses/${id}`,
@@ -281,7 +361,11 @@ export function patchRecurringExpense(id: string, input: Partial<RecurringExpens
 
 /** "No es fijo": the suggestion stops showing for the whole space (plan 7.3). */
 export function dismissRecurringSuggestion(key: string) {
-  return apiMutate<void>({ method: "POST", path: "/recurring-expenses/suggestions/dismiss", body: { key } });
+  return apiMutate<void>({
+    method: "POST",
+    path: "/recurring-expenses/suggestions/dismiss",
+    body: { key },
+  });
 }
 
 export function toggleRecurringExpense(id: string, isActive: boolean) {
@@ -293,7 +377,10 @@ export function toggleRecurringExpense(id: string, isActive: boolean) {
 }
 
 export function deleteRecurringExpense(id: string) {
-  return apiMutate<void>({ method: "DELETE", path: `/recurring-expenses/${id}` });
+  return apiMutate<void>({
+    method: "DELETE",
+    path: `/recurring-expenses/${id}`,
+  });
 }
 
 // --- Recurring incomes ----------------------------------------------------
@@ -314,10 +401,17 @@ export type RecurringIncomeInput = {
 };
 
 export function createRecurringIncome(input: RecurringIncomeInput) {
-  return apiMutate<RecurringIncome>({ method: "POST", path: "/recurring-incomes", body: input });
+  return apiMutate<RecurringIncome>({
+    method: "POST",
+    path: "/recurring-incomes",
+    body: input,
+  });
 }
 
-export function patchRecurringIncome(id: string, input: Partial<RecurringIncomeInput>) {
+export function patchRecurringIncome(
+  id: string,
+  input: Partial<RecurringIncomeInput>,
+) {
   return apiMutate<RecurringIncome>({
     method: "PATCH",
     path: `/recurring-incomes/${id}`,
@@ -334,7 +428,10 @@ export function toggleRecurringIncome(id: string, isActive: boolean) {
 }
 
 export function deleteRecurringIncome(id: string) {
-  return apiMutate<void>({ method: "DELETE", path: `/recurring-incomes/${id}` });
+  return apiMutate<void>({
+    method: "DELETE",
+    path: `/recurring-incomes/${id}`,
+  });
 }
 
 // --- Settlements ----------------------------------------------------------
@@ -348,7 +445,11 @@ export type SettlementCreateInput = {
 };
 
 export function createSettlement(input: SettlementCreateInput) {
-  return apiMutate<Settlement>({ method: "POST", path: "/settlements", body: input });
+  return apiMutate<Settlement>({
+    method: "POST",
+    path: "/settlements",
+    body: input,
+  });
 }
 
 export function deleteSettlement(id: string) {
@@ -357,7 +458,10 @@ export function deleteSettlement(id: string) {
 
 // --- Split rules ----------------------------------------------------------
 
-export function patchSplitRules(items: { userId: string; weight: number }[], householdId?: string) {
+export function patchSplitRules(
+  items: { userId: string; weight: number }[],
+  householdId?: string,
+) {
   return apiMutate<SplitRulesResponse>({
     method: "PATCH",
     path: "/split",
@@ -390,7 +494,11 @@ export type GoalPatchInput = {
 };
 
 export function patchGoal(id: string, input: GoalPatchInput) {
-  return apiMutate<Goal>({ method: "PATCH", path: `/goals/${id}`, body: input });
+  return apiMutate<Goal>({
+    method: "PATCH",
+    path: `/goals/${id}`,
+    body: input,
+  });
 }
 
 export function toggleGoal(id: string, isActive: boolean) {
@@ -408,19 +516,37 @@ export function deleteGoal(id: string) {
 // --- Banks ----------------------------------------------------------------
 
 export function createBank(name: string) {
-  return apiMutate<Bank>({ method: "POST", path: "/banks", body: { name }, householdScoped: false });
+  return apiMutate<Bank>({
+    method: "POST",
+    path: "/banks",
+    body: { name },
+    householdScoped: false,
+  });
 }
 
 export function patchBank(id: string, name: string) {
-  return apiMutate<Bank>({ method: "PATCH", path: `/banks/${id}`, body: { name }, householdScoped: false });
+  return apiMutate<Bank>({
+    method: "PATCH",
+    path: `/banks/${id}`,
+    body: { name },
+    householdScoped: false,
+  });
 }
 
 export function activateBank(id: string) {
-  return apiMutate<Bank>({ method: "POST", path: `/banks/${id}/activate`, householdScoped: false });
+  return apiMutate<Bank>({
+    method: "POST",
+    path: `/banks/${id}/activate`,
+    householdScoped: false,
+  });
 }
 
 export function deactivateBank(id: string) {
-  return apiMutate<Bank>({ method: "POST", path: `/banks/${id}/deactivate`, householdScoped: false });
+  return apiMutate<Bank>({
+    method: "POST",
+    path: `/banks/${id}/deactivate`,
+    householdScoped: false,
+  });
 }
 
 // --- Payment methods ------------------------------------------------------
@@ -445,7 +571,12 @@ export type PaymentMethodCreateInput = {
 };
 
 export function createPaymentMethod(input: PaymentMethodCreateInput) {
-  return apiMutate<PaymentMethod>({ method: "POST", path: "/payment-methods", body: input, householdScoped: false });
+  return apiMutate<PaymentMethod>({
+    method: "POST",
+    path: "/payment-methods",
+    body: input,
+    householdScoped: false,
+  });
 }
 
 export type PaymentMethodPatchInput = {
@@ -455,15 +586,28 @@ export type PaymentMethodPatchInput = {
 };
 
 export function patchPaymentMethod(id: string, input: PaymentMethodPatchInput) {
-  return apiMutate<PaymentMethod>({ method: "PATCH", path: `/payment-methods/${id}`, body: input, householdScoped: false });
+  return apiMutate<PaymentMethod>({
+    method: "PATCH",
+    path: `/payment-methods/${id}`,
+    body: input,
+    householdScoped: false,
+  });
 }
 
 export function activatePaymentMethod(id: string) {
-  return apiMutate<PaymentMethod>({ method: "POST", path: `/payment-methods/${id}/activate`, householdScoped: false });
+  return apiMutate<PaymentMethod>({
+    method: "POST",
+    path: `/payment-methods/${id}/activate`,
+    householdScoped: false,
+  });
 }
 
 export function deactivatePaymentMethod(id: string) {
-  return apiMutate<PaymentMethod>({ method: "POST", path: `/payment-methods/${id}/deactivate`, householdScoped: false });
+  return apiMutate<PaymentMethod>({
+    method: "POST",
+    path: `/payment-methods/${id}/deactivate`,
+    householdScoped: false,
+  });
 }
 
 // --- Credit cards ---------------------------------------------------------
@@ -477,7 +621,10 @@ export type CreditCardPatchInput = {
   network?: CardNetwork | null;
 };
 
-export function patchCreditCard(paymentMethodId: string, input: CreditCardPatchInput) {
+export function patchCreditCard(
+  paymentMethodId: string,
+  input: CreditCardPatchInput,
+) {
   return apiMutate<CreditCard>({
     method: "PATCH",
     path: `/payment-methods/${paymentMethodId}/credit-card`,
@@ -516,31 +663,85 @@ function statementPath(paymentMethodId: string, ym: string) {
 }
 
 /** Amount omitted pays the total; currency omitted means pesos (or the only one). */
-export function payCardStatement(paymentMethodId: string, ym: string, input: { amount?: number; currency?: Currency } = {}) {
-  return apiMutate<CardStatementDetail>({ method: "POST", path: `${statementPath(paymentMethodId, ym)}/pay`, body: input, householdScoped: false });
+export function payCardStatement(
+  paymentMethodId: string,
+  ym: string,
+  input: { amount?: number; currency?: Currency } = {},
+) {
+  return apiMutate<CardStatementDetail>({
+    method: "POST",
+    path: `${statementPath(paymentMethodId, ym)}/pay`,
+    body: input,
+    householdScoped: false,
+  });
 }
 
 export function unpayCardStatement(paymentMethodId: string, ym: string) {
-  return apiMutate<CardStatementDetail>({ method: "POST", path: `${statementPath(paymentMethodId, ym)}/unpay`, householdScoped: false });
+  return apiMutate<CardStatementDetail>({
+    method: "POST",
+    path: `${statementPath(paymentMethodId, ym)}/unpay`,
+    householdScoped: false,
+  });
 }
 
 /** null clears it. In pesos. */
-export function setStatementMinimum(paymentMethodId: string, ym: string, minimumPayment: number | null) {
-  return apiMutate<CardStatementDetail>({ method: "PATCH", path: statementPath(paymentMethodId, ym), body: { minimumPayment }, householdScoped: false });
+export function setStatementMinimum(
+  paymentMethodId: string,
+  ym: string,
+  minimumPayment: number | null,
+) {
+  return apiMutate<CardStatementDetail>({
+    method: "PATCH",
+    path: statementPath(paymentMethodId, ym),
+    body: { minimumPayment },
+    householdScoped: false,
+  });
 }
 
-export type AdjustmentInput = { kind: AdjustmentKind; description: string; amount: number; currency: Currency };
+export type AdjustmentInput = {
+  kind: AdjustmentKind;
+  description: string;
+  amount: number;
+  currency: Currency;
+};
 
-export function createStatementAdjustment(paymentMethodId: string, ym: string, input: AdjustmentInput) {
-  return apiMutate<CardStatementDetail>({ method: "POST", path: `${statementPath(paymentMethodId, ym)}/adjustments`, body: input, householdScoped: false });
+export function createStatementAdjustment(
+  paymentMethodId: string,
+  ym: string,
+  input: AdjustmentInput,
+) {
+  return apiMutate<CardStatementDetail>({
+    method: "POST",
+    path: `${statementPath(paymentMethodId, ym)}/adjustments`,
+    body: input,
+    householdScoped: false,
+  });
 }
 
-export function updateStatementAdjustment(paymentMethodId: string, ym: string, id: string, input: AdjustmentInput) {
-  return apiMutate<CardStatementDetail>({ method: "PATCH", path: `${statementPath(paymentMethodId, ym)}/adjustments/${id}`, body: input, householdScoped: false });
+export function updateStatementAdjustment(
+  paymentMethodId: string,
+  ym: string,
+  id: string,
+  input: AdjustmentInput,
+) {
+  return apiMutate<CardStatementDetail>({
+    method: "PATCH",
+    path: `${statementPath(paymentMethodId, ym)}/adjustments/${id}`,
+    body: input,
+    householdScoped: false,
+  });
 }
 
-export function deleteStatementAdjustment(paymentMethodId: string, ym: string, id: string) {
-  return apiMutate<CardStatementDetail>({ method: "DELETE", path: `${statementPath(paymentMethodId, ym)}/adjustments/${id}`, householdScoped: false });
+export function deleteStatementAdjustment(
+  paymentMethodId: string,
+  ym: string,
+  id: string,
+) {
+  return apiMutate<CardStatementDetail>({
+    method: "DELETE",
+    path: `${statementPath(paymentMethodId, ym)}/adjustments/${id}`,
+    householdScoped: false,
+  });
 }
 
 // --- Households -----------------------------------------------------------
@@ -554,7 +755,10 @@ export function createHousehold(input: { name: string }) {
   });
 }
 
-export function patchHousehold(id: string, input: { name?: string; fxSource?: string }) {
+export function patchHousehold(
+  id: string,
+  input: { name?: string; fxSource?: string },
+) {
   return apiMutate<Household>({
     method: "PATCH",
     path: `/households/${id}`,
@@ -564,7 +768,11 @@ export function patchHousehold(id: string, input: { name?: string; fxSource?: st
 }
 
 export function deleteHousehold(id: string) {
-  return apiMutate<void>({ method: "DELETE", path: `/households/${id}`, householdScoped: false });
+  return apiMutate<void>({
+    method: "DELETE",
+    path: `/households/${id}`,
+    householdScoped: false,
+  });
 }
 
 export function removeHouseholdMember(householdId: string, userId: string) {
@@ -579,7 +787,10 @@ export function removeHouseholdMember(householdId: string, userId: string) {
  * Transfiere la propiedad del hogar al `userId` indicado. El caller debe ser owner.
  * Endpoint real: PATCH /households/{id}/members/{userId}/role con { role: "owner" }.
  */
-export function transferHouseholdOwnership(householdId: string, userId: string) {
+export function transferHouseholdOwnership(
+  householdId: string,
+  userId: string,
+) {
   // The API answers 204 with no body.
   return apiMutate<void>({
     method: "PATCH",
@@ -649,7 +860,12 @@ export async function getInvitePreview(token: string): Promise<InvitePreview> {
 }
 
 export function acceptInvite(token: string) {
-  return apiMutate<{ householdId: string; userId: string; role: string; joinedAt: string }>({
+  return apiMutate<{
+    householdId: string;
+    userId: string;
+    role: string;
+    joinedAt: string;
+  }>({
     method: "POST",
     path: `/invites/accept`,
     body: { token },
@@ -701,7 +917,11 @@ export function putNotificationPreferences(prefs: NotificationPreferences) {
   return apiMutate<NotificationPreferences>({
     method: "PUT",
     path: "/me/notification-preferences",
-    body: { kinds: prefs.kinds, quietHours: prefs.quietHours, dailyReminder: prefs.dailyReminder },
+    body: {
+      kinds: prefs.kinds,
+      quietHours: prefs.quietHours,
+      dailyReminder: prefs.dailyReminder,
+    },
     householdScoped: false,
   });
 }
@@ -758,12 +978,19 @@ export function markAllInsightsRead(userId?: string | null) {
 
 /** Ends every session of the account, on every device (plan 0.5). */
 export function logoutAll() {
-  return apiMutate<void>({ method: "POST", path: "/auth/logout-all", householdScoped: false });
+  return apiMutate<void>({
+    method: "POST",
+    path: "/auth/logout-all",
+    householdScoped: false,
+  });
 }
 
 /** A single-use ticket to open the insights stream (valid 60 s, plan 0.9). */
 export function requestStreamTicket() {
-  return apiMutate<{ ticket: string; expiresIn: number }>({ method: "POST", path: "/insights/stream-ticket" });
+  return apiMutate<{ ticket: string; expiresIn: number }>({
+    method: "POST",
+    path: "/insights/stream-ticket",
+  });
 }
 
 export function deleteInsight(id: string) {
@@ -798,7 +1025,12 @@ export function adminExportWaitlist(): Promise<Blob> {
 
 /** Removes an address from the waitlist on request (Ley 25.326). */
 export function adminDeleteWaitlistEmail(email: string) {
-  return apiMutate<void>({ method: "DELETE", path: "/admin/waitlist", query: { email }, householdScoped: false });
+  return apiMutate<void>({
+    method: "DELETE",
+    path: "/admin/waitlist",
+    query: { email },
+    householdScoped: false,
+  });
 }
 
 // --- Categories -----------------------------------------------------------
@@ -812,11 +1044,19 @@ export type CategoryInput = {
 };
 
 export function createCategory(input: CategoryInput) {
-  return apiMutate<Category>({ method: "POST", path: "/categories", body: input });
+  return apiMutate<Category>({
+    method: "POST",
+    path: "/categories",
+    body: input,
+  });
 }
 
 export function patchCategory(id: string, input: CategoryInput) {
-  return apiMutate<Category>({ method: "PATCH", path: `/categories/${id}`, body: input });
+  return apiMutate<Category>({
+    method: "PATCH",
+    path: `/categories/${id}`,
+    body: input,
+  });
 }
 
 export function deleteCategory(id: string) {
@@ -825,7 +1065,8 @@ export function deleteCategory(id: string) {
 
 // --- Exports (plan 11.1) --------------------------------------------------
 
-export const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+export const XLSX_TYPE =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 export type ExportRange = { from: string; to: string };
 
@@ -837,11 +1078,22 @@ export type ExpenseExportFilters = {
 };
 
 /** The space's confirmed expenses in the range as an Excel file. */
-export function exportExpenses(range: ExportRange, filters: ExpenseExportFilters = {}): Promise<Blob> {
-  return apiDownload({ path: "/exports/expenses.xlsx", query: { ...range, ...filters }, accept: XLSX_TYPE });
+export function exportExpenses(
+  range: ExportRange,
+  filters: ExpenseExportFilters = {},
+): Promise<Blob> {
+  return apiDownload({
+    path: "/exports/expenses.xlsx",
+    query: { ...range, ...filters },
+    accept: XLSX_TYPE,
+  });
 }
 
 /** The space's incomes in the range as an Excel file. */
 export function exportIncomes(range: ExportRange): Promise<Blob> {
-  return apiDownload({ path: "/exports/incomes.xlsx", query: range, accept: XLSX_TYPE });
+  return apiDownload({
+    path: "/exports/incomes.xlsx",
+    query: range,
+    accept: XLSX_TYPE,
+  });
 }

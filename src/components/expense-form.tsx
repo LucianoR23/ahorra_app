@@ -1,7 +1,7 @@
 "use client";
 
 import { CardPeriodNudge } from "@/components/card-statements/period-nudge";
-import { Check, Sparkles, TriangleAlert } from "lucide-react";
+import { Check, Mic, Sparkles, Square, TriangleAlert } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate as swrMutate } from "swr";
@@ -22,7 +22,20 @@ import {
 } from "@/lib/api/hooks";
 import { selectSpace, useSpaces } from "@/lib/spaces";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { createExpense, parseExpense, suggestCategory, type ExpenseCreateInput } from "@/lib/api/mutations";
+import {
+  createExpense,
+  parseExpense,
+  parseExpenseAudio,
+  suggestCategory,
+  type ExpenseCreateInput,
+  type ExpenseParse,
+} from "@/lib/api/mutations";
+import {
+  formatSecondsLeft,
+  MAX_VOICE_SECONDS,
+  useVoiceNote,
+  voiceSupported,
+} from "@/lib/use-voice-note";
 import { ApiError } from "@/lib/api/errors";
 import { isoToday, projectBillingMonth } from "@/lib/format";
 import { monthName } from "@/lib/committed";
@@ -30,14 +43,26 @@ import { dayMonth } from "@/lib/statements";
 import { Money } from "@/components/ui/money";
 import type { Currency } from "@/lib/api/schemas";
 import { cn } from "@/lib/utils";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { PAYMENT_METHOD_KIND_LABELS } from "@/lib/labels";
 import { DatePicker } from "@/components/ui/date-picker";
 import { CategorySelect } from "@/components/category-select";
 import { FormRow as Row, rowControl } from "@/components/ui/form-row";
 import type { ExpensePrefill } from "@/lib/simulator";
 import { RateSourceSelect } from "@/components/rate-source-select";
-import { convert, isStale, rateSourceLabel, sourceOf, STALE_RATE_WARNING } from "@/lib/fx";
+import {
+  convert,
+  isStale,
+  rateSourceLabel,
+  sourceOf,
+  STALE_RATE_WARNING,
+} from "@/lib/fx";
 
 const CURRENCIES = [
   { value: "ARS", label: "ARS" },
@@ -45,20 +70,38 @@ const CURRENCIES = [
   { value: "EUR", label: "EUR" },
 ] as const;
 
-type NlStatus = "loading" | "ok" | "partial" | "not_finance" | "error";
+type NlStatus =
+  | "loading"
+  | "ok"
+  | "partial"
+  | "not_finance"
+  | "error"
+  | "listening"
+  | "not_heard"
+  | "voice_denied"
+  | "voice_failed";
 
 const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
   loading: "Leyendo…",
   partial: "No encontramos el monto: completalo abajo.",
   not_finance: "Solo puedo cargar gastos. Probá: «súper 15000 débito».",
   error: "No pudimos leerlo. Completá los datos abajo.",
+  listening: "Escuchando…",
+  not_heard: "No pudimos entender el audio. Probá de nuevo o escribilo.",
+  voice_denied:
+    "Sin permiso para el micrófono. Activalo en el navegador o escribilo.",
+  voice_failed: "No pudimos usar el micrófono. Escribilo en la caja.",
 };
 
 /** "Tenés 2 Visa: elegí cuál", from the word the names share. */
 export function candidatesHint(names: string[]): string {
   const first = names.map((n) => n.split(/\s+/)[0]);
-  const shared = first.every((w) => w.toLowerCase() === first[0]?.toLowerCase()) ? first[0] : "";
-  return shared ? `Tenés ${names.length} ${shared}: elegí cuál` : `Coinciden ${names.length} medios de pago: elegí cuál`;
+  const shared = first.every((w) => w.toLowerCase() === first[0]?.toLowerCase())
+    ? first[0]
+    : "";
+  return shared
+    ? `Tenés ${names.length} ${shared}: elegí cuál`
+    : `Coinciden ${names.length} medios de pago: elegí cuál`;
 }
 
 /** Last "Compartido" choice (plan 1.2). The form renders only on the client. */
@@ -109,21 +152,38 @@ export function ExpenseForm({
   const [nlText, setNlText] = useState("");
   const [nlStatus, setNlStatus] = useState<NlStatus | null>(null);
   const nlAsked = useRef("");
+  // The form renders only on the client, so this can read the browser.
+  const [canRecord] = useState(voiceSupported);
+  const voiceTicket = useRef(0);
   // Methods that fit an ambiguous word ("visa"): listed first, none picked.
   const [paymentCandidates, setPaymentCandidates] = useState<string[]>([]);
 
   const [description, setDescription] = useState("");
-  const [amountStr, setAmountStr] = useState(initial.amount ? String(initial.amount).replace(".", ",") : "");
-  const [currency, setCurrency] = useState<Currency>((initial.currency as Currency | undefined) ?? baseCurrency);
-  const [categoryId, setCategoryId] = useState<string>(initial.categoryId ?? "");
+  const [amountStr, setAmountStr] = useState(
+    initial.amount ? String(initial.amount).replace(".", ",") : "",
+  );
+  const [currency, setCurrency] = useState<Currency>(
+    (initial.currency as Currency | undefined) ?? baseCurrency,
+  );
+  const [categoryId, setCategoryId] = useState<string>(
+    initial.categoryId ?? "",
+  );
   // Auto-categorization (plan 8.4): the category fills itself from the
   // description until the person picks one.
   const [categoryPicked, setCategoryPicked] = useState(!!initial.categoryId);
-  const [suggestion, setSuggestion] = useState<{ spaceId: string; categoryId: string; source: "history" | "ai" | null } | null>(null);
+  const [suggestion, setSuggestion] = useState<{
+    spaceId: string;
+    categoryId: string;
+    source: "history" | "ai" | null;
+  } | null>(null);
   const lastAsked = useRef("");
-  const [paymentMethodId, setPaymentMethodId] = useState<string>(initial.paymentMethodId ?? "");
+  const [paymentMethodId, setPaymentMethodId] = useState<string>(
+    initial.paymentMethodId ?? "",
+  );
   const [spentAt, setSpentAt] = useState<string>(isoToday());
-  const [installments, setInstallments] = useState<number>(initial.installments ?? 1);
+  const [installments, setInstallments] = useState<number>(
+    initial.installments ?? 1,
+  );
   const [overrideShares, setOverrideShares] = useState(false);
   const [shareAmounts, setShareAmounts] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -131,7 +191,10 @@ export function ExpenseForm({
 
   // The suggestion shows once its space's categories are loaded.
   const suggested =
-    !categoryPicked && suggestion && suggestion.spaceId === target?.id && categories?.some((c) => c.id === suggestion.categoryId)
+    !categoryPicked &&
+    suggestion &&
+    suggestion.spaceId === target?.id &&
+    categories?.some((c) => c.id === suggestion.categoryId)
       ? suggestion
       : null;
   const effectiveCategoryId = suggested ? suggested.categoryId : categoryId;
@@ -144,21 +207,44 @@ export function ExpenseForm({
   const allowsInstallments = paymentMethod?.allowsInstallments ?? false;
 
   const { data: creditCard } = useCreditCard(isCredit ? paymentMethodId : null);
-  const { data: periods } = useCreditCardPeriods(isCredit ? paymentMethodId : null);
+  const { data: periods } = useCreditCardPeriods(
+    isCredit ? paymentMethodId : null,
+  );
 
   // The dollar it converts with (plan 5.1): the space's unless picked here.
   const [pickedSource, setPickedSource] = useState("");
   const rateSource = pickedSource || sourceOf(target?.fxSource);
-  const foreignRate = currency === baseCurrency ? null : convert(rates, amountValid ? amount : 0, currency, baseCurrency, rateSource);
-  const ratePreview = currency === baseCurrency ? { rate: 1, amountBase: amountValid ? amount : 0 } : foreignRate;
-  const foreignCurrency = currency === baseCurrency ? null : currency === "ARS" ? baseCurrency : currency;
+  const foreignRate =
+    currency === baseCurrency
+      ? null
+      : convert(
+          rates,
+          amountValid ? amount : 0,
+          currency,
+          baseCurrency,
+          rateSource,
+        );
+  const ratePreview =
+    currency === baseCurrency
+      ? { rate: 1, amountBase: amountValid ? amount : 0 }
+      : foreignRate;
+  const foreignCurrency =
+    currency === baseCurrency
+      ? null
+      : currency === "ARS"
+        ? baseCurrency
+        : currency;
 
   // Where the first installment lands: the loaded period of its month, or just the month.
   const firstStatement = (() => {
     if (!isCredit || !creditCard) return null;
     const ym = projectBillingMonth(spentAt, creditCard.defaultClosingDay);
     const period = periods?.find((p) => p.periodYm === ym);
-    return { ym, closingDate: period?.closingDate ?? null, dueDate: period?.dueDate ?? null };
+    return {
+      ym,
+      closingDate: period?.closingDate ?? null,
+      dueDate: period?.dueDate ?? null,
+    };
   })();
 
   const sharesList =
@@ -175,7 +261,11 @@ export function ExpenseForm({
 
   // Asks once per description and space, when the description loses focus
   // or the space changes. `fresh` skips the checks of the old space.
-  async function suggest(spaceId: string | undefined, fresh = false, desc = description) {
+  async function suggest(
+    spaceId: string | undefined,
+    fresh = false,
+    desc = description,
+  ) {
     const text = desc.trim();
     const key = `${spaceId}|${text.toLowerCase()}`;
     if (!spaceId || text.length < 2) return;
@@ -185,7 +275,11 @@ export function ExpenseForm({
       const s = await suggestCategory(text, spaceId);
       // Stale: the description, the space or the choice changed meanwhile.
       if (lastAsked.current !== key) return;
-      setSuggestion(s.categoryId ? { spaceId, categoryId: s.categoryId, source: s.source } : null);
+      setSuggestion(
+        s.categoryId
+          ? { spaceId, categoryId: s.categoryId, source: s.source }
+          : null,
+      );
     } catch {
       // No suggestion: the person picks the category as always.
     }
@@ -201,46 +295,90 @@ export function ExpenseForm({
     try {
       const r = await parseExpense(text, target.id);
       if (nlAsked.current !== text) return;
-      if (r.notFinance) {
-        setNlStatus("not_finance");
-        return;
-      }
-      if (r.amount) setAmountStr(String(r.amount).replace(".", ","));
-      if (r.currency) setCurrency(r.currency);
-      if (r.spentAt) setSpentAt(r.spentAt);
-      if (r.paymentMethodId || r.paymentCandidates.length > 0) {
-        setPaymentMethodId(r.paymentMethodId ?? "");
-        setPaymentCandidates(r.paymentMethodId ? [] : r.paymentCandidates);
-        setInstallments(r.installments ?? 1);
-      } else if (r.installments) {
-        setInstallments(r.installments);
-      }
-      const desc = r.description ?? description;
-      if (r.description) setDescription(r.description);
-      if (r.shared && hogar && !isShared) {
-        // The category was read for Mi plata: ask again in the hogar.
-        setCompartido(true);
-        setCategoryId("");
-        setCategoryPicked(false);
-        void suggest(hogar.id, true, desc);
-      } else if (r.categoryId && r.categorySource) {
-        setSuggestion({ spaceId: target.id, categoryId: r.categoryId, source: r.categorySource });
-        lastAsked.current = `${target.id}|${desc.trim().toLowerCase()}`;
-      } else if (r.description) {
-        void suggest(target.id, false, desc);
-      }
-      setNlStatus(r.understood ? "ok" : "partial");
+      apply(r);
     } catch {
       if (nlAsked.current === text) setNlStatus("error");
     }
   }
 
+  // A voice note (plan 3.2): what was heard goes into the box, so a wrong
+  // word is fixed there and Enter reads it again as text (decided with the
+  // user); the fields fill as for a typed sentence.
+  async function hear(audio: Blob) {
+    if (!target) return;
+    const ticket = `audio:${++voiceTicket.current}`;
+    nlAsked.current = ticket;
+    setNlStatus("listening");
+    try {
+      const r = await parseExpenseAudio(audio, target.id);
+      if (nlAsked.current !== ticket) return;
+      const transcript = r.transcript?.trim();
+      if (!transcript) {
+        setNlStatus("not_heard");
+        return;
+      }
+      setNlText(transcript);
+      nlAsked.current = transcript;
+      apply(r);
+    } catch {
+      if (nlAsked.current === ticket) setNlStatus("not_heard");
+    }
+  }
+
+  // Fills the rows the reading mentions; the rest stay as they are.
+  function apply(r: ExpenseParse) {
+    if (!target) return;
+    if (r.notFinance) {
+      setNlStatus("not_finance");
+      return;
+    }
+    if (r.amount) setAmountStr(String(r.amount).replace(".", ","));
+    if (r.currency) setCurrency(r.currency);
+    if (r.spentAt) setSpentAt(r.spentAt);
+    if (r.paymentMethodId || r.paymentCandidates.length > 0) {
+      setPaymentMethodId(r.paymentMethodId ?? "");
+      setPaymentCandidates(r.paymentMethodId ? [] : r.paymentCandidates);
+      setInstallments(r.installments ?? 1);
+    } else if (r.installments) {
+      setInstallments(r.installments);
+    }
+    const desc = r.description ?? description;
+    if (r.description) setDescription(r.description);
+    if (r.shared && hogar && !isShared) {
+      // The category was read for Mi plata: ask again in the hogar.
+      setCompartido(true);
+      setCategoryId("");
+      setCategoryPicked(false);
+      void suggest(hogar.id, true, desc);
+    } else if (r.categoryId && r.categorySource) {
+      setSuggestion({
+        spaceId: target.id,
+        categoryId: r.categoryId,
+        source: r.categorySource,
+      });
+      lastAsked.current = `${target.id}|${desc.trim().toLowerCase()}`;
+    } else if (r.description) {
+      void suggest(target.id, false, desc);
+    }
+    setNlStatus(r.understood ? "ok" : "partial");
+  }
+
+  const voice = useVoiceNote(
+    (audio) => void hear(audio),
+    (reason) =>
+      setNlStatus(reason === "denied" ? "voice_denied" : "voice_failed"),
+  );
+  const recording = voice.state === "recording";
   const candidateNames = paymentCandidates
     .map((id) => paymentMethods?.find((p) => p.id === id)?.name)
     .filter((n): n is string => !!n);
   const activeMethods = (paymentMethods ?? [])
     .filter((p) => p.isActive)
-    .sort((a, b) => Number(paymentCandidates.includes(b.id)) - Number(paymentCandidates.includes(a.id)));
+    .sort(
+      (a, b) =>
+        Number(paymentCandidates.includes(b.id)) -
+        Number(paymentCandidates.includes(a.id)),
+    );
 
   function validate() {
     const e: Record<string, string> = {};
@@ -249,7 +387,8 @@ export function ExpenseForm({
     if (!paymentMethodId) e.paymentMethodId = "Elegí con qué pagaste";
     if (!spentAt) e.spentAt = "Elegí la fecha";
     if (installments < 1) e.installments = "Mínimo 1";
-    if (installments > 1 && !allowsInstallments) e.installments = "Este medio no admite cuotas";
+    if (installments > 1 && !allowsInstallments)
+      e.installments = "Este medio no admite cuotas";
     if (sharesList && !sharesMatch) {
       e.shares = `Las partes suman ${sharesSum.toFixed(2)}, deben sumar ${amount.toFixed(2)}`;
     }
@@ -274,7 +413,10 @@ export function ExpenseForm({
     };
     if (currency !== baseCurrency) input.rateSource = rateSource;
     if (sharesList) {
-      input.sharesOverride = sharesList.map((s) => ({ userId: s.userId, amount: s.amount }));
+      input.sharesOverride = sharesList.map((s) => ({
+        userId: s.userId,
+        amount: s.amount,
+      }));
     }
 
     if (!target) return;
@@ -287,7 +429,10 @@ export function ExpenseForm({
         (k) =>
           Array.isArray(k) &&
           typeof k[0] === "string" &&
-          (k[0].startsWith("/expenses") || k[0].startsWith("/reports") || k[0].startsWith("/balances") || k[0].startsWith("/credit-cards")),
+          (k[0].startsWith("/expenses") ||
+            k[0].startsWith("/reports") ||
+            k[0].startsWith("/balances") ||
+            k[0].startsWith("/credit-cards")),
         undefined,
         { revalidate: true },
       );
@@ -306,37 +451,89 @@ export function ExpenseForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      {/* Contalo como te salga (plan 3.1). */}
+      {/* Contalo como te salga (plan 3.1), typed or dictated (3.2). */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="nl" className="font-semibold">
           Contalo como te salga
         </Label>
-        <Textarea
-          id="nl"
-          rows={2}
-          maxLength={300}
-          value={nlText}
-          placeholder="Ej.: café 2500 visa 3 cuotas ayer"
-          onChange={(e) => setNlText(e.target.value)}
-          onBlur={() => void interpret()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              void interpret();
-            }
-          }}
-          aria-describedby={nlStatus ? "nl-status" : undefined}
-          className="min-h-0 resize-none rounded-2xl text-body"
-        />
-        {nlStatus && (
-          <p id="nl-status" role="status" className="flex items-center gap-1.5 text-caption text-ink-muted">
-            {nlStatus === "ok" ? (
+        <div className="relative">
+          <Textarea
+            id="nl"
+            rows={2}
+            maxLength={300}
+            value={nlText}
+            placeholder="Ej.: café 2500 visa 3 cuotas ayer"
+            onChange={(e) => setNlText(e.target.value)}
+            onBlur={() => void interpret()}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                !e.shiftKey &&
+                !e.nativeEvent.isComposing
+              ) {
+                e.preventDefault();
+                void interpret();
+              }
+            }}
+            aria-describedby={nlStatus || recording ? "nl-status" : undefined}
+            className={cn(
+              "min-h-0 resize-none rounded-2xl text-body",
+              canRecord && "pr-16",
+            )}
+          />
+          {canRecord && (
+            <Button
+              type="button"
+              size="icon"
+              variant={recording ? "destructive" : "secondary"}
+              aria-label={recording ? "Terminar de grabar" : "Dictar por audio"}
+              disabled={
+                !target ||
+                voice.state === "starting" ||
+                nlStatus === "listening"
+              }
+              onClick={() => (recording ? voice.stop() : void voice.start())}
+              className="absolute right-2 bottom-2"
+            >
+              {recording ? (
+                <Square aria-hidden fill="currentColor" className="size-4" />
+              ) : (
+                <Mic aria-hidden strokeWidth={1.75} />
+              )}
+            </Button>
+          )}
+        </div>
+        {(nlStatus || recording) && (
+          <p
+            id="nl-status"
+            role="status"
+            className="flex items-center gap-1.5 text-caption text-ink-muted"
+          >
+            {recording ? (
               <>
-                <Sparkles aria-hidden className="size-4 shrink-0 text-brand-ink" strokeWidth={1.75} />
+                <span className="sr-only">
+                  Grabando, hasta {MAX_VOICE_SECONDS} segundos. Tocá de nuevo
+                  para terminar.
+                </span>
+                <span aria-hidden>
+                  Grabando…{" "}
+                  <span className="tabular-nums">
+                    {formatSecondsLeft(voice.secondsLeft)}
+                  </span>
+                  . Tocá de nuevo para terminar.
+                </span>
+              </>
+            ) : nlStatus === "ok" ? (
+              <>
+                <Sparkles
+                  aria-hidden
+                  className="size-4 shrink-0 text-brand-ink"
+                  strokeWidth={1.75}
+                />
                 Lo entendimos así. Tocá un dato para cambiarlo.
               </>
             ) : (
-              NL_MESSAGES[nlStatus]
+              nlStatus && NL_MESSAGES[nlStatus]
             )}
           </p>
         )}
@@ -349,7 +546,13 @@ export function ExpenseForm({
             Monto
           </Label>
           <div className="flex min-w-0 flex-1 items-baseline gap-1 text-display font-bold">
-            <span aria-hidden className={cn("shrink-0 whitespace-nowrap", !amountStr && "text-ink-muted")}>
+            <span
+              aria-hidden
+              className={cn(
+                "shrink-0 whitespace-nowrap",
+                !amountStr && "text-ink-muted",
+              )}
+            >
               {currency === "USD" ? "US$" : currency === "EUR" ? "€" : "$"}
             </span>
             <Input
@@ -379,8 +582,9 @@ export function ExpenseForm({
         )}
         {ratePreview && currency !== baseCurrency && (
           <p className="text-caption text-ink-muted">
-            ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} /> al dólar {rateSourceLabel(rateSource)}. La
-            cotización se fija al guardar.
+            ≈ <Money amount={ratePreview.amountBase} currency={baseCurrency} />{" "}
+            al dólar {rateSourceLabel(rateSource)}. La cotización se fija al
+            guardar.
             {foreignCurrency && isStale(rates, foreignCurrency, rateSource) && (
               <span className="block text-negative">{STALE_RATE_WARNING}</span>
             )}
@@ -392,7 +596,11 @@ export function ExpenseForm({
       <Card className="py-1">
         <CardContent className="divide-y divide-border">
           {foreignCurrency && (
-            <Row label="Cotización" htmlFor="rateSource" error={errors.rateSource}>
+            <Row
+              label="Cotización"
+              htmlFor="rateSource"
+              error={errors.rateSource}
+            >
               <RateSourceSelect
                 id="rateSource"
                 value={rateSource}
@@ -405,7 +613,11 @@ export function ExpenseForm({
             </Row>
           )}
 
-          <Row label="Descripción" htmlFor="description" error={errors.description}>
+          <Row
+            label="Descripción"
+            htmlFor="description"
+            error={errors.description}
+          >
             <Input
               id="description"
               value={description}
@@ -420,7 +632,13 @@ export function ExpenseForm({
           <Row
             label="Categoría"
             htmlFor="category"
-            hint={suggested ? (suggested.source === "ai" ? "Sugerida automáticamente" : "Como la última vez") : undefined}
+            hint={
+              suggested
+                ? suggested.source === "ai"
+                  ? "Sugerida automáticamente"
+                  : "Como la última vez"
+                : undefined
+            }
           >
             <CategorySelect
               value={effectiveCategoryId}
@@ -441,7 +659,11 @@ export function ExpenseForm({
             label="Pago"
             htmlFor="paymentMethod"
             error={errors.paymentMethodId}
-            hint={candidateNames.length > 1 && !paymentMethodId ? candidatesHint(candidateNames) : undefined}
+            hint={
+              candidateNames.length > 1 && !paymentMethodId
+                ? candidatesHint(candidateNames)
+                : undefined
+            }
           >
             <Select
               value={paymentMethodId}
@@ -451,24 +673,35 @@ export function ExpenseForm({
                 setInstallments(1);
               }}
             >
-              <SelectTrigger id="paymentMethod" aria-invalid={!!errors.paymentMethodId} className={rowControl}>
+              <SelectTrigger
+                id="paymentMethod"
+                aria-invalid={!!errors.paymentMethodId}
+                className={rowControl}
+              >
                 <SelectValue placeholder="Elegí">
-                  {(v: string | null) => paymentMethods?.find((p) => p.id === v)?.name ?? "Elegí"}
+                  {(v: string | null) =>
+                    paymentMethods?.find((p) => p.id === v)?.name ?? "Elegí"
+                  }
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {activeMethods.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} · {PAYMENT_METHOD_KIND_LABELS[p.kind]}
-                    </SelectItem>
-                  ))}
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name} · {PAYMENT_METHOD_KIND_LABELS[p.kind]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </Row>
 
           {allowsInstallments && (
             <div className="flex flex-col gap-2 py-2">
-              <Row label="Cuotas" htmlFor="installments" error={errors.installments} bare>
+              <Row
+                label="Cuotas"
+                htmlFor="installments"
+                error={errors.installments}
+                bare
+              >
                 <span className="flex items-center gap-2 font-semibold">
                   <Input
                     id="installments"
@@ -477,21 +710,35 @@ export function ExpenseForm({
                     min={1}
                     max={60}
                     value={installments}
-                    onChange={(e) => setInstallments(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+                    onChange={(e) =>
+                      setInstallments(
+                        Math.max(1, Math.min(60, Number(e.target.value) || 1)),
+                      )
+                    }
                     className="h-11 w-20 text-center font-semibold"
                   />
                   {amountValid && installments > 1 && (
                     <span>
-                      de <Money amount={amount / installments} currency={currency} />
+                      de{" "}
+                      <Money
+                        amount={amount / installments}
+                        currency={currency}
+                      />
                     </span>
                   )}
                 </span>
               </Row>
               {installments > 1 && (
                 <div aria-hidden className="flex gap-1">
-                  {Array.from({ length: Math.min(installments, 12) }, (_, i) => (
-                    <span key={i} className="h-2 flex-1 rounded-full bg-border" />
-                  ))}
+                  {Array.from(
+                    { length: Math.min(installments, 12) },
+                    (_, i) => (
+                      <span
+                        key={i}
+                        className="h-2 flex-1 rounded-full bg-border"
+                      />
+                    ),
+                  )}
                 </div>
               )}
               {firstStatement && (
@@ -506,12 +753,22 @@ export function ExpenseForm({
           )}
 
           <Row label="Fecha" error={errors.spentAt}>
-            <DatePicker value={spentAt} onChange={setSpentAt} aria-invalid={!!errors.spentAt} className={rowControl} />
+            <DatePicker
+              value={spentAt}
+              onChange={setSpentAt}
+              aria-invalid={!!errors.spentAt}
+              className={rowControl}
+            />
           </Row>
         </CardContent>
       </Card>
 
-      {isCredit && paymentMethod && <CardPeriodNudge paymentMethodId={paymentMethod.id} cardName={paymentMethod.name} />}
+      {isCredit && paymentMethod && (
+        <CardPeriodNudge
+          paymentMethodId={paymentMethod.id}
+          cardName={paymentMethod.name}
+        />
+      )}
 
       {/* Compartido (plan 1.2): only with a hogar */}
       {hogar && (
@@ -519,7 +776,10 @@ export function ExpenseForm({
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <Label htmlFor="isShared" className="text-heading font-semibold">
+                <Label
+                  htmlFor="isShared"
+                  className="text-heading font-semibold"
+                >
                   Compartido
                 </Label>
                 <p className="text-caption text-ink-muted">
@@ -547,14 +807,21 @@ export function ExpenseForm({
               <>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <Label htmlFor="overrideShares">División personalizada</Label>
-                  <Switch id="overrideShares" checked={overrideShares} onCheckedChange={setOverrideShares} />
+                  <Switch
+                    id="overrideShares"
+                    checked={overrideShares}
+                    onCheckedChange={setOverrideShares}
+                  />
                 </div>
 
                 {overrideShares && sharesList && (
                   <div className="flex flex-col gap-2">
                     {sharesList.map((s) => (
                       <div key={s.userId} className="flex items-center gap-2">
-                        <Label htmlFor={`share-${s.userId}`} className="flex-1 truncate font-normal">
+                        <Label
+                          htmlFor={`share-${s.userId}`}
+                          className="flex-1 truncate font-normal"
+                        >
                           {s.name}
                         </Label>
                         <Input
@@ -562,17 +829,38 @@ export function ExpenseForm({
                           inputMode="decimal"
                           placeholder="0"
                           value={shareAmounts[s.userId] ?? ""}
-                          onChange={(e) => setShareAmounts({ ...shareAmounts, [s.userId]: e.target.value })}
+                          onChange={(e) =>
+                            setShareAmounts({
+                              ...shareAmounts,
+                              [s.userId]: e.target.value,
+                            })
+                          }
                           className="h-11 w-32 text-right tabular-nums"
                         />
-                        <span className="w-9 text-caption text-ink-muted">{currency}</span>
+                        <span className="w-9 text-caption text-ink-muted">
+                          {currency}
+                        </span>
                       </div>
                     ))}
-                    <p className={cn("flex items-center gap-1 text-caption", sharesMatch ? "text-positive" : "text-negative")}>
-                      {sharesMatch ? <Check aria-hidden className="size-4" /> : <TriangleAlert aria-hidden className="size-4" />} Suma{" "}
-                      {sharesSum.toFixed(2)} / {amount.toFixed(2)} {currency}
+                    <p
+                      className={cn(
+                        "flex items-center gap-1 text-caption",
+                        sharesMatch ? "text-positive" : "text-negative",
+                      )}
+                    >
+                      {sharesMatch ? (
+                        <Check aria-hidden className="size-4" />
+                      ) : (
+                        <TriangleAlert aria-hidden className="size-4" />
+                      )}{" "}
+                      Suma {sharesSum.toFixed(2)} / {amount.toFixed(2)}{" "}
+                      {currency}
                     </p>
-                    {errors.shares && <p className="text-caption text-negative">{errors.shares}</p>}
+                    {errors.shares && (
+                      <p className="text-caption text-negative">
+                        {errors.shares}
+                      </p>
+                    )}
                   </div>
                 )}
               </>
@@ -582,14 +870,22 @@ export function ExpenseForm({
       )}
 
       {errors.form && (
-        <p role="alert" className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative">
+        <p
+          role="alert"
+          className="rounded-lg bg-negative-soft px-3 py-2 text-caption text-negative"
+        >
           {errors.form}
         </p>
       )}
 
       {/* One action, pinned to the bottom on phones. */}
       <div className="safe-bottom sticky bottom-0 -mx-4 border-t border-border bg-background px-4 pt-3 pb-4 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
-        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={submitting}
+        >
           {submitting ? "Guardando…" : "Guardar gasto"}
         </Button>
       </div>
