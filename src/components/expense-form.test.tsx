@@ -37,6 +37,7 @@ function api(households: unknown[]) {
       ]),
     ),
     http.post(`${API}/expenses`, () => HttpResponse.json({ expense: { id: "e1" }, installments: [], shares: [] }, { status: 201 })),
+    http.post(`${API}/categories/suggest`, () => HttpResponse.json({ categoryId: null, source: null })),
     // Last: the first matching handler wins.
     http.get(`${API}/*`, () => HttpResponse.json([])),
   );
@@ -186,5 +187,91 @@ describe("ExpenseForm filled in (Cargar compra, plan 4.8)", () => {
       categoryId: "c-p",
       description: "Heladera",
     });
+  });
+});
+
+describe("ExpenseForm auto-categorization (plan 8.4)", () => {
+  const suggestPosts = () => requests().filter((r) => r.method === "POST" && r.path === "/categories/suggest");
+  // Answers with the space's own category, as the API does.
+  function suggests(source: "history" | "ai") {
+    server.use(
+      http.post(`${API}/categories/suggest`, ({ request }) =>
+        HttpResponse.json({ categoryId: request.headers.get("x-household-id") === hogarSpace.id ? "c-h" : "c-p", source }),
+      ),
+    );
+  }
+  const categoryRow = () => screen.getByLabelText("Categoría");
+
+  it("fills the category from history when the description loses focus, and saves it", async () => {
+    api([personalSpace]);
+    suggests("history");
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await screen.findByLabelText("Descripción"), "Coto");
+    await userEvent.tab();
+    expect(await screen.findByText("Como la última vez")).toBeInTheDocument();
+    expect(categoryRow()).toHaveTextContent("Mis gustos");
+    const post = suggestPosts()[0];
+    expect(post.headers.get("x-household-id")).toBe(personalSpace.id);
+    expect(JSON.parse(post.body || "{}")).toEqual({ description: "Coto" });
+
+    // The same description is not asked twice.
+    await userEvent.click(screen.getByLabelText("Descripción"));
+    await userEvent.tab();
+    expect(suggestPosts()).toHaveLength(1);
+
+    await userEvent.type(screen.getByLabelText("Monto"), "1500");
+    await userEvent.click(screen.getByLabelText("Pago"));
+    await userEvent.click(await screen.findByRole("option", { name: /Efectivo/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Guardar gasto" }));
+    await waitFor(() => expect(expensePost()).toBeDefined());
+    expect(JSON.parse(expensePost()!.body || "{}").categoryId).toBe("c-p");
+  });
+
+  it("says when the AI picked it, and leaves the category empty without a suggestion", async () => {
+    api([personalSpace]);
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await screen.findByLabelText("Descripción"), "Cosas varias");
+    await userEvent.tab();
+    await waitFor(() => expect(suggestPosts()).toHaveLength(1));
+    expect(categoryRow()).toHaveTextContent("Sin categoría");
+
+    suggests("ai");
+    await userEvent.type(screen.getByLabelText("Descripción"), " de farmacia");
+    await userEvent.tab();
+    expect(await screen.findByText("Sugerida automáticamente")).toBeInTheDocument();
+  });
+
+  it("stops once the person picks a category", async () => {
+    api([personalSpace]);
+    suggests("history");
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await screen.findByLabelText("Descripción");
+    await userEvent.click(categoryRow());
+    await userEvent.click(await screen.findByRole("option", { name: /Sin categoría/ }));
+    await userEvent.type(screen.getByLabelText("Descripción"), "Coto");
+    await userEvent.tab();
+    expect(suggestPosts()).toHaveLength(0);
+    expect(screen.queryByText("Como la última vez")).not.toBeInTheDocument();
+  });
+
+  it("asks again in the hogar when Compartido changes the space", async () => {
+    api([personalSpace, hogarSpace]);
+    suggests("history");
+    render(<ExpenseForm />, { wrapper: WithSWR });
+    await userEvent.type(await screen.findByLabelText("Descripción"), "Coto");
+    await userEvent.tab();
+    await waitFor(() => expect(categoryRow()).toHaveTextContent("Mis gustos"));
+    await userEvent.click(screen.getByRole("switch", { name: "Compartido" }));
+    await waitFor(() => expect(categoryRow()).toHaveTextContent("Súper del hogar"));
+    expect(suggestPosts().map((r) => r.headers.get("x-household-id"))).toEqual([personalSpace.id, hogarSpace.id]);
+  });
+
+  it("never asks when the category came filled in", async () => {
+    api([personalSpace]);
+    suggests("history");
+    render(<ExpenseForm initial={{ categoryId: "c-p" }} />, { wrapper: WithSWR });
+    await userEvent.type(await screen.findByLabelText("Descripción"), "Heladera");
+    await userEvent.tab();
+    expect(suggestPosts()).toHaveLength(0);
   });
 });

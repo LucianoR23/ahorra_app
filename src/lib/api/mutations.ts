@@ -102,6 +102,16 @@ export function createExpense(input: ExpenseCreateInput, householdId?: string) {
   return apiMutate<ExpenseDetail>({ method: "POST", path: "/expenses", body: input, householdId });
 }
 
+export type CategorySuggestion = { categoryId: string | null; source: "history" | "ai" | null };
+
+/**
+ * A category for a description (plan 8.4): from the space's history, or
+ * the AI when history has nothing. Nulls when nothing is confident.
+ */
+export function suggestCategory(description: string, householdId?: string) {
+  return apiMutate<CategorySuggestion>({ method: "POST", path: "/categories/suggest", body: { description }, householdId });
+}
+
 export type PurchaseSimulationInput = {
   paymentMethodId: string;
   categoryId?: string | null;

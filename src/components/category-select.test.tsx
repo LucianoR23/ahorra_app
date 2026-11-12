@@ -23,7 +23,7 @@ describe("CategorySelect", () => {
     expect(options[2]).toHaveClass("pl-11");
 
     await userEvent.click(options[2]);
-    expect(onValueChange).toHaveBeenCalledWith("luz");
+    expect(onValueChange).toHaveBeenCalledWith("luz", true);
   });
 
   it("shows the chosen category's name", () => {

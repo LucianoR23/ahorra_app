@@ -20,7 +20,8 @@ export function CategorySelect({
   "aria-label": ariaLabel,
 }: {
   value: string;
-  onValueChange: (value: string) => void;
+  /** byUser is false when the select cleared the value by itself. */
+  onValueChange: (value: string, byUser: boolean) => void;
   categories: readonly CategoryOption[] | undefined;
   emptyLabel: string;
   id?: string;
@@ -30,7 +31,7 @@ export function CategorySelect({
   const rows = categoryTree(categories);
   const nameOf = (v: string | null) => (v ? (categories?.find((c) => c.id === v)?.name ?? emptyLabel) : emptyLabel);
   return (
-    <Select value={value} onValueChange={(v) => onValueChange(v ?? "")}>
+    <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger id={id} aria-label={ariaLabel} className={className}>
         <SelectValue placeholder={emptyLabel}>{nameOf}</SelectValue>
       </SelectTrigger>

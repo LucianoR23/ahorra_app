@@ -11,14 +11,16 @@ type SelectRootProps = React.ComponentProps<typeof SelectPrimitive.Root>
 // Base UI tipa onValueChange como (unknown | null), pero en este codebase
 // usamos "" como sentinel de "sin selección". Normalizamos para que los call
 // sites puedan pasar setters de useState<string> sin castear cada vez.
+// byUser is false when Base UI changes the value by itself (for example,
+// it clears a value that is not among the new items).
 function Select({
   onValueChange,
   ...props
 }: Omit<SelectRootProps, "onValueChange"> & {
-  onValueChange?: (value: string) => void
+  onValueChange?: (value: string, byUser: boolean) => void
 }) {
   const handler: SelectRootProps["onValueChange"] = onValueChange
-    ? (value) => onValueChange(((value as string | null) ?? ""))
+    ? (value, details) => onValueChange((value as string | null) ?? "", details.reason !== "none")
     : undefined
   return <SelectPrimitive.Root {...props} onValueChange={handler} />
 }

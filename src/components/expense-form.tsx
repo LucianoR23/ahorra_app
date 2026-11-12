@@ -2,7 +2,7 @@
 
 import { CardPeriodNudge } from "@/components/card-statements/period-nudge";
 import { Check, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate as swrMutate } from "swr";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +21,7 @@ import {
 } from "@/lib/api/hooks";
 import { selectSpace, useSpaces } from "@/lib/spaces";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
-import { createExpense, type ExpenseCreateInput } from "@/lib/api/mutations";
+import { createExpense, suggestCategory, type ExpenseCreateInput } from "@/lib/api/mutations";
 import { ApiError } from "@/lib/api/errors";
 import { isoToday, projectBillingMonth } from "@/lib/format";
 import { monthName } from "@/lib/committed";
@@ -91,6 +91,11 @@ export function ExpenseForm({
   const [amountStr, setAmountStr] = useState(initial.amount ? String(initial.amount).replace(".", ",") : "");
   const [currency, setCurrency] = useState<Currency>((initial.currency as Currency | undefined) ?? baseCurrency);
   const [categoryId, setCategoryId] = useState<string>(initial.categoryId ?? "");
+  // Auto-categorization (plan 8.4): the category fills itself from the
+  // description until the person picks one.
+  const [categoryPicked, setCategoryPicked] = useState(!!initial.categoryId);
+  const [suggestion, setSuggestion] = useState<{ spaceId: string; categoryId: string; source: "history" | "ai" | null } | null>(null);
+  const lastAsked = useRef("");
   const [paymentMethodId, setPaymentMethodId] = useState<string>(initial.paymentMethodId ?? "");
   const [spentAt, setSpentAt] = useState<string>(isoToday());
   const [installments, setInstallments] = useState<number>(initial.installments ?? 1);
@@ -98,6 +103,13 @@ export function ExpenseForm({
   const [shareAmounts, setShareAmounts] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // The suggestion shows once its space's categories are loaded.
+  const suggested =
+    !categoryPicked && suggestion && suggestion.spaceId === target?.id && categories?.some((c) => c.id === suggestion.categoryId)
+      ? suggestion
+      : null;
+  const effectiveCategoryId = suggested ? suggested.categoryId : categoryId;
 
   const amount = Number(amountStr.replace(",", "."));
   const amountValid = amountStr !== "" && !isNaN(amount) && amount > 0;
@@ -136,6 +148,24 @@ export function ExpenseForm({
   const sharesSum = sharesList?.reduce((a, s) => a + s.amount, 0) ?? 0;
   const sharesMatch = !sharesList || Math.abs(sharesSum - amount) < 0.01;
 
+  // Asks once per description and space, when the description loses focus
+  // or the space changes. `fresh` skips the checks of the old space.
+  async function suggest(spaceId: string | undefined, fresh = false) {
+    const text = description.trim();
+    const key = `${spaceId}|${text.toLowerCase()}`;
+    if (!spaceId || text.length < 2) return;
+    if (!fresh && (categoryPicked || key === lastAsked.current)) return;
+    lastAsked.current = key;
+    try {
+      const s = await suggestCategory(text, spaceId);
+      // Stale: the description, the space or the choice changed meanwhile.
+      if (lastAsked.current !== key) return;
+      setSuggestion(s.categoryId ? { spaceId, categoryId: s.categoryId, source: s.source } : null);
+    } catch {
+      // No suggestion: the person picks the category as always.
+    }
+  }
+
   function validate() {
     const e: Record<string, string> = {};
     if (!description.trim()) e.description = "Contá qué compraste";
@@ -157,7 +187,7 @@ export function ExpenseForm({
     if (Object.keys(fieldErrors).length > 0) return;
 
     const input: ExpenseCreateInput = {
-      categoryId: categoryId || null,
+      categoryId: effectiveCategoryId || null,
       paymentMethodId,
       amount,
       currency,
@@ -268,16 +298,26 @@ export function ExpenseForm({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              onBlur={() => void suggest(target?.id)}
               placeholder="Qué compraste"
               aria-invalid={!!errors.description}
               className={cn(rowControl, "flex-1")}
             />
           </Row>
 
-          <Row label="Categoría" htmlFor="category">
+          <Row
+            label="Categoría"
+            htmlFor="category"
+            hint={suggested ? (suggested.source === "ai" ? "Sugerida automáticamente" : "Como la última vez") : undefined}
+          >
             <CategorySelect
-              value={categoryId}
-              onValueChange={setCategoryId}
+              value={effectiveCategoryId}
+              onValueChange={(v, byUser) => {
+                setCategoryId(v);
+                if (!byUser) return;
+                setCategoryPicked(true);
+                lastAsked.current = "";
+              }}
               categories={categories}
               emptyLabel="Sin categoría"
               id="category"
@@ -378,8 +418,10 @@ export function ExpenseForm({
                 onCheckedChange={(v) => {
                   setCompartido(v);
                   writeSharedPref(v);
-                  // Each space has its own categories.
+                  // Each space has its own categories: suggest again there.
                   setCategoryId("");
+                  setCategoryPicked(false);
+                  void suggest(v ? hogar?.id : personal?.id, true);
                   if (!v) setOverrideShares(false);
                 }}
               />
