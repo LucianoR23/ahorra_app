@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 8.1 (app part): AI spend in the superadmin panel
+- New "IA" section in `/admin` (`/admin/ia`): today's spend against the daily budget with a progress bar, this month's spend and requests, today's errors, requests stopped by the limits and average latency.
+- By task this month (cost, requests, errors, stopped) and the people who spend the most, each linking to their account.
+- Says when AI is off (`AI_ENABLED`) and when today's budget ran out (AI paused until midnight). Metrics only: the panel never sees what people sent to the AI.
+
 ### 10.2 (app part): daily logging reminder
 - "Recordatorio diario" in Preferencias de notificaciones: a switch (off by default) and the time, in half hours (21:00 by default). It sends a push asking "¿Hoy no gastaste nada?" only on days nothing was loaded.
 - If the chosen time falls inside the quiet hours, a notice says it won't arrive, since quiet hours drop the reminder instead of holding it.
