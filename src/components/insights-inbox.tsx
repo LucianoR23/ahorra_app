@@ -28,6 +28,7 @@ const TYPES = [
   { value: "alert", label: "Alertas" },
   { value: "daily_summary", label: "Diarias" },
   { value: "weekly_review", label: "Semanales" },
+  { value: "monthly_review", label: "Mensuales" },
   { value: "shared_expense", label: "Gastos compartidos" },
   { value: "invite", label: "Invitaciones" },
   { value: "settlement", label: "Pagos" },

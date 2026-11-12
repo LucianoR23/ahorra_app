@@ -76,7 +76,7 @@ const expense = {
   updatedAt: "2026-11-02T00:00:00Z",
 };
 
-function handlers({ income = 1151143, spent = 486320, cards = committed } = {}) {
+function handlers({ income = 1151143, spent = 486320, cards = committed, insightType = "weekly_review" } = {}) {
   server.use(
     http.get(`${API}/households`, () => HttpResponse.json([personalSpace])),
     http.get(`${API}/reports/monthly`, ({ request }) => {
@@ -108,7 +108,7 @@ function handlers({ income = 1151143, spent = 486320, cards = committed } = {}) 
             id: "i1",
             householdId: personalSpace.id,
             insightDate: "2026-11-08",
-            insightType: "weekly_review",
+            insightType,
             title: "Tu semana",
             body: "Gastaste 18% más en delivery.",
             severity: "info",
@@ -213,5 +213,13 @@ describe("InicioYo", () => {
     expect((await screen.findAllByText("Heladera"))[0]).toBeInTheDocument();
     expect(screen.getAllByText("12 cuotas").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /Heladera/ })[0]).toHaveAttribute("href", "/movimientos/e1");
+  });
+
+  it("heads the monthly summary as the month (plan 8.2)", async () => {
+    handlers({ insightType: "monthly_review" });
+    render(<InicioYo />, { wrapper: WithSWR });
+    expect(await screen.findByText("Gastaste 18% más en delivery.")).toBeInTheDocument();
+    expect(screen.getByText("Tu mes")).toBeInTheDocument();
+    expect(screen.queryByText("Tu semana")).not.toBeInTheDocument();
   });
 });

@@ -157,21 +157,24 @@ function MonthHero() {
   );
 }
 
+const SUMMARY_HEADINGS: Record<string, string> = { weekly_review: "Tu semana", monthly_review: "Tu mes" };
+
 /** The latest insight (design "Tu semana"); nothing until there is one. */
 function LatestInsight() {
   const { data } = useLatestInsight();
   const mask = useMaskText();
   const insight = data?.items[0];
   if (!insight) return null;
-  const weekly = insight.insightType === "weekly_review";
+  // A summary (plan 8.2) says it all in its body; other notices need the title.
+  const summary = SUMMARY_HEADINGS[insight.insightType];
 
   return (
     <section aria-labelledby="latest-insight" className="flex flex-col gap-3 rounded-xl bg-brand-soft p-5 text-ink">
       <h2 id="latest-insight" className="flex items-center gap-2 text-label uppercase">
         <Sparkles aria-hidden className="size-4 text-brand-ink" strokeWidth={1.75} />
-        {weekly ? "Tu semana" : "Novedad"}
+        {summary ?? "Novedad"}
       </h2>
-      {!weekly && <p className="text-body font-semibold">{mask(insight.title)}</p>}
+      {!summary && <p className="text-body font-semibold">{mask(insight.title)}</p>}
       <p className="whitespace-pre-line text-body">{mask(insight.body)}</p>
       <Link href="/notificaciones" className="self-start text-body font-semibold underline underline-offset-4">
         Ver notificaciones

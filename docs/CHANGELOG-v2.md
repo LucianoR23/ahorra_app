@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 8.2 (app part): AI summaries
+- Inicio heads the monthly summary as "Tu mes", like "Tu semana" for the weekly one, and shows its paragraph.
+- Notifications: "Mensuales" filter, "Resumen mensual" label, and both summaries link to the numbers behind them (Movimientos for the week, Reportes for the month).
+- Preferencias de notificaciones shows the new switches the API adds (push for the weekly summary, app for the monthly one) with no code change.
+
 ### 8.1 (app part): AI spend in the superadmin panel
 - New "IA" section in `/admin` (`/admin/ia`): today's spend against the daily budget with a progress bar, this month's spend and requests, today's errors, requests stopped by the limits and average latency.
 - By task this month (cost, requests, errors, stopped) and the people who spend the most, each linking to their account.
