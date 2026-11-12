@@ -4,6 +4,11 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 8.4 (app part): auto-categorization
+- Cargar gasto fills the category by itself when the description loses focus, with `POST /categories/suggest` in the space the expense goes to. A quiet note under the row says where it came from: "Como la última vez" (history) or "Sugerida automáticamente" (AI). Asked once per description and space.
+- The person always wins: once they pick a category, even "Sin categoría", nothing is suggested again. A category that came filled in (Cargar compra from the simulator) is never replaced. Changing Compartido asks again in the new space.
+- `FormRow` gains a `hint`. The shared `Select` passes a second argument, `byUser`, false when Base UI clears a value by itself (a value missing from new items), so the form tells a person's choice from an automatic reset.
+
 ### 8.2 (app part): AI summaries
 - Inicio heads the monthly summary as "Tu mes", like "Tu semana" for the weekly one, and shows its paragraph.
 - Notifications: "Mensuales" filter, "Resumen mensual" label, and both summaries link to the numbers behind them (Movimientos for the week, Reportes for the month).

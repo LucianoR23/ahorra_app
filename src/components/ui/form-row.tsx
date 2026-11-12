@@ -17,12 +17,15 @@ export function FormRow({
   label,
   htmlFor,
   error,
+  hint,
   bare,
   children,
 }: {
   label: string
   htmlFor?: string
   error?: string
+  /** A quiet note under the control, hidden while there is an error. */
+  hint?: string
   /** Inside a block that already has the padding and the divider. */
   bare?: boolean
   children: React.ReactNode
@@ -40,6 +43,7 @@ export function FormRow({
         {children}
       </div>
       {error && <p className="text-right text-caption text-negative">{error}</p>}
+      {!error && hint && <p className="text-right text-caption text-ink-muted">{hint}</p>}
     </div>
   )
 }
