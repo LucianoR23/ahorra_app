@@ -1,3 +1,4 @@
+import path from "node:path";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { PASSWORD, addMember, cardClosedYesterday, cashOf, createGoal, createIncome, createExpense, createHousehold, createRecurringExpense, createRecurringIncome, midPreviousMonth, localDate, loginUI, personalSpaceOf, register } from "./helpers";
 
@@ -81,6 +82,8 @@ async function snap(page: Page, name: string, { fullPage = true } = {}) {
     caret: "hide",
     // A masked date one character longer moves its row a little.
     maxDiffPixelRatio: 0.01,
+    // Keeps date-dependent rows at a fixed height (see the file).
+    stylePath: path.resolve("e2e/screenshot.css"),
   });
 }
 

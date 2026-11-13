@@ -153,7 +153,7 @@ export type ExpenseParse = {
   shared: boolean;
   categoryId: string | null;
   categorySource: "history" | "ai" | null;
-  /** What a voice note said (plan 3.2); null for typed text or when it was not heard. */
+  /** The sentence for the box: what a voice note said (plan 3.2) or what a photo shows (plan 3.3); null for typed text or when nothing was read. */
   transcript?: string | null;
 };
 
@@ -179,6 +179,16 @@ export function parseExpenseAudio(audio: Blob, householdId?: string) {
     method: "POST",
     path: "/expenses/parse-audio",
     body: audio,
+    householdId,
+  });
+}
+
+/** A ticket or payment screenshot (plan 3.3), already resized to JPEG. */
+export function parseExpenseReceipt(image: Blob, householdId?: string) {
+  return apiMutate<ExpenseParse>({
+    method: "POST",
+    path: "/expenses/parse-receipt",
+    body: image,
     householdId,
   });
 }

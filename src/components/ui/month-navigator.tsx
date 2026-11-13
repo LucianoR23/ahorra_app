@@ -34,7 +34,11 @@ function MonthNavigator({
       </Button>
       <div className="min-w-0 flex-1 text-center" aria-live="polite">
         <p className="text-heading text-ink">{fmtMonthLong(month)}</p>
-        {summary ? <div className="text-caption text-ink-muted">{summary}</div> : null}
+        {summary ? (
+          <div data-slot="month-summary" className="text-caption text-ink-muted">
+            {summary}
+          </div>
+        ) : null}
       </div>
       <Button
         variant="ghost"

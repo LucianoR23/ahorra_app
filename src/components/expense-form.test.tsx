@@ -9,6 +9,11 @@ import { useHouseholdStore } from "@/stores/household";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 const replace = vi.fn();
+const resize = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/resize-image", async (orig) => ({
+  ...(await orig<typeof import("@/lib/resize-image")>()),
+  resizeImage: resize,
+}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, back: vi.fn(), push: vi.fn() }) }));
 
 const cash = {
@@ -491,6 +496,70 @@ describe("ExpenseForm natural-language entry (plan 3.1)", () => {
       expect(
         await screen.findByText("Sin permiso para el micrófono. Activalo en el navegador o escribilo."),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("photo (plan 3.3)", () => {
+    const photo = new File(["raw"], "ticket.heic", { type: "image/heic" });
+    function reads(answer: Record<string, unknown>) {
+      server.use(http.post(`${API}/expenses/parse-receipt`, () => HttpResponse.json({ ...empty, transcript: null, ...answer })));
+    }
+    const receiptPosts = () => requests().filter((r) => r.method === "POST" && r.path === "/expenses/parse-receipt");
+    const fileInput = () => document.querySelector<HTMLInputElement>("input[type=file]")!;
+
+    beforeEach(() => {
+      resize.mockReset();
+      resize.mockResolvedValue(new Blob(["small"], { type: "image/jpeg" }));
+    });
+
+    it("reads a ticket: the sentence goes into the box and fills the rows", async () => {
+      api([personalSpace]);
+      parses({ amount: 15000, description: "Carrefour" });
+      reads({ transcript: "Carrefour 15430,50 mercado pago ayer", amount: 15430.5, description: "Carrefour", paymentMethodId: "pm-mp" });
+      render(<ExpenseForm />, { wrapper: WithSWR });
+      expect(await screen.findByRole("button", { name: "Leer foto de ticket o comprobante" })).toBeEnabled();
+      await userEvent.upload(fileInput(), photo);
+
+      expect(await screen.findByText("Lo entendimos así. Tocá un dato para cambiarlo.")).toBeInTheDocument();
+      expect(screen.getByLabelText("Contalo como te salga")).toHaveValue("Carrefour 15430,50 mercado pago ayer");
+      expect(screen.getByLabelText("Monto")).toHaveValue("15430,5");
+      expect(screen.getByLabelText("Pago")).toHaveTextContent("Mercado Pago");
+      expect(resize).toHaveBeenCalledWith(photo);
+      const post = receiptPosts()[0];
+      expect(post.headers.get("content-type")).toBe("image/jpeg");
+      expect(post.headers.get("x-household-id")).toBe(personalSpace.id);
+      // Picked again later: the input was cleared.
+      expect(fileInput().value).toBe("");
+
+      // A correction is read as text; the photo is not sent again.
+      const nl = screen.getByLabelText("Contalo como te salga");
+      await userEvent.clear(nl);
+      await userEvent.type(nl, "Carrefour 15000 mercado pago ayer{Enter}");
+      await waitFor(() => expect(screen.getByLabelText("Monto")).toHaveValue("15000"));
+      expect(parsePosts()).toHaveLength(1);
+      expect(receiptPosts()).toHaveLength(1);
+    });
+
+    it("says when the photo is not a payment, cannot be read or cannot be opened", async () => {
+      api([personalSpace]);
+      reads({ notFinance: true });
+      render(<ExpenseForm />, { wrapper: WithSWR });
+      await screen.findByRole("button", { name: "Leer foto de ticket o comprobante" });
+      await userEvent.upload(fileInput(), photo);
+      expect(
+        await screen.findByText("No parece un ticket ni un comprobante de pago. Probá con otra foto."),
+      ).toBeInTheDocument();
+
+      reads({ understood: false });
+      await userEvent.upload(fileInput(), photo);
+      expect(await screen.findByText("No pudimos leer la foto. Probá con otra o escribilo.")).toBeInTheDocument();
+      expect(screen.getByLabelText("Contalo como te salga")).toHaveValue("");
+
+      const { ImageUnreadable } = await import("@/lib/resize-image");
+      resize.mockRejectedValue(new ImageUnreadable());
+      await userEvent.upload(fileInput(), photo);
+      expect(await screen.findByText("No pudimos abrir esa imagen. Probá con otra foto.")).toBeInTheDocument();
+      expect(receiptPosts()).toHaveLength(2);
     });
   });
 });
