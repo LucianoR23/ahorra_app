@@ -1,7 +1,7 @@
 "use client";
 
 import { CardPeriodNudge } from "@/components/card-statements/period-nudge";
-import { Check, Mic, Sparkles, Square, TriangleAlert } from "lucide-react";
+import { Camera, Check, Mic, Sparkles, Square, TriangleAlert } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate as swrMutate } from "swr";
@@ -26,6 +26,7 @@ import {
   createExpense,
   parseExpense,
   parseExpenseAudio,
+  parseExpenseReceipt,
   suggestCategory,
   type ExpenseCreateInput,
   type ExpenseParse,
@@ -36,6 +37,7 @@ import {
   useVoiceNote,
   voiceSupported,
 } from "@/lib/use-voice-note";
+import { ImageUnreadable, resizeImage } from "@/lib/resize-image";
 import { ApiError } from "@/lib/api/errors";
 import { isoToday, projectBillingMonth } from "@/lib/format";
 import { monthName } from "@/lib/committed";
@@ -79,7 +81,11 @@ type NlStatus =
   | "listening"
   | "not_heard"
   | "voice_denied"
-  | "voice_failed";
+  | "voice_failed"
+  | "reading_image"
+  | "not_read"
+  | "image_bad"
+  | "not_receipt";
 
 const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
   loading: "Leyendo…",
@@ -91,6 +97,11 @@ const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
   voice_denied:
     "Sin permiso para el micrófono. Activalo en el navegador o escribilo.",
   voice_failed: "No pudimos usar el micrófono. Escribilo en la caja.",
+  reading_image: "Leyendo la foto…",
+  not_read: "No pudimos leer la foto. Probá con otra o escribilo.",
+  image_bad: "No pudimos abrir esa imagen. Probá con otra foto.",
+  not_receipt:
+    "No parece un ticket ni un comprobante de pago. Probá con otra foto.",
 };
 
 /** "Tenés 2 Visa: elegí cuál", from the word the names share. */
@@ -154,7 +165,9 @@ export function ExpenseForm({
   const nlAsked = useRef("");
   // The form renders only on the client, so this can read the browser.
   const [canRecord] = useState(voiceSupported);
-  const voiceTicket = useRef(0);
+  // Each voice note or photo gets a ticket; a later one wins.
+  const mediaTicket = useRef(0);
+  const fileInput = useRef<HTMLInputElement>(null);
   // Methods that fit an ambiguous word ("visa"): listed first, none picked.
   const [paymentCandidates, setPaymentCandidates] = useState<string[]>([]);
 
@@ -301,28 +314,51 @@ export function ExpenseForm({
     }
   }
 
-  // A voice note (plan 3.2): what was heard goes into the box, so a wrong
-  // word is fixed there and Enter reads it again as text (decided with the
-  // user); the fields fill as for a typed sentence.
-  async function hear(audio: Blob) {
+  // A voice note (plan 3.2) or a photo of a ticket or payment screenshot
+  // (plan 3.3): what was read goes into the box as a sentence, so a wrong
+  // word is fixed there and Enter reads it again as text, without sending
+  // the media again (decided with the user); the rows fill as for a typed
+  // sentence.
+  async function readMedia(
+    kind: "audio" | "image",
+    send: () => Promise<ExpenseParse>,
+  ) {
     if (!target) return;
-    const ticket = `audio:${++voiceTicket.current}`;
+    const ticket = `${kind}:${++mediaTicket.current}`;
+    const failed = kind === "audio" ? "not_heard" : "not_read";
     nlAsked.current = ticket;
-    setNlStatus("listening");
+    setNlStatus(kind === "audio" ? "listening" : "reading_image");
     try {
-      const r = await parseExpenseAudio(audio, target.id);
+      const r = await send();
       if (nlAsked.current !== ticket) return;
-      const transcript = r.transcript?.trim();
-      if (!transcript) {
-        setNlStatus("not_heard");
+      if (kind === "image" && r.notFinance) {
+        setNlStatus("not_receipt");
         return;
       }
-      setNlText(transcript);
-      nlAsked.current = transcript;
+      const sentence = r.transcript?.trim();
+      if (!sentence) {
+        setNlStatus(failed);
+        return;
+      }
+      setNlText(sentence);
+      nlAsked.current = sentence;
       apply(r);
-    } catch {
-      if (nlAsked.current === ticket) setNlStatus("not_heard");
+    } catch (err) {
+      if (nlAsked.current !== ticket) return;
+      setNlStatus(err instanceof ImageUnreadable ? "image_bad" : failed);
     }
+  }
+
+  function hear(audio: Blob) {
+    const id = target?.id;
+    void readMedia("audio", () => parseExpenseAudio(audio, id));
+  }
+
+  function readPhoto(file: File) {
+    const id = target?.id;
+    void readMedia("image", async () =>
+      parseExpenseReceipt(await resizeImage(file), id),
+    );
   }
 
   // Fills the rows the reading mentions; the rest stay as they are.
@@ -364,7 +400,7 @@ export function ExpenseForm({
   }
 
   const voice = useVoiceNote(
-    (audio) => void hear(audio),
+    (audio) => hear(audio),
     (reason) =>
       setNlStatus(reason === "denied" ? "voice_denied" : "voice_failed"),
   );
@@ -451,7 +487,8 @@ export function ExpenseForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      {/* Contalo como te salga (plan 3.1), typed or dictated (3.2). */}
+      {/* Contalo como te salga (plan 3.1), typed, dictated (3.2) or read
+          from a photo (3.3). */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="nl" className="font-semibold">
           Contalo como te salga
@@ -478,30 +515,61 @@ export function ExpenseForm({
             aria-describedby={nlStatus || recording ? "nl-status" : undefined}
             className={cn(
               "min-h-0 resize-none rounded-2xl text-body",
-              canRecord && "pr-16",
+              canRecord ? "pr-28" : "pr-16",
             )}
           />
-          {canRecord && (
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            tabIndex={-1}
+            aria-hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              // Cleared so the same photo can be picked again.
+              e.target.value = "";
+              if (file) readPhoto(file);
+            }}
+          />
+          <div className="absolute right-2 bottom-2 flex gap-1.5">
             <Button
               type="button"
               size="icon"
-              variant={recording ? "destructive" : "secondary"}
-              aria-label={recording ? "Terminar de grabar" : "Dictar por audio"}
+              variant="secondary"
+              aria-label="Leer foto de ticket o comprobante"
               disabled={
                 !target ||
-                voice.state === "starting" ||
-                nlStatus === "listening"
+                recording ||
+                nlStatus === "listening" ||
+                nlStatus === "reading_image"
               }
-              onClick={() => (recording ? voice.stop() : void voice.start())}
-              className="absolute right-2 bottom-2"
+              onClick={() => fileInput.current?.click()}
             >
-              {recording ? (
-                <Square aria-hidden fill="currentColor" className="size-4" />
-              ) : (
-                <Mic aria-hidden strokeWidth={1.75} />
-              )}
+              <Camera aria-hidden strokeWidth={1.75} />
             </Button>
-          )}
+            {canRecord && (
+              <Button
+                type="button"
+                size="icon"
+                variant={recording ? "destructive" : "secondary"}
+                aria-label={recording ? "Terminar de grabar" : "Dictar por audio"}
+                disabled={
+                  !target ||
+                  voice.state === "starting" ||
+                  nlStatus === "listening" ||
+                  nlStatus === "reading_image"
+                }
+                onClick={() => (recording ? voice.stop() : void voice.start())}
+              >
+                {recording ? (
+                  <Square aria-hidden fill="currentColor" className="size-4" />
+                ) : (
+                  <Mic aria-hidden strokeWidth={1.75} />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
         {(nlStatus || recording) && (
           <p

@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 3.3 (app part): receipt and screenshot reading
+- A camera button next to the mic in «Contalo como te salga» (decided with the user). It opens the phone's picker (take a photo or pick one from the gallery) for a paper ticket or a Mercado Pago or bank transfer or payment screenshot.
+- The image is resized in the browser to at most 1600 px on its longest side and sent as JPEG (`src/lib/resize-image.ts`; EXIF rotation applied, quality lowered until it fits the API's 5 MB, files over 40 MB or that the browser cannot decode are refused) to `POST /expenses/parse-receipt`. iPhone HEIC photos work where the browser decodes them.
+- What was read goes into the box as a sentence ("Carrefour 15430,50 mercado pago ayer") and the rows fill as for a typed one; a correction typed there is read again as text without sending the photo again. The description is the store or the recipient.
+- Messages for a photo that is not a payment, cannot be read, or cannot be opened. Voice and photo share one reader, so a later one wins over an earlier one still on its way.
+- ESLint ignores local Playwright output (`playwright-report/`, `test-results/`), which made `pnpm lint` fail after a local E2E run.
+- The Cargar gasto help text mentions the camera. Visual baselines of Cargar gasto updated.
+
 ### 0.15d: Node 26 LTS, pnpm 12, minor/patch refresh
 - Node 26.13.1 (LTS since 2026-10-28; Node 24 is in maintenance): `.nvmrc` 26, `engines.node` `>=26`, Docker `node:26.13.1-alpine3.24`.
 - pnpm 12.18.0 in `packageManager`. Every `pnpm-workspace.yaml` setting is still recognized; the lockfile stays at version 9.0 and now records the pinned pnpm in a first YAML document.

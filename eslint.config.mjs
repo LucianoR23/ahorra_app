@@ -27,6 +27,9 @@ export default defineConfig([
   },
   globalIgnores([
     "coverage/**",
+    // Local Playwright output (git-ignored too).
+    "playwright-report/**",
+    "test-results/**",
     ".next/**",
     "out/**",
     "build/**",
