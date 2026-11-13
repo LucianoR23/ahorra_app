@@ -4,6 +4,14 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 3.4: PWA Share Target
+- The installed app shows up in Android's share sheet for images and text (`share_target` in the manifest, multipart POST to `/compartir`).
+- The service worker answers that POST: it keeps the first image (or, without one, the title and text with links dropped, cut to 300 characters) in Cache Storage (`app.share_target`) and sends the person to `/agregar?recibido=1` (`src/lib/share-target.ts`).
+- Cargar gasto reads it as soon as the space is known, as if the camera had been used or the text typed (decided with the user), then deletes it and drops the query. A share waits up to 10 minutes through the login (decided with the user); logging out deletes it with the other caches.
+- Without the service worker, `/compartir` redirects to Cargar gasto, which says nothing arrived. Nothing shared is read or logged on the server.
+- The auth gate now sends a logged-out visitor to `/login?next=<page>`, so signing in comes back to the page (the login already checked `next` with `safeNext`).
+- The Cargar gasto help mentions sharing from another app.
+
 ### 3.3 (app part): receipt and screenshot reading
 - A camera button next to the mic in «Contalo como te salga» (decided with the user). It opens the phone's picker (take a photo or pick one from the gallery) for a paper ticket or a Mercado Pago or bank transfer or payment screenshot.
 - The image is resized in the browser to at most 1600 px on its longest side and sent as JPEG (`src/lib/resize-image.ts`; EXIF rotation applied, quality lowered until it fits the API's 5 MB, files over 40 MB or that the browser cannot decode are refused) to `POST /expenses/parse-receipt`. iPhone HEIC photos work where the browser decodes them.

@@ -9,6 +9,7 @@ const AGREGAR_HELP: InfoHelpContent = {
   titulo: "Cargar gasto",
   acciones: [
     "Contalo en una frase en «Contalo como te salga» (por ejemplo «café 2500 visa galicia 3 cuotas ayer») y apretá Enter, tocá el micrófono y decilo (hasta 30 segundos), o tocá la cámara y elegí la foto de un ticket o una captura de una transferencia: completa los datos de abajo para que los revises.",
+    "En Android, con la app instalada, también podés compartirle una captura o un texto desde otra app (por ejemplo desde Mercado Pago o la galería): se abre Cargar gasto y lo lee solo.",
     "Escribí el monto arriba y elegí la moneda (ARS, USD o EUR); si no es en pesos, ves cuánto es en pesos.",
     "Completá la descripción, la categoría (opcional), con qué pagaste y la fecha.",
     "Si el medio de pago admite cuotas, indicá cuántas; con tarjeta de crédito ves en qué resumen entra la primera.",
@@ -32,7 +33,8 @@ const AGREGAR_HELP: InfoHelpContent = {
 
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   // "Cargar compra" from the simulator (plan 4.8) fills the form in.
-  const initial = parsePrefill(await searchParams);
+  const params = await searchParams;
+  const initial = parsePrefill(params);
   return (
     <AppShell focus>
       <div className="mx-auto w-full max-w-xl">
@@ -46,7 +48,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
             </div>
           }
         />
-        <ExpenseForm initial={initial} />
+        {/* Opened from the Share Target (plan 3.4). */}
+        <ExpenseForm initial={initial} fromShare={params.recibido === "1"} />
       </div>
     </AppShell>
   );

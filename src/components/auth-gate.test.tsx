@@ -38,6 +38,15 @@ describe("AuthGate", () => {
     expect(replace).toHaveBeenCalledWith("/login");
   });
 
+  it("comes back to the page after signing in (a shared photo waits there, plan 3.4)", () => {
+    pathname = "/agregar";
+    window.history.replaceState(null, "", "/agregar?recibido=1");
+    useAuthStore.setState({ hydrated: true });
+    renderGate();
+    expect(replace).toHaveBeenCalledWith("/login?next=%2Fagregar%3Frecibido%3D1");
+    window.history.replaceState(null, "", "/");
+  });
+
   it("waits on the loading screen while the user's households are still loading", () => {
     // Just logged in with the form: user known, households not fetched yet.
     useAuthStore.setState({ hydrated: true, user, accessToken: "t" });
