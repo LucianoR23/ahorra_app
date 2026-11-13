@@ -10,6 +10,7 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 - What was read goes into the box as a sentence ("Carrefour 15430,50 mercado pago ayer") and the rows fill as for a typed one; a correction typed there is read again as text without sending the photo again. The description is the store or the recipient.
 - Messages for a photo that is not a payment, cannot be read, or cannot be opened. Voice and photo share one reader, so a later one wins over an earlier one still on its way.
 - ESLint ignores local Playwright output (`playwright-report/`, `test-results/`), which made `pnpm lint` fail after a local E2E run.
+- Visual test: the month summary under a month navigator stays on one line in screenshots (`e2e/screenshot.css`). "vence el miércoles 22 nov" wrapped on phones on some days only, so the statement screen changed height with the date and failed against its baseline.
 - The Cargar gasto help text mentions the camera. Visual baselines of Cargar gasto updated.
 
 ### 0.15d: Node 26 LTS, pnpm 12, minor/patch refresh

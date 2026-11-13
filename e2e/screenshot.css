@@ -1,0 +1,10 @@
+/*
+ * Applied only while comparing screenshots (screens.spec.ts).
+ * A month summary with a long weekday ("vence el miércoles 22 nov") wraps
+ * on phones on some days and not others: kept on one line so the page
+ * height does not depend on the date. The text itself is masked.
+ */
+[data-slot="month-summary"] {
+  white-space: nowrap;
+  overflow: hidden;
+}
