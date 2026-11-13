@@ -2,7 +2,7 @@
 
 import { CardPeriodNudge } from "@/components/card-statements/period-nudge";
 import { Camera, Check, Mic, Sparkles, Square, TriangleAlert } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate as swrMutate } from "swr";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +38,7 @@ import {
   voiceSupported,
 } from "@/lib/use-voice-note";
 import { ImageUnreadable, resizeImage } from "@/lib/resize-image";
+import { takeShare } from "@/lib/share-target";
 import { ApiError } from "@/lib/api/errors";
 import { isoToday, projectBillingMonth } from "@/lib/format";
 import { monthName } from "@/lib/committed";
@@ -85,7 +86,8 @@ type NlStatus =
   | "reading_image"
   | "not_read"
   | "image_bad"
-  | "not_receipt";
+  | "not_receipt"
+  | "share_empty";
 
 const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
   loading: "Leyendo…",
@@ -102,6 +104,8 @@ const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
   image_bad: "No pudimos abrir esa imagen. Probá con otra foto.",
   not_receipt:
     "No parece un ticket ni un comprobante de pago. Probá con otra foto.",
+  share_empty:
+    "No llegó nada para leer. Probá compartirlo de nuevo o escribilo acá.",
 };
 
 /** "Tenés 2 Visa: elegí cuál", from the word the names share. */
@@ -145,7 +149,13 @@ function writeSharedPref(v: boolean) {
 export function ExpenseForm({
   onCreated,
   initial = {},
-}: { onCreated?: (expenseId: string) => void; initial?: ExpensePrefill } = {}) {
+  fromShare = false,
+}: {
+  onCreated?: (expenseId: string) => void;
+  initial?: ExpensePrefill;
+  /** Opened from the Share Target (plan 3.4): read what was shared. */
+  fromShare?: boolean;
+} = {}) {
   const router = useRouter();
   // "Compartido" off → Mi plata; on → the hogar with its split rules.
   const { personal, hogar, current } = useSpaces();
@@ -168,6 +178,7 @@ export function ExpenseForm({
   // Each voice note or photo gets a ticket; a later one wins.
   const mediaTicket = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
+  const shareTaken = useRef(false);
   // Methods that fit an ambiguous word ("visa"): listed first, none picked.
   const [paymentCandidates, setPaymentCandidates] = useState<string[]>([]);
 
@@ -300,8 +311,8 @@ export function ExpenseForm({
 
   // Reads the sentence once, on Enter or when it loses focus, and fills
   // the rows it mentions; the rest stay as they are (decided with the user).
-  async function interpret() {
-    const text = nlText.trim();
+  async function interpret(sentence = nlText) {
+    const text = sentence.trim();
     if (!text || text === nlAsked.current || !target) return;
     nlAsked.current = text;
     setNlStatus("loading");
@@ -398,6 +409,28 @@ export function ExpenseForm({
     }
     setNlStatus(r.understood ? "ok" : "partial");
   }
+
+  // A photo or text shared to the app (plan 3.4) is read as soon as the
+  // space is known, as if the camera had been used or the text typed
+  // (decided with the user). It is taken once: the device copy is deleted.
+  const readShare = useEffectEvent(async () => {
+    // Drops ?recibido=1 so a reload does not look for it again.
+    window.history.replaceState(null, "", window.location.pathname);
+    const got = await takeShare(
+      typeof caches === "undefined" ? undefined : caches,
+      Date.now(),
+    );
+    if (got?.image) readPhoto(got.image);
+    else if (got?.text) {
+      setNlText(got.text);
+      void interpret(got.text);
+    } else setNlStatus("share_empty");
+  });
+  useEffect(() => {
+    if (!fromShare || !target || shareTaken.current) return;
+    shareTaken.current = true;
+    void readShare();
+  }, [fromShare, target]);
 
   const voice = useVoiceNote(
     (audio) => hear(audio),

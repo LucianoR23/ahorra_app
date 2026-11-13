@@ -14,6 +14,11 @@ vi.mock("@/lib/resize-image", async (orig) => ({
   ...(await orig<typeof import("@/lib/resize-image")>()),
   resizeImage: resize,
 }));
+const take = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/share-target", async (orig) => ({
+  ...(await orig<typeof import("@/lib/share-target")>()),
+  takeShare: take,
+}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, back: vi.fn(), push: vi.fn() }) }));
 
 const cash = {
@@ -560,6 +565,57 @@ describe("ExpenseForm natural-language entry (plan 3.1)", () => {
       await userEvent.upload(fileInput(), photo);
       expect(await screen.findByText("No pudimos abrir esa imagen. Probá con otra foto.")).toBeInTheDocument();
       expect(receiptPosts()).toHaveLength(2);
+    });
+
+    describe("shared to the app (plan 3.4)", () => {
+      beforeEach(() => {
+        take.mockReset();
+        window.history.replaceState(null, "", "/agregar?recibido=1");
+      });
+
+      it("reads a shared photo as soon as the space is known", async () => {
+        api([personalSpace]);
+        reads({ transcript: "Carrefour 15430,50 mercado pago", amount: 15430.5, description: "Carrefour", paymentMethodId: "pm-mp" });
+        parses({});
+        take.mockResolvedValue({ image: photo });
+        render(<ExpenseForm fromShare />, { wrapper: WithSWR });
+
+        await waitFor(() =>
+          expect(screen.getByLabelText("Contalo como te salga")).toHaveValue("Carrefour 15430,50 mercado pago"),
+        );
+        expect(resize).toHaveBeenCalledWith(photo);
+        expect(receiptPosts()).toHaveLength(1);
+        expect(take).toHaveBeenCalledTimes(1);
+        // A reload does not look for it again.
+        expect(window.location.search).toBe("");
+      });
+
+      it("reads a shared text as a typed sentence", async () => {
+        api([personalSpace]);
+        parses({ amount: 2500, description: "Café" });
+        take.mockResolvedValue({ text: "café 2500" });
+        render(<ExpenseForm fromShare />, { wrapper: WithSWR });
+
+        await waitFor(() => expect(screen.getByLabelText("Monto")).toHaveValue("2500"));
+        expect(screen.getByLabelText("Contalo como te salga")).toHaveValue("café 2500");
+        expect(parsePosts()).toHaveLength(1);
+        expect(receiptPosts()).toHaveLength(0);
+      });
+
+      it("says when nothing arrived, and does nothing without the flag", async () => {
+        api([personalSpace]);
+        take.mockResolvedValue(null);
+        const { unmount } = render(<ExpenseForm fromShare />, { wrapper: WithSWR });
+        expect(
+          await screen.findByText("No llegó nada para leer. Probá compartirlo de nuevo o escribilo acá."),
+        ).toBeInTheDocument();
+        unmount();
+
+        take.mockClear();
+        render(<ExpenseForm />, { wrapper: WithSWR });
+        await screen.findByRole("button", { name: "Leer foto de ticket o comprobante" });
+        expect(take).not.toHaveBeenCalled();
+      });
     });
   });
 });

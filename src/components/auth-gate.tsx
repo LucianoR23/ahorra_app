@@ -18,7 +18,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     if (!user) {
-      router.replace("/login");
+      // Back to this page after signing in (a shared photo waits in
+      // Cargar gasto, plan 3.4); the login checks `next` with safeNext.
+      const here = pathname + window.location.search;
+      router.replace(pathname === "/" ? "/login" : `/login?next=${encodeURIComponent(here)}`);
       return;
     }
     // Decide only once the user's households are known; until then the

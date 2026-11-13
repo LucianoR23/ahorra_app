@@ -15,4 +15,6 @@ export const STORAGE_KEYS = {
   viewCurrency: "app.view_currency",
   /** IndexedDB database the service worker can read too (plan 1.9). */
   deviceDb: "app.device",
+  /** Cache the service worker keeps a shared photo or text in (plan 3.4). */
+  shareCache: "app.share_target",
 } as const;
