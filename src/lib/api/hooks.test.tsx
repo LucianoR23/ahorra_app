@@ -2,16 +2,16 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
 import { SWRConfig } from "swr";
+import { swrTestConfig } from "@/test/spaces";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useAuthStore } from "@/stores/auth";
 import { API, requests, server, signIn, signOut } from "@/test/msw";
 import * as h from "./hooks";
-import { swrFetcher } from "./swr-fetcher";
 
 // Same fetcher as the app's providers, with a fresh cache per test.
 function wrapper({ children }: { children: ReactNode }) {
   return (
-    <SWRConfig value={{ fetcher: swrFetcher, provider: () => new Map(), dedupingInterval: 0, revalidateOnFocus: false }}>
+    <SWRConfig value={{ ...swrTestConfig, revalidateOnFocus: false }}>
       {children}
     </SWRConfig>
   );
