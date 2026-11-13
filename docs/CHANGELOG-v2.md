@@ -4,6 +4,9 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### Test fix: SWR after jsdom teardown
+- `next` CI failed once (all tests green, one unhandled rejection: `document is not defined` from SWR's `isVisible` in `inicio-yo.test.tsx`). SWR checks for `document` once at import, so a request that ends after a test file's jsdom is gone throws. The test SWR config (`swrTestConfig` in `src/test/spaces.tsx`, now shared by every test wrapper) fixes `isVisible` and `isOnline` to true.
+
 ### 3.4: PWA Share Target
 - The installed app shows up in Android's share sheet for images and text (`share_target` in the manifest, multipart POST to `/compartir`).
 - The service worker answers that POST: it keeps the first image (or, without one, the title and text with links dropped, cut to 300 characters) in Cache Storage (`app.share_target`) and sends the person to `/agregar?recibido=1` (`src/lib/share-target.ts`).

@@ -23,10 +23,24 @@ export const hogarSpace: Household = {
   updatedAt: "2026-01-02T00:00:00Z",
 };
 
+/**
+ * SWR for tests: the app's fetcher, a fresh cache per test, no deduping.
+ * isVisible and isOnline are fixed because SWR's defaults read `document`
+ * and `navigator`, which are gone when a request ends after jsdom is torn
+ * down ("document is not defined", an unhandled rejection that fails CI).
+ */
+export const swrTestConfig = {
+  fetcher: swrFetcher,
+  provider: () => new Map(),
+  dedupingInterval: 0,
+  isVisible: () => true,
+  isOnline: () => true,
+};
+
 /** SWR with the app's fetcher and a fresh cache per test. */
 export function WithSWR({ children }: { children: React.ReactNode }) {
   return (
-    <SWRConfig value={{ fetcher: swrFetcher, provider: () => new Map(), dedupingInterval: 0 }}>
+    <SWRConfig value={swrTestConfig}>
       {children}
     </SWRConfig>
   );

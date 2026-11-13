@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { SWRConfig } from "swr";
+import { swrTestConfig } from "@/test/spaces";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { swrFetcher } from "@/lib/api/swr-fetcher";
 import { API, server, signIn } from "@/test/msw";
 import userEvent from "@testing-library/user-event";
 import { AiExportCard } from "./ai-export-card";
@@ -16,7 +16,7 @@ vi.mock("@/components/report-charts-lazy", () => ({
 }));
 
 const wrap = (ui: React.ReactNode) =>
-  render(<SWRConfig value={{ fetcher: swrFetcher, provider: () => new Map(), dedupingInterval: 0 }}>{ui}</SWRConfig>);
+  render(<SWRConfig value={swrTestConfig}>{ui}</SWRConfig>);
 
 beforeEach(() => signIn());
 

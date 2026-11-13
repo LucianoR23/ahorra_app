@@ -1,14 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { SWRConfig } from "swr";
+import { swrTestConfig } from "@/test/spaces";
 import { beforeEach, describe, expect, it } from "vitest";
-import { swrFetcher } from "@/lib/api/swr-fetcher";
 import { API, server, signIn } from "@/test/msw";
 import { ActivityCard, activityLabel } from "./activity-card";
 
 function renderCard() {
   return render(
-    <SWRConfig value={{ fetcher: swrFetcher, provider: () => new Map(), dedupingInterval: 0 }}>
+    <SWRConfig value={swrTestConfig}>
       <ActivityCard />
     </SWRConfig>,
   );

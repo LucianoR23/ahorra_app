@@ -2,9 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { SWRConfig } from "swr";
+import { swrTestConfig } from "@/test/spaces";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { NotificationPreferences as Prefs } from "@/lib/api/hooks";
-import { swrFetcher } from "@/lib/api/swr-fetcher";
 import { API, server, signIn } from "@/test/msw";
 import { NotificationPreferences } from "./notification-preferences";
 
@@ -44,7 +44,7 @@ function serve(initial = defaults()) {
 
 function renderScreen() {
   return render(
-    <SWRConfig value={{ fetcher: swrFetcher, provider: () => new Map(), dedupingInterval: 0 }}>
+    <SWRConfig value={swrTestConfig}>
       <NotificationPreferences />
     </SWRConfig>,
   );
