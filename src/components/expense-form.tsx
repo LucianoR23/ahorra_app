@@ -19,10 +19,14 @@ import {
   useCreditCardPeriods,
   useExchangeRates,
   useHouseholdMembers,
+  useInboundMessages,
+  INBOUND_MESSAGES_KEY,
+  type InboundMessage,
 } from "@/lib/api/hooks";
 import { selectSpace, useSpaces } from "@/lib/spaces";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 import {
+  confirmInboundMessage,
   createExpense,
   parseExpense,
   parseExpenseAudio,
@@ -87,7 +91,8 @@ type NlStatus =
   | "not_read"
   | "image_bad"
   | "not_receipt"
-  | "share_empty";
+  | "share_empty"
+  | "mail_gone";
 
 const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
   loading: "Leyendo…",
@@ -106,6 +111,7 @@ const NL_MESSAGES: Record<Exclude<NlStatus, "ok">, string> = {
     "No parece un ticket ni un comprobante de pago. Probá con otra foto.",
   share_empty:
     "No llegó nada para leer. Probá compartirlo de nuevo o escribilo acá.",
+  mail_gone: "Ese mail ya no está para revisar. Si hace falta, cargalo a mano.",
 };
 
 /** "Tenés 2 Visa: elegí cuál", from the word the names share. */
@@ -150,11 +156,14 @@ export function ExpenseForm({
   onCreated,
   initial = {},
   fromShare = false,
+  fromMail,
 }: {
   onCreated?: (expenseId: string) => void;
   initial?: ExpensePrefill;
   /** Opened from the Share Target (plan 3.4): read what was shared. */
   fromShare?: boolean;
+  /** Opened from Gastos por mail (plan 3.5): the mail's id. */
+  fromMail?: string;
 } = {}) {
   const router = useRouter();
   // "Compartido" off → Mi plata; on → the hogar with its split rules.
@@ -179,6 +188,8 @@ export function ExpenseForm({
   const mediaTicket = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const shareTaken = useRef(false);
+  const mailTaken = useRef(false);
+  const { data: inbound } = useInboundMessages({ enabled: !!fromMail });
   // Methods that fit an ambiguous word ("visa"): listed first, none picked.
   const [paymentCandidates, setPaymentCandidates] = useState<string[]>([]);
 
@@ -426,6 +437,23 @@ export function ExpenseForm({
       void interpret(got.text);
     } else setNlStatus("share_empty");
   });
+  // A forwarded mail (plan 3.5) is read like a typed sentence; saving links
+  // it to the new expense (decided with the user).
+  const readMail = useEffectEvent((list: InboundMessage[]) => {
+    const sentence = list.find((m) => m.id === fromMail && m.kind === "expense")?.sentence;
+    if (!sentence) {
+      setNlStatus("mail_gone");
+      return;
+    }
+    setNlText(sentence);
+    void interpret(sentence);
+  });
+  useEffect(() => {
+    if (!fromMail || !target || !inbound || mailTaken.current) return;
+    mailTaken.current = true;
+    readMail(inbound);
+  }, [fromMail, target, inbound]);
+
   useEffect(() => {
     if (!fromShare || !target || shareTaken.current) return;
     shareTaken.current = true;
@@ -492,6 +520,12 @@ export function ExpenseForm({
     setSubmitting(true);
     try {
       const detail = await createExpense(input, target.id);
+      if (fromMail) {
+        // Best effort: the expense is saved either way; a mail left open
+        // can still be dismissed from Gastos por mail.
+        await confirmInboundMessage(fromMail, detail.expense.id).catch(() => {});
+        void swrMutate(INBOUND_MESSAGES_KEY);
+      }
       // The detail page reads the current space: show the one it went to.
       if (target.id !== current?.id) selectSpace(target.id);
       swrMutate(

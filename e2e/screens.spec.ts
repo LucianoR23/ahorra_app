@@ -28,6 +28,7 @@ const SCREENS = [
   { name: "deudas", path: "/deudas" },
   { name: "ingresos", path: "/ingresos" },
   { name: "recurrentes", path: "/recurrentes" },
+  { name: "gastos-por-mail", path: "/gastos-por-mail" },
   { name: "objetivos", path: "/objetivos" },
   { name: "categorias", path: "/categorias" },
   { name: "reportes", path: "/reportes" },

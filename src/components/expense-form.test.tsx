@@ -567,6 +567,48 @@ describe("ExpenseForm natural-language entry (plan 3.1)", () => {
       expect(receiptPosts()).toHaveLength(2);
     });
 
+    describe("forwarded mail (plan 3.5)", () => {
+      const mailId = "11111111-1111-1111-1111-111111111111";
+      function mails(list: unknown[]) {
+        server.use(
+          http.get(`${API}/inbound/messages`, () => HttpResponse.json(list)),
+          http.post(`${API}/inbound/messages/:id/confirm`, () => new HttpResponse(null, { status: 204 })),
+        );
+      }
+      const mail = {
+        id: mailId, kind: "expense", status: "pending", source: "mercadopago", reading: null,
+        sentence: "Carrefour 15430,50 mercado pago ayer", sender: null, gmailCode: null, receivedAt: "2026-11-13T00:10:00Z",
+      };
+
+      it("reads the mail's sentence and links the saved expense to it", async () => {
+        api([personalSpace]);
+        mails([mail]);
+        parses({ amount: 15430.5, description: "Carrefour", paymentMethodId: "pm-mp", spentAt: "2026-11-12" });
+        render(<ExpenseForm fromMail={mailId} />, { wrapper: WithSWR });
+
+        await waitFor(() => expect(screen.getByLabelText("Monto")).toHaveValue("15430,5"));
+        expect(screen.getByLabelText("Contalo como te salga")).toHaveValue("Carrefour 15430,50 mercado pago ayer");
+        expect(JSON.parse(parsePosts()[0].body || "{}")).toEqual({ text: "Carrefour 15430,50 mercado pago ayer" });
+
+        await userEvent.click(screen.getByRole("button", { name: "Guardar gasto" }));
+        await waitFor(() =>
+          expect(requests().find((r) => r.method === "POST" && r.path === `/inbound/messages/${mailId}/confirm`)).toBeDefined(),
+        );
+        const confirm = requests().find((r) => r.path === `/inbound/messages/${mailId}/confirm`)!;
+        expect(JSON.parse(confirm.body || "{}")).toEqual({ expenseId: "e1" });
+        expect(confirm.headers.get("x-household-id")).toBeNull();
+        expect(expensePost()).toBeDefined();
+      });
+
+      it("says when the mail is no longer open, and asks nothing without it", async () => {
+        api([personalSpace]);
+        mails([]);
+        render(<ExpenseForm fromMail={mailId} />, { wrapper: WithSWR });
+        expect(await screen.findByText("Ese mail ya no está para revisar. Si hace falta, cargalo a mano.")).toBeInTheDocument();
+        expect(parsePosts()).toHaveLength(0);
+      });
+    });
+
     describe("shared to the app (plan 3.4)", () => {
       beforeEach(() => {
         take.mockReset();
