@@ -9,6 +9,7 @@ import { reportCurrency } from "@/lib/fx";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { InstallPrompt } from "@/components/install-prompt";
 import { PendingDraftsCard } from "@/components/pending-drafts-card";
+import { InboundPendingCard } from "@/components/inbound-pending-card";
 import { PushProvider } from "@/components/push-provider";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export function InicioHogar() {
         <SharedHero people={people} />
         <Accounts people={people} />
         <WhereItWent />
+        <InboundPendingCard className="md:col-span-full" />
         <div className="md:col-span-full">
           <PendingDraftsCard />
         </div>

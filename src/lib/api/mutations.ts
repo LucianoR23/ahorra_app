@@ -1107,3 +1107,25 @@ export function exportIncomes(range: ExportRange): Promise<Blob> {
     accept: XLSX_TYPE,
   });
 }
+
+// Import by email (plan 3.5). Per person, so no household header.
+
+/** Trusts the address a sender_pending mail was forwarded from. */
+export function acceptInboundSender(id: string) {
+  return apiMutate<void>({ method: "POST", path: `/inbound/messages/${id}/accept-sender`, householdScoped: false });
+}
+
+/** Closes an open mail without loading it. */
+export function dismissInboundMessage(id: string) {
+  return apiMutate<void>({ method: "POST", path: `/inbound/messages/${id}/dismiss`, householdScoped: false });
+}
+
+/** Links an open mail to the expense saved from it in Cargar gasto. */
+export function confirmInboundMessage(id: string, expenseId: string) {
+  return apiMutate<void>({
+    method: "POST",
+    path: `/inbound/messages/${id}/confirm`,
+    body: { expenseId },
+    householdScoped: false,
+  });
+}

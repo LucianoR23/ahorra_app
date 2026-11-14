@@ -11,6 +11,7 @@ import {
   LifeBuoy,
   List,
   ListChecks,
+  Mail,
   Repeat,
   ScrollText,
   Settings,
@@ -65,6 +66,7 @@ export const MORE_GROUPS: NavGroup[] = [
     items: [
       { id: "incomes", label: "Ingresos", href: "/ingresos", icon: TrendingUp },
       { id: "recurring", label: "Recurrentes", href: "/recurrentes", icon: Repeat },
+      { id: "inbound", label: "Gastos por mail", href: "/gastos-por-mail", icon: Mail },
       { id: "calendar", label: "Vencimientos", href: "/vencimientos", icon: CalendarDays },
       goals,
       { id: "simulate", label: "¿Me lo puedo comprar?", href: "/simular", icon: ShoppingBag },

@@ -4,6 +4,13 @@ Entries reference item IDs from `AHORRA_V2_PLAN.md` (workspace repo).
 
 ## Unreleased
 
+### 3.5 (app part): Gastos por mail
+- New screen `/gastos-por-mail` in Más › Tu plata (decided with the user): the person's forwarding address with a copy button, Gmail's forwarding confirmation code as soon as it arrives (the list refreshes every 15 s there), a step-by-step Gmail setup with the filter text to paste, and the mails waiting to be loaded.
+- Each open mail shows the sentence the API wrote ("Carrefour 15430,50 mercado pago ayer") with «Cargar» and «Descartar». A mail forwarded from another address asks «¿Es tuyo?» first.
+- «Cargar» opens Cargar gasto with `?mail=<id>`: the sentence goes into the box and is read like a typed one (decided with the user); saving links the new expense to the mail (`POST /inbound/messages/{id}/confirm`). A mail no longer open says so.
+- Inicio (Yo and Hogar) shows «Tenés N gastos por mail para revisar» when there are open mails; nothing when there are none or the feature is off on the server (503: the screen says it is not available yet).
+- Hooks `useInboundAddress`, `useInboundMessages`; mutations for accept sender, dismiss and confirm. Visual baseline for the new screen and Más updated.
+
 ### Test fix: SWR after jsdom teardown
 - `next` CI failed once (all tests green, one unhandled rejection: `document is not defined` from SWR's `isVisible` in `inicio-yo.test.tsx`). SWR checks for `document` once at import, so a request that ends after a test file's jsdom is gone throws. The test SWR config (`swrTestConfig` in `src/test/spaces.tsx`, now shared by every test wrapper) fixes `isVisible` and `isOnline` to true.
 

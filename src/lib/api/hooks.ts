@@ -647,3 +647,52 @@ export function useNotificationPreferences() {
   const token = useAuthStore((s) => s.accessToken);
   return useSWR<NotificationPreferences>(token ? NOTIFICATION_PREFERENCES_KEY : null);
 }
+
+/** One open item of import by email (plan 3.5), as GET /inbound/messages returns it. */
+export type InboundMessage = {
+  id: string;
+  kind: "expense" | "gmail_confirmation" | "other";
+  status: "pending" | "sender_pending" | "confirmed" | "dismissed" | "unreadable";
+  source: string | null;
+  reading: {
+    amount: number;
+    currency: string;
+    date: string;
+    installments: number;
+    payment: string;
+    description: string;
+  } | null;
+  /** Goes into "Contalo como te salga" ("Carrefour 15430,50 mercado pago ayer"). */
+  sentence: string | null;
+  /** The forwarding address to accept, only while sender_pending. */
+  sender: string | null;
+  gmailCode: string | null;
+  receivedAt: string;
+};
+
+export const INBOUND_MESSAGES_KEY = ["/inbound/messages", { householdScoped: false }] as const;
+
+// Import by email answers 503 until the server is configured: no retries,
+// the screens say it is not available.
+const inboundOpts = { shouldRetryOnError: false, revalidateOnFocus: true } as const;
+
+/** The person's forwarding address, created on first use (plan 3.5). */
+export function useInboundAddress() {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<{ address: string }>(
+    token ? (["/inbound/address", { householdScoped: false }] as const) : null,
+    inboundOpts,
+  );
+}
+
+/**
+ * Open mails and Gmail codes. `poll` refreshes every 15 s, for the screen
+ * where the person waits for Gmail's code.
+ */
+export function useInboundMessages({ poll = false, enabled = true }: { poll?: boolean; enabled?: boolean } = {}) {
+  const token = useAuthStore((s) => s.accessToken);
+  return useSWR<InboundMessage[]>(token && enabled ? INBOUND_MESSAGES_KEY : null, {
+    ...inboundOpts,
+    refreshInterval: poll ? 15_000 : 0,
+  });
+}
